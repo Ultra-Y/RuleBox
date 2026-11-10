@@ -5,6 +5,7 @@ import pytest
 from rulebox.core.level import LevelFormatError, load_level, parse_level
 
 LEVEL = Path(__file__).resolve().parents[1] / "content" / "levels" / "01-first-step.txt"
+LEVEL3 = Path(__file__).resolve().parents[1] / "content" / "levels" / "03-blocked-road.txt"
 
 
 def test_load_first_level():
@@ -63,3 +64,12 @@ def test_missing_size():
     text = "name bad\nlegend\n  # wall\ngrid\n  #\n"
     with pytest.raises(LevelFormatError):
         parse_level(text)
+
+
+def test_blocked_road_level_layout():
+    level = load_level(LEVEL3)
+    assert (level.width, level.height) == (11, 8)
+    assert level.entity_at(4, 2).id == "baba"
+    assert level.entity_at(4, 5) is None
+    assert level.entity_at(5, 5).id == "box"
+    assert level.entity_at(6, 9).id == "flag"

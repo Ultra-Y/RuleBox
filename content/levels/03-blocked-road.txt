@@ -1,0 +1,28 @@
+name 03 路被堵住了？
+size 11 8
+
+legend
+  # wall
+  . empty
+  @ baba
+  $ box
+  F flag
+  人 word 人
+  是 word 是
+  你 word 你
+  旗 word 旗
+  赢 word 赢
+  箱 word 箱
+  推 word 推
+  墙 word 墙
+  停 word 停
+
+grid
+  ###########
+  #...箱是推..墙#
+  #...旗是赢..是#
+  #........停#
+  #.@.......#
+  #####$#####
+  #人是你.....F#
+  ###########
