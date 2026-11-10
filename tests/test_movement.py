@@ -205,3 +205,129 @@ def test_undo_restores_overlapped_entities():
     assert world.undo() is True
     assert [entity.id for entity in world.entities_at(4, 1)] == ["baba"]
     assert [entity.id for entity in world.entities_at(4, 2)] == ["rock"]
+
+
+def test_transform_after_move_and_words_unchanged():
+    world = make_world(
+        words=[
+            (0, 0, "人"),
+            (0, 1, "是"),
+            (0, 2, "你"),
+            (1, 0, "石"),
+            (1, 1, "是"),
+            (1, 2, "箱"),
+        ],
+        objects=[(4, 1, "baba"), (4, 4, "rock")],
+    )
+
+    result = try_move(world, 0, 1)
+    assert result.moved
+    assert world.get(4, 4).id == "box"
+    assert world.get(1, 0).is_word
+    assert world.get(1, 0).text == "石"
+
+
+def test_transform_preserves_overlap_order():
+    world = make_world(
+        words=[
+            (0, 0, "人"),
+            (0, 1, "是"),
+            (0, 2, "你"),
+            (1, 0, "石"),
+            (1, 1, "是"),
+            (1, 2, "箱"),
+        ],
+        objects=[(4, 1, "baba"), (4, 2, "rock")],
+    )
+
+    result = try_move(world, 0, 1)
+    assert result.moved
+    assert [entity.id for entity in world.entities_at(4, 2)] == ["box", "baba"]
+
+
+def test_transformed_box_can_be_pushed():
+    world = make_world(
+        words=[
+            (0, 0, "人"),
+            (0, 1, "是"),
+            (0, 2, "你"),
+            (1, 0, "石"),
+            (1, 1, "是"),
+            (1, 2, "箱"),
+            (2, 0, "箱"),
+            (2, 1, "是"),
+            (2, 2, "推"),
+        ],
+        objects=[(4, 1, "baba"), (4, 3, "rock")],
+    )
+
+    assert try_move(world, 0, 1).moved
+    assert world.get(4, 3).id == "box"
+
+    result = try_move(world, 0, 1)
+    assert result.moved
+    assert world.get(4, 3).id == "baba"
+    assert world.get(4, 4).id == "box"
+
+
+def test_failed_move_does_not_transform():
+    world = make_world(
+        words=[
+            (0, 0, "人"),
+            (0, 1, "是"),
+            (0, 2, "你"),
+            (1, 0, "石"),
+            (1, 1, "是"),
+            (1, 2, "箱"),
+        ],
+        objects=[(4, 0, "baba"), (4, 2, "rock")],
+    )
+
+    result = try_move(world, 0, -1)
+    assert not result.moved
+    assert world.get(4, 2).id == "rock"
+    assert not world.can_undo
+
+
+def test_undo_restores_transformed_entity():
+    world = make_world(
+        words=[
+            (0, 0, "人"),
+            (0, 1, "是"),
+            (0, 2, "你"),
+            (1, 0, "石"),
+            (1, 1, "是"),
+            (1, 2, "箱"),
+        ],
+        objects=[(4, 1, "baba"), (4, 4, "rock")],
+    )
+
+    result = try_move(world, 0, 1)
+    assert result.moved
+    assert world.get(4, 4).id == "box"
+
+    assert world.undo() is True
+    assert world.get(4, 1).id == "baba"
+    assert world.get(4, 4).id == "rock"
+
+
+def test_transform_rules_apply_once():
+    world = make_world(
+        words=[
+            (0, 0, "人"),
+            (0, 1, "是"),
+            (0, 2, "你"),
+            (1, 0, "石"),
+            (1, 1, "是"),
+            (1, 2, "箱"),
+            (2, 0, "箱"),
+            (2, 1, "是"),
+            (2, 2, "石"),
+        ],
+        objects=[(4, 0, "baba"), (4, 2, "rock"), (4, 4, "box")],
+    )
+
+    result = try_move(world, 0, 1)
+    assert result.moved
+    assert world.get(4, 2).id == "box"
+    assert world.get(4, 4).id == "rock"

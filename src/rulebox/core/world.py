@@ -70,6 +70,13 @@ class World:
             raise IndexError(f"坐标越界：({row}, {col})")
         self.cells[row][col].remove(entity)
 
+    def replace(self, row: int, col: int, old: Entity, new: Entity) -> None:
+        """原地替换指定实体，保留格内其他实体及其层叠顺序。"""
+        if not self.in_bounds(row, col):
+            raise IndexError(f"坐标越界：({row}, {col})")
+        index = self.cells[row][col].index(old)
+        self.cells[row][col][index] = new
+
     def find(self, predicate: Callable[[Entity], bool]) -> list[tuple[int, int, Entity]]:
         found: list[tuple[int, int, Entity]] = []
         for row in range(self.height):

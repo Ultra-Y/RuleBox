@@ -9,8 +9,8 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 from .entities import Entity
-from .resolve import has_prop, you_positions
-from .rules import parse_rules, property_map
+from .resolve import apply_transforms, has_prop, you_positions
+from .rules import parse_rules, property_map, transform_map
 from .world import World
 
 MAX_PUSH_DEPTH = 10
@@ -26,24 +26,30 @@ def try_move(world: World, dr: int, dc: int) -> MoveResult:
     """尝试让所有「你」朝 (dr, dc) 走一步。"""
     world.snapshot()
 
-    props = property_map(parse_rules(world))
+    rules = parse_rules(world)
+    props = property_map(rules)
+    transforms = transform_map(rules)
     movers = you_positions(world, props)
     if not movers:
         world.undo()
         return MoveResult(False)
 
     moved_any = False
+    won = False
     for row, col in movers:
         result = _move_one(world, row, col, dr, dc, props, can_win=True)
         if result.won:
-            return MoveResult(True, won=True)
+            won = True
+            break
         moved_any = moved_any or result.moved
 
-    if not moved_any:
+    if not moved_any and not won:
         world.undo()
         return MoveResult(False)
 
-    return MoveResult(True)
+    # 接触结算后统一变形；下一步和 UI 会重新解析变形后的属性。
+    apply_transforms(world, transforms)
+    return MoveResult(True, won=won)
 
 
 def _move_one(

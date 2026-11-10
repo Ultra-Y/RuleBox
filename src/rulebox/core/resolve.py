@@ -6,7 +6,7 @@ Day 2 只处理 YOU / PUSH / STOP / WIN；
 
 from __future__ import annotations
 
-from .entities import Entity
+from .entities import Entity, make_object
 from .world import World
 
 
@@ -27,3 +27,16 @@ def you_positions(world: World, props: dict[str, set[str]]) -> list[tuple[int, i
             if any(has_prop(entity, props, "YOU") for entity in entities):
                 found.append((row, col))
     return found
+
+
+def apply_transforms(world: World, transforms: dict[str, str]) -> None:
+    """按回合开始时的物件身份统一变形一次，词块不参与。"""
+    pending = [
+        (row, col, entity, transforms[entity.id])
+        for row, col, entity in world.find(
+            lambda entity: entity.kind == "object" and entity.id in transforms
+        )
+    ]
+    for row, col, entity, target_id in pending:
+        if target_id != entity.id:
+            world.replace(row, col, entity, make_object(target_id))
