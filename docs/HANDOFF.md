@@ -17,6 +17,7 @@ Day 2、5.1、5.2 完成：能走、能推箱、能推词、能解析规则、�
 | 源码 | `src/rulebox/` | core 纯逻辑，ui 用 Pygame |
 | 关卡 | `content/levels/01-*.txt`、`02-*.txt` | 文本 DSL |
 | 测试 | `tests/` | 44 条 |
+| 子 agent 封装 | `tools/qoder_agent.py` | 调用 Qoder CN CLI，结果在 `docs/agent-runs/` |
 | 计划 | `docs/plan.md` | 12 关、6 周的原计划（快照） |
 | 清单 | `docs/checklist.md` | 每日/每周行动清单（快照） |
 | 截图 | `docs/preview_01.png`、`preview_02.png` | README 用 |

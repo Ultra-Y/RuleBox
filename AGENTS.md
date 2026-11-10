@@ -75,6 +75,22 @@ RuleBox：中文词块推箱解谜。墙、箱子、旗子的行为由场上可�
 - 中文说明，一个提交只做一件事。
 - 改完先跑 `pytest`，再提交。
 
+## 用 Qoder CN 当子 agent（可选）
+
+本机已安装 Qoder CN CLI（`qodercn`），可以用 `tools/qoder_agent.py` 非交互调用：
+
+```powershell
+.\.venv\Scripts\python.exe tools\qoder_agent.py `
+  --prompt "只读任务：..." `
+  --permission-mode dont_ask `
+  --allowed-tools "Read,Grep,Glob"
+```
+
+- 只读任务：`dont_ask` + `Read,Grep,Glob`。
+- 要改代码：先开分支，用 `accept_edits` 或 `auto`；改完必须 review diff + 跑 pytest，不能直接信它的“测试通过”。
+- 每次调用消耗 Qoder CN credits；结果和原始日志写到 `docs/agent-runs/`（`.log` 已被 gitignore）。
+- 不要把 token、账号信息写进仓库。
+
 ## 网络
 
 这台机器访问 GitHub 时通时断。`git push` 前先看 `docs/HANDOFF.md` 的「网络」一节；不要随意改全局 git 配置。
