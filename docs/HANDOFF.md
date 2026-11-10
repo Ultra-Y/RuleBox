@@ -1,13 +1,13 @@
 # 交接说明（Handoff）
 
-> 快照：2026-11-10（关卡编辑器加入）
+> 快照：2026-11-10（官方/自制分离与编辑器增强）
 > 最新代码提交：以 `git log` 为准
 > 仓库：https://github.com/Ultra-Y/RuleBox （public）
 > 交接 tag：`handoff-2026-11-10`
 
 ## 1. 一句话状态
 
-Day 2、5.1、5.2、5.3 完成，并补上开始菜单、选关、通关进度、过关下一关；规则层支持相邻两句（横/竖）与显式「墙 是 停」；第 3 关《路被堵住了？》已加入；关卡编辑器支持自制关卡、保存到关卡库、导出/导入分享码；99 条测试全过；第 1–3 关可玩。
+Day 2、5.1、5.2、5.3 完成，并补上开始菜单、官方/自制关卡分离、通关进度、过关下一关；规则层支持相邻两句（横/竖）与显式「墙 是 停」；第 3 关《路被堵住了？》已加入；关卡编辑器支持 5×5–20×20、试玩、打开、重命名、删除、分享码导出/导入；106 条测试全过；第 1–3 关可玩。
 下一项是 5.4：**继续加第 4–8 关 + 每关解法回放测试**。
 
 ## 2. 资源清单
@@ -16,7 +16,7 @@ Day 2、5.1、5.2、5.3 完成，并补上开始菜单、选关、通关进度�
 | :--- | :--- | :--- |
 | 源码 | `src/rulebox/` | core 纯逻辑，ui 用 Pygame |
 | 关卡 | `content/levels/01-*.txt`、`02-*.txt` | 文本 DSL |
-| 测试 | `tests/` | 99 条 |
+| 测试 | `tests/` | 106 条 |
 | 子 agent 封装 | `tools/qoder_agent.py` | 调用 Qoder CN CLI，结果在 `docs/agent-runs/` |
 | 计划 | `docs/plan.md` | 12 关、6 周的原计划（快照） |
 | 清单 | `docs/checklist.md` | 每日/每周行动清单（快照） |
@@ -125,11 +125,12 @@ py -3.10 -m venv .venv
 
 ### 5.3.3 关卡编辑器与分享码（已完成）
 
-- `core/level_builder.py`：调色板、从字符网格生成关卡 DSL、分享码 base64 编解码、带时间戳保存。
-- `ui/editor.py`：11×8 画布、调色板、左键放置/右键擦除、关卡名输入、保存到关卡库、导出/导入分享码。
-- 自定义关卡写入 `content/levels/custom-*.txt`，导出写入 `exports/`；两者都已 gitignore。
-- 保存前用 `parse_level` 校验；导入分享码也先校验再落盘，避免坏文件进关卡库。
-- 验证：99 passed（新增编辑器/构建器 7 条）；菜单/选关/编辑器截图检查。
+- 官方关卡：`content/levels/*.txt`；自制关卡：`custom_levels/*.txt`（gitignore），菜单分开显示。
+- `core/level_builder.py`：调色板、字符网格 ↔ DSL、分享码 base64、按名称安全保存。
+- `ui/editor.py`：5×5–20×20 画布、调色板、放置/擦除、试玩、打开、重命名、删除、导出/导入分享码。
+- 试玩不落盘：`App.play_editor_level` 直接构造 `Game`，Esc 回编辑器，不写进度。
+- 保存/导入前都用 `parse_level` 校验，坏码不会进关卡库。
+- 验证：106 passed（新增目录/编辑器/尺寸测试 14 条）；菜单/官方选关/编辑器截图检查。
 
 ### 5.4 关卡 3–8（进行中）
 
@@ -141,7 +142,8 @@ py -3.10 -m venv .venv
 - 传送落点未复查 `STOP`/`SHUT`；`PUSH`+`SHUT` 门的开关优先级待关卡验证。
 - 没有提示系统，也没有 `validate.py`；关卡“有解”目前只靠单关测试。
 - 关卡 3–8 尚未做完；`progress.json` 只记录完成，不记录最佳步数。
-- 编辑器固定 11×8，只有放置/擦除，没有删除、重命名、试玩按钮；导入依赖剪贴板，剪贴板不可用时需要手动复制 `.code`。
+- 编辑器画布上限 20×20；没有撤销/重做，也没有把自制关卡转为官方关卡的按钮（需手动复制到 `content/levels/`）。
+- 导入依赖剪贴板，剪贴板不可用时需要手动复制 `.code`。
 - 键盘问题已修（焦点/IME/连发），但需要用户实机再确认；`--debug-keys` 可打印按键。
 
 ## 7. 网络（这台机器）
@@ -191,7 +193,7 @@ git clone RuleBox-handoff-2026-11-10.bundle RuleBox
 
 第一步：
 1. 读 AGENTS.md、docs/HANDOFF.md、docs/plan.md。
-2. 运行 .\.venv\Scripts\python.exe -m pytest -q，确认 99 passed。
+2. 运行 .\.venv\Scripts\python.exe -m pytest -q，确认 106 passed。
 3. 运行 .\.venv\Scripts\python.exe run.py，确认开始菜单能启动。
 
 约束：
@@ -207,7 +209,7 @@ git clone RuleBox-handoff-2026-11-10.bundle RuleBox
 ## 10. 交接检查清单
 
 - [x] 代码已推送，远程 = 本地
-- [x] 测试 99 passed
+- [x] 测试 106 passed
 - [x] 计划 / 清单 / AI 记录进仓库
 - [x] 交接 tag
 - [x] 新 agent 跑通测试
