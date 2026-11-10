@@ -26,7 +26,7 @@ WIN = (255, 226, 128)
 
 def main(argv: list[str] | None = None) -> int:
     args = list(sys.argv[1:] if argv is None else argv)
-    level_path, frames, shot = _parse_args(args)
+    level_path, frames, shot, debug_keys = _parse_args(args)
     if level_path is None:
         return 0
     if not level_path.exists():
@@ -43,42 +43,47 @@ def main(argv: list[str] | None = None) -> int:
         print("\n安装：pip install pygame")
         return 0
 
-    return _run(game, frames, shot)
+    return _run(game, frames, shot, debug_keys)
 
 
-def _parse_args(args: list[str]) -> tuple[Path | None, int, Path | None]:
+def _parse_args(args: list[str]) -> tuple[Path | None, int, Path | None, bool]:
     level_path: Path | None = DEFAULT_LEVEL
     frames = 0
     shot: Path | None = None
+    debug_keys = False
     i = 0
     while i < len(args):
         arg = args[i]
         if arg in ("-h", "--help"):
             print(
-                "用法：python run.py [关卡文件] [--frames N] [--shot 图片路径]"
+                "用法：python run.py [关卡文件] [--frames N] [--shot 图片路径] [--debug-keys]"
             )
-            return None, 0, None
+            return None, 0, None, False
         if arg == "--frames":
             try:
                 frames = int(args[i + 1])
             except (IndexError, ValueError):
                 print("--frames 需要跟一个整数", file=sys.stderr)
-                return None, 0, None
+                return None, 0, None, False
             i += 2
             continue
         if arg == "--shot":
             if i + 1 >= len(args):
                 print("--shot 需要跟一个图片路径", file=sys.stderr)
-                return None, 0, None
+                return None, 0, None, False
             shot = Path(args[i + 1])
             i += 2
             continue
+        if arg == "--debug-keys":
+            debug_keys = True
+            i += 1
+            continue
         level_path = Path(arg)
         i += 1
-    return level_path, frames, shot
+    return level_path, frames, shot, debug_keys
 
 
-def _run(game: Game, frames: int, shot: Path | None = None) -> int:
+def _run(game: Game, frames: int, shot: Path | None = None, debug_keys: bool = False) -> int:
     import pygame
 
     pygame.init()
@@ -87,6 +92,15 @@ def _run(game: Game, frames: int, shot: Path | None = None) -> int:
     except pygame.error as exc:
         print(f"无法创建窗口：{exc}", file=sys.stderr)
         return 1
+
+    # 关掉文字输入，避免中文输入法吃掉 R / Z / Esc
+    try:
+        pygame.key.stop_text_input()
+    except AttributeError:
+        pass
+
+    # 尽量把窗口提到前台，避免按键全进终端
+    _focus_window(pygame)
 
     pygame.display.set_caption(f"RuleBox · {game.level.name}")
     pygame.key.set_repeat(180, 100)
@@ -132,15 +146,17 @@ def _run(game: Game, frames: int, shot: Path | None = None) -> int:
             if event.type == pygame.QUIT:
                 running = False
             elif event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_ESCAPE:
+                if debug_keys:
+                    print(
+                        f"KEY key={event.key} unicode={event.unicode!r} "
+                        f"focused={pygame.key.get_focused()}"
+                    )
+                if not _handle_key(game, event.key, event.unicode, moves):
                     running = False
-                elif event.key == pygame.K_r:
-                    game.reset()
-                elif event.key == pygame.K_z:
-                    game.undo()
-                elif event.key in moves and not game.won:
-                    dr, dc = moves[event.key]
-                    game.move(dr, dc)
+
+        # 事件被输入法/焦点吞掉时的兜底：直接轮询 Esc
+        if pygame.key.get_pressed()[pygame.K_ESCAPE]:
+            running = False
 
         _draw(screen, game, (ox, oy), cell, fonts)
         pygame.display.flip()
@@ -179,6 +195,11 @@ def _draw(screen, game: Game, origin, cell: int, fonts) -> None:
     screen.blit(fonts["title"].render(world.name, True, TITLE), (40, 24))
     moves_text = fonts["hint"].render(f"步数 {game.moves}", True, HINT)
     screen.blit(moves_text, (980 - 40 - moves_text.get_width(), 34))
+
+    # 窗口没拿到焦点时，按键会全部进终端，这里给出明确提示
+    if pygame.display.get_driver() != "dummy" and not pygame.key.get_focused():
+        tip = fonts["rule"].render("点击窗口后使用键盘", True, (255, 210, 120))
+        screen.blit(tip, tip.get_rect(center=(490, 84)))
 
     for row in range(world.height):
         for col in range(world.width):
@@ -241,3 +262,38 @@ def _text_color(bg: tuple[int, int, int]) -> tuple[int, int, int]:
     r, g, b = bg
     luminance = 0.299 * r + 0.587 * g + 0.114 * b
     return TEXT_DARK if luminance > 140 else TEXT_LIGHT
+
+
+def _handle_key(game: Game, key: int, text: str, moves: dict[int, tuple[int, int]]) -> bool:
+    """处理一次按键；返回 False 表示退出游戏。"""
+    import pygame
+
+    text = (text or "").lower()
+    if key == pygame.K_ESCAPE:
+        return False
+    if key == pygame.K_r or text == "r":
+        game.reset()
+        return True
+    if key == pygame.K_z or text == "z":
+        game.undo()
+        return True
+    if key in moves and not game.won:
+        dr, dc = moves[key]
+        game.move(dr, dc)
+    return True
+
+
+def _focus_window(pygame) -> None:
+    """Windows 下尽量把游戏窗口提到前台，避免键盘事件都进终端。"""
+    try:
+        import ctypes
+
+        hwnd = pygame.display.get_wm_info().get("window")
+        if not hwnd:
+            return
+        user32 = ctypes.windll.user32
+        user32.ShowWindow(hwnd, 5)  # SW_SHOW
+        user32.SetForegroundWindow(hwnd)
+    except Exception:
+        # 非 Windows 或没有权限就算了，不影响游戏
+        pass
