@@ -39,6 +39,20 @@
 - 验证：全量 `pytest` 38 passed；第 2 关两帧渲染启动正常；SDL dummy 额外渲染了「人」与无「停」墙重叠的局面；`core/` 无 `pygame` 导入。
 - 提交：用户亲自提交并推送，5.1 代码提交为 `b8e8604`。
 
+## 2026-11-10 变形结算
+
+- 要求：只做 HANDOFF 5.2；移动结算后统一变形，词块不参与。
+- AI 产出：`rules.transform_map`、`resolve.apply_transforms`、`World.replace`；新增 6 条测试。
+- 验证：44 passed。
+
+## 2026-11-10 Qoder CN 子 agent 与 5.3
+
+- 要求：安装并接入 **Qoder CN** CLI（`qoder.cn`，不是国际版），用 `tools/qoder_agent.py` 把它当子 agent；实现 5.3 的水/浮、热/融。
+- 过程：安装 CLI 1.1.86 → 浏览器登录 → 只读任务验证 → 分支 `qoder/5.3-hazards` 委派实现。
+- Qoder CN 产出：4 个核心文件 + `tests/test_hazards.py` 16 条测试，60 passed；因 40 轮上限被截断，未输出总结。
+- 我的审查与修正：`lost` 原在变形前判定，变形制造/消灭「你」会误判；补 2 条边界测试，改为变形后重新解析再判负；封装补 `max_turns` 错误处理。
+- 验证：62 passed；无头启动正常；main 快进合并。
+
 ## 待本人补充
 
 - 哪些 AI 建议被采纳、修改或否决，以及判断理由。

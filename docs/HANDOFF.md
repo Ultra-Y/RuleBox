@@ -1,14 +1,14 @@
 # 交接说明（Handoff）
 
-> 快照：2026-11-10（5.2 文档收尾）
-> 最新代码提交：`da6c1b4`（以 `git log` 为准）
+> 快照：2026-11-10（5.3 水/热收尾）
+> 最新代码提交：`32972c3`（以 `git log` 为准）
 > 仓库：https://github.com/Ultra-Y/RuleBox （public）
 > 交接 tag：`handoff-2026-11-10`
 
 ## 1. 一句话状态
 
-Day 2、5.1、5.2 完成：能走、能推箱、能推词、能解析规则、能判胜负、能撤销重开；无「停」的普通物件可与「你」重叠；变形 `A 是 B` 在移动结算后生效；44 条测试全过；第 1、2 关可玩。
-下一项是 5.3：**水/浮、热/融、开/关、传**（先做水/浮与热/融）。
+Day 2、5.1、5.2、5.3（水/热）完成：能走、能推箱、能推词、能解析规则、能判胜负、能撤销重开；无「停」的普通物件可与「你」重叠；变形 `A 是 B` 在移动结算后生效；水/浮、热/融接触结算生效；失去所有「你」判负；62 条测试全过；第 1、2 关可玩。
+下一项是 5.3 剩余部分：**开/关、传**。
 
 ## 2. 资源清单
 
@@ -16,7 +16,7 @@ Day 2、5.1、5.2 完成：能走、能推箱、能推词、能解析规则、�
 | :--- | :--- | :--- |
 | 源码 | `src/rulebox/` | core 纯逻辑，ui 用 Pygame |
 | 关卡 | `content/levels/01-*.txt`、`02-*.txt` | 文本 DSL |
-| 测试 | `tests/` | 44 条 |
+| 测试 | `tests/` | 62 条 |
 | 子 agent 封装 | `tools/qoder_agent.py` | 调用 Qoder CN CLI，结果在 `docs/agent-runs/` |
 | 计划 | `docs/plan.md` | 12 关、6 周的原计划（快照） |
 | 清单 | `docs/checklist.md` | 每日/每周行动清单（快照） |
@@ -83,9 +83,19 @@ py -3.10 -m venv .venv
 实现：`movement.try_move` 在接触结算后调用 `resolve.apply_transforms`；`rules.transform_map` 提供映射；`World.replace` 原地替换。
 验证：44 passed（新增 6 条变形测试）。
 
-### 5.3 机关
+### 5.3 已完成（第一部分）：水/浮、热/融
 
-水/浮、热/融、开/关、传。每加一个属性，先补属性交互测试，再补一关。
+行为（由测试锁定）：
+
+- 水（`water`）与同格非 `FLOAT` 物件接触即摧毁；带 `FLOAT` 的物件可共存。
+- 词块与水免疫；水自身不被水摧毁。
+- 同格存在 `HOT` 时摧毁 `MELT`；同一物件同时带 `HOT`/`MELT` 不自毁。
+- 顺序：水 → 热/融 → 变形 → 重新解析 → 判负；变形可能制造/消灭「你」，所以 `lost` 在变形后判定。
+- 失去所有「你」→ `lost`；UI 显示失败遮罩，R 重开，Z 撤销。
+
+实现：`resolve.apply_contacts` / `_sink_victims` / `_melt_victims`；`movement.try_move`；`Game.lost`；`ui` 失败遮罩。
+验证：62 passed（新增 18 条测试，含 2 条“变形后判负”边界）。
+剩余：开/关、传。
 
 ### 5.4 关卡 3–8
 
@@ -93,7 +103,7 @@ py -3.10 -m venv .venv
 
 ## 6. 已知问题
 
-- 水、热、开关、传送只解析、未结算。
+- 开/关、传只解析、未结算。
 - 没有选关、存档、提示系统。
 - 没有 `validate.py`，关卡“有解”目前只靠单关测试。
 - 键盘问题已修（焦点/IME/连发），但需要用户实机再确认；`--debug-keys` 可打印按键。
@@ -145,7 +155,7 @@ git clone RuleBox-handoff-2026-11-10.bundle RuleBox
 
 第一步：
 1. 读 AGENTS.md、docs/HANDOFF.md、docs/plan.md。
-2. 运行 .\.venv\Scripts\python.exe -m pytest -q，确认 44 passed。
+2. 运行 .\.venv\Scripts\python.exe -m pytest -q，确认 62 passed。
 3. 运行 .\.venv\Scripts\python.exe run.py content\levels\02-move-aside.txt，确认能启动。
 
 约束：
@@ -154,14 +164,14 @@ git clone RuleBox-handoff-2026-11-10.bundle RuleBox
 - 改行为前先写测试；改完跑全量 pytest。
 - 不要重写 UI，不要引入新框架。
 
-下一项只做 HANDOFF 第 5.3 节的第一部分：水/浮（FLOAT）与热/融（HOT/MELT）的结算，并补测试。
+下一项只做 HANDOFF 第 5.3 节的剩余部分：开/关（OPEN/SHUT）与传（TELE）的结算，并补测试。
 先给我看实现计划和会新增/修改哪些测试，等我确认后再改代码，不要直接提交。
 ```
 
 ## 10. 交接检查清单
 
 - [x] 代码已推送，远程 = 本地
-- [x] 测试 44 passed
+- [x] 测试 62 passed
 - [x] 计划 / 清单 / AI 记录进仓库
 - [x] 交接 tag
 - [x] 新 agent 跑通测试
