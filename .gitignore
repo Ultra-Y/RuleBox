@@ -5,3 +5,7 @@ venv/
 .pytest_cache/
 progress.json
 *.log
+.idea/
+*.egg-info/
+build/
+dist/
