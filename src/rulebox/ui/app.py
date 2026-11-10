@@ -22,6 +22,7 @@ RULE_TEXT = (196, 202, 218)
 TEXT_DARK = (26, 26, 32)
 TEXT_LIGHT = (242, 242, 248)
 WIN = (255, 226, 128)
+LOSE = (255, 150, 150)
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -163,7 +164,7 @@ def _run(game: Game, frames: int, shot: Path | None = None, debug_keys: bool = F
 
         # 方向键按住时连续移动；Z/R 不在轮询里，避免连发
         now = pygame.time.get_ticks()
-        if running and not game.won and now >= repeat_at:
+        if running and not game.won and not game.lost and now >= repeat_at:
             pressed = pygame.key.get_pressed()
             for key, (dr, dc) in moves.items():
                 if pressed[key]:
@@ -255,15 +256,22 @@ def _draw(screen, game: Game, origin, cell: int, fonts) -> None:
     hint_surface = fonts["hint"].render(hint, True, HINT)
     screen.blit(hint_surface, (40, 680 - 34))
 
-    if game.won:
+    if game.won or game.lost:
         overlay = pygame.Surface((980, 680), pygame.SRCALPHA)
         overlay.fill((10, 10, 16, 170))
         screen.blit(overlay, (0, 0))
+
+    if game.won:
         big = fonts["title"].render("过关！", True, WIN)
         screen.blit(big, big.get_rect(center=(490, 300)))
         sub = fonts["rule"].render(
             f"用了 {game.moves} 步 · 按 R 重来", True, (232, 232, 240)
         )
+        screen.blit(sub, sub.get_rect(center=(490, 345)))
+    elif game.lost:
+        big = fonts["title"].render("失败", True, LOSE)
+        screen.blit(big, big.get_rect(center=(490, 300)))
+        sub = fonts["rule"].render("你被摧毁了 · 按 R 重开", True, (232, 232, 240))
         screen.blit(sub, sub.get_rect(center=(490, 345)))
 
 
@@ -286,7 +294,7 @@ def _handle_key(game: Game, key: int, text: str, moves: dict[int, tuple[int, int
     if key == pygame.K_z or text == "z":
         game.undo()
         return True
-    if key in moves and not game.won:
+    if key in moves and not game.won and not game.lost:
         dr, dc = moves[key]
         game.move(dr, dc)
     return True

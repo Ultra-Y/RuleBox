@@ -1,0 +1,261 @@
+"""水/浮、热/融的接触结算。"""
+
+import pygame
+
+from rulebox.core.entities import make_object, make_word
+from rulebox.core.game import Game
+from rulebox.core.level import Level
+from rulebox.core.movement import try_move
+from rulebox.core.world import World
+from rulebox.ui.app import _handle_key
+
+MOVES = {
+    pygame.K_UP: (-1, 0),
+    pygame.K_DOWN: (1, 0),
+    pygame.K_LEFT: (0, -1),
+    pygame.K_RIGHT: (0, 1),
+}
+
+
+def rule(row: int, noun: str, prop: str) -> list[tuple[int, int, str]]:
+    """把「名词 是 属性」放在第 row 行的前三格。"""
+    return [(row, 0, noun), (row, 1, "是"), (row, 2, prop)]
+
+
+def make_level(words=(), objects=(), width=8, height=6) -> Level:
+    cells: list[list] = [[None] * width for _ in range(height)]
+    for row, col, text in words:
+        cells[row][col] = make_word(text)
+    for row, col, object_id in objects:
+        cells[row][col] = make_object(object_id)
+    return Level("hazards", width, height, cells)
+
+
+def make_world(words=(), objects=(), width=8, height=6) -> World:
+    return World(make_level(words, objects, width, height))
+
+
+def ids_at(world: World, row: int, col: int) -> list[str]:
+    return [entity.id for entity in world.entities_at(row, col)]
+
+
+# ---------- 水 / 浮 ----------
+
+
+def test_water_drowns_you():
+    world = make_world(words=rule(0, "人", "你"), objects=[(4, 1, "baba"), (4, 2, "water")])
+
+    result = try_move(world, 0, 1)
+
+    assert result.moved and result.lost
+    assert world.get(4, 1) is None
+    assert ids_at(world, 4, 2) == ["water"]
+
+
+def test_game_tracks_loss_and_reset_clears_it():
+    game = Game(
+        make_level(words=rule(0, "人", "你"), objects=[(4, 1, "baba"), (4, 2, "water")])
+    )
+
+    assert game.move(0, 1).lost
+    assert game.lost and game.moves == 1
+
+    assert not game.move(0, 1).moved
+    assert ids_at(game.world, 4, 2) == ["water"]
+    assert game.moves == 1
+
+    game.reset()
+    assert not game.lost
+    assert game.moves == 0
+    assert game.world.get(4, 1).id == "baba"
+
+
+def test_undo_restores_drowned_you():
+    world = make_world(words=rule(0, "人", "你"), objects=[(4, 1, "baba"), (4, 2, "water")])
+
+    assert try_move(world, 0, 1).lost
+    assert world.undo() is True
+    assert world.get(4, 1).id == "baba"
+    assert ids_at(world, 4, 2) == ["water"]
+
+
+def test_float_you_survives_water():
+    words = rule(0, "人", "你") + rule(1, "人", "浮")
+    world = make_world(words=words, objects=[(4, 1, "baba"), (4, 2, "water")])
+
+    result = try_move(world, 0, 1)
+
+    assert result.moved and not result.lost
+    assert ids_at(world, 4, 2) == ["water", "baba"]
+
+
+def test_float_object_leaves_water_intact():
+    words = rule(0, "人", "你") + rule(1, "人", "浮")
+    world = make_world(words=words, objects=[(4, 1, "baba"), (4, 2, "water")])
+
+    assert try_move(world, 0, 1).moved
+    result = try_move(world, 0, 1)
+
+    assert result.moved and not result.lost
+    assert world.get(4, 3).id == "baba"
+    assert ids_at(world, 4, 2) == ["water"]
+
+
+def test_word_pushed_into_water_survives():
+    words = rule(0, "人", "你") + [(4, 2, "墙")]
+    world = make_world(words=words, objects=[(4, 1, "baba"), (4, 3, "water")])
+
+    result = try_move(world, 0, 1)
+
+    assert result.moved and not result.lost
+    assert world.get(4, 2).id == "baba"
+    assert ids_at(world, 4, 3) == ["water", "word:墙"]
+
+
+def test_losing_one_of_two_you_is_not_defeat():
+    world = make_world(
+        words=rule(0, "人", "你"),
+        objects=[(2, 4, "baba"), (4, 1, "baba"), (4, 2, "water")],
+    )
+
+    result = try_move(world, 0, 1)
+
+    assert result.moved and not result.lost
+    assert ids_at(world, 4, 2) == ["water"]
+    assert world.get(2, 4) is None
+    assert world.get(2, 5).id == "baba"
+
+
+def test_stop_still_blocks_water_cell():
+    words = rule(0, "人", "你") + rule(1, "墙", "停")
+    world = make_world(words=words, objects=[(4, 1, "baba"), (4, 2, "wall")])
+    world.add(4, 2, make_object("water"))
+
+    result = try_move(world, 0, 1)
+
+    assert not result.moved
+    assert world.get(4, 1).id == "baba"
+    assert not world.can_undo
+
+
+# ---------- 热 / 融 ----------
+
+
+MELT_BOX_PUSH = rule(0, "人", "你") + rule(1, "箱", "推") + rule(2, "火", "热") + rule(3, "箱", "融")
+
+
+def test_fire_melts_pushed_box():
+    world = make_world(
+        words=MELT_BOX_PUSH,
+        objects=[(4, 1, "baba"), (4, 2, "box"), (4, 3, "fire")],
+    )
+
+    result = try_move(world, 0, 1)
+
+    assert result.moved and not result.lost
+    assert world.get(4, 2).id == "baba"
+    assert ids_at(world, 4, 3) == ["fire"]
+
+
+def test_undo_restores_melted_box():
+    world = make_world(
+        words=MELT_BOX_PUSH,
+        objects=[(4, 1, "baba"), (4, 2, "box"), (4, 3, "fire")],
+    )
+
+    assert try_move(world, 0, 1).moved
+    assert world.undo() is True
+    assert world.get(4, 1).id == "baba"
+    assert world.get(4, 2).id == "box"
+    assert world.get(4, 3).id == "fire"
+
+
+def test_non_hazard_and_water_still_block_push():
+    words = rule(0, "人", "你") + rule(1, "箱", "推")
+    world = make_world(words=words, objects=[(4, 1, "baba"), (4, 2, "box"), (4, 3, "rock")])
+    world.add(4, 3, make_object("water"))
+
+    result = try_move(world, 0, 1)
+
+    assert not result.moved
+    assert world.get(4, 2).id == "box"
+    assert ids_at(world, 4, 3) == ["rock", "water"]
+    assert not world.can_undo
+
+
+def test_fire_melts_you():
+    words = rule(0, "人", "你") + rule(1, "人", "融") + rule(2, "火", "热")
+    world = make_world(words=words, objects=[(4, 1, "baba"), (4, 2, "fire")])
+
+    result = try_move(world, 0, 1)
+
+    assert result.moved and result.lost
+    assert ids_at(world, 4, 2) == ["fire"]
+
+    assert world.undo() is True
+    assert world.get(4, 1).id == "baba"
+
+
+def test_word_pushed_into_fire_survives():
+    words = rule(0, "人", "你") + rule(1, "火", "热") + rule(2, "箱", "融") + [(4, 2, "箱")]
+    world = make_world(words=words, objects=[(4, 1, "baba"), (4, 3, "fire")])
+
+    result = try_move(world, 0, 1)
+
+    assert result.moved and not result.lost
+    assert world.get(4, 2).id == "baba"
+    assert ids_at(world, 4, 3) == ["fire", "word:箱"]
+
+
+def test_hot_and_melt_object_does_not_self_destroy():
+    words = (
+        rule(0, "人", "你")
+        + rule(1, "人", "热")
+        + rule(2, "人", "融")
+        + rule(3, "火", "热")
+    )
+    world = make_world(words=words, objects=[(4, 1, "baba"), (4, 2, "fire")])
+
+    result = try_move(world, 0, 1)
+
+    assert result.moved and not result.lost
+    assert ids_at(world, 4, 2) == ["fire", "baba"]
+
+
+# ---------- 结算顺序 ----------
+
+
+def test_water_resolves_before_heat():
+    words = rule(0, "人", "你") + rule(1, "火", "热") + rule(2, "水", "融")
+    world = make_world(words=words, objects=[(4, 1, "baba"), (4, 4, "water")])
+    world.add(4, 4, make_object("fire"))
+
+    result = try_move(world, 0, 1)
+
+    assert result.moved and not result.lost
+    assert ids_at(world, 4, 4) == ["water"]
+
+
+# ---------- UI ----------
+
+
+def test_key_handler_blocks_moves_after_loss():
+    game = Game(
+        make_level(words=rule(0, "人", "你"), objects=[(4, 1, "baba"), (4, 2, "water")])
+    )
+
+    assert game.move(0, 1).lost
+
+    assert _handle_key(game, pygame.K_RIGHT, "", MOVES) is True
+    assert game.moves == 1
+    assert ids_at(game.world, 4, 2) == ["water"]
+
+    assert _handle_key(game, pygame.K_z, "z", MOVES) is True
+    assert not game.lost
+    assert game.moves == 0
+    assert game.world.get(4, 1).id == "baba"
+
+    assert game.move(0, 1).lost
+    assert _handle_key(game, pygame.K_r, "r", MOVES) is True
+    assert not game.lost
+    assert game.world.get(4, 1).id == "baba"

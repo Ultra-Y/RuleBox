@@ -1,7 +1,8 @@
 """移动、推箱与推词。
 
 每一步的流程：
-    快照 -> 解析规则 -> 找出所有「你」 -> 逐个尝试移动 -> 失败则回滚
+    快照 -> 解析规则 -> 找出所有「你」 -> 逐个尝试移动
+    -> 接触结算 -> 变形 -> 失败则回滚
 """
 
 from __future__ import annotations
@@ -9,7 +10,13 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 from .entities import Entity
-from .resolve import apply_transforms, has_prop, you_positions
+from .resolve import (
+    apply_contacts,
+    apply_transforms,
+    has_prop,
+    is_hazard,
+    you_positions,
+)
 from .rules import parse_rules, property_map, transform_map
 from .world import World
 
@@ -20,6 +27,7 @@ MAX_PUSH_DEPTH = 10
 class MoveResult:
     moved: bool
     won: bool = False
+    lost: bool = False
 
 
 def try_move(world: World, dr: int, dc: int) -> MoveResult:
@@ -47,9 +55,14 @@ def try_move(world: World, dr: int, dc: int) -> MoveResult:
         world.undo()
         return MoveResult(False)
 
+    lost = False
+    if not won:
+        # 接触结算用回合开始时解析出的属性，和水/热是否被推动无关。
+        lost = apply_contacts(world, props)
+
     # 接触结算后统一变形；下一步和 UI 会重新解析变形后的属性。
     apply_transforms(world, transforms)
-    return MoveResult(True, won=won)
+    return MoveResult(True, won=won, lost=lost)
 
 
 def _move_one(
@@ -101,7 +114,11 @@ def _move_one(
         return MoveResult(True)
 
     # 推链里的非「你」物件不能进入占用格；「你」也不能与另一个「你」重叠。
-    if not can_win or any(has_prop(target, props, "YOU") for target in targets):
+    # 格子里只有水/热时不算占用：推进去由接触结算决定生死。
+    if any(has_prop(target, props, "YOU") for target in targets):
+        return MoveResult(False)
+    occupied = any(not is_hazard(target, props) for target in targets)
+    if occupied and not can_win:
         return MoveResult(False)
 
     _relocate(world, row, col, target_row, target_col, entity)
