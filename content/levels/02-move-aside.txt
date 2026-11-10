@@ -1,0 +1,25 @@
+name 02 让开
+size 11 7
+
+legend
+  # wall
+  . empty
+  @ baba
+  $ box
+  F flag
+  人 word 人
+  是 word 是
+  你 word 你
+  旗 word 旗
+  赢 word 赢
+  箱 word 箱
+  推 word 推
+
+grid
+  ###########
+  #...箱是推...#
+  #...旗是赢...#
+  #.@..$....#
+  #####.#####
+  #人是你.....F#
+  ###########

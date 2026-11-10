@@ -1,7 +1,7 @@
 """物件与词块的数据定义。
 
 这里只描述"有什么"，不描述"能做什么"。
-行为（推、停、赢……）由后续的 rules / resolve 模块实现。
+行为（推、停、赢……）由 rules / resolve / movement 模块实现。
 """
 
 from __future__ import annotations
@@ -24,11 +24,40 @@ OBJECTS: dict[str, tuple[str, Color]] = {
     "portal": ("传", (150, 100, 220)),
 }
 
-NOUN_WORDS = frozenset({"人", "墙", "箱", "旗", "水", "火", "石", "门", "钥", "传送"})
+# 名词词块 -> 物件 id
+NOUN_TO_OBJECT: dict[str, str] = {
+    "人": "baba",
+    "墙": "wall",
+    "箱": "box",
+    "旗": "flag",
+    "水": "water",
+    "火": "fire",
+    "石": "rock",
+    "门": "door",
+    "钥": "key",
+    "传送": "portal",
+}
+OBJECT_TO_NOUN = {value: key for key, value in NOUN_TO_OBJECT.items()}
+
+# 属性词块 -> 内部属性名
+PROP_TO_ID: dict[str, str] = {
+    "你": "YOU",
+    "推": "PUSH",
+    "停": "STOP",
+    "赢": "WIN",
+    "浮": "FLOAT",
+    "热": "HOT",
+    "融": "MELT",
+    "开": "OPEN",
+    "关": "SHUT",
+    "传": "TELE",
+    "败": "DEFEAT",
+}
+ID_TO_PROP = {value: key for key, value in PROP_TO_ID.items()}
+
+NOUN_WORDS = frozenset(NOUN_TO_OBJECT)
+PROPERTY_WORDS = frozenset(PROP_TO_ID)
 CONNECTOR_WORDS = frozenset({"是", "和", "不"})
-PROPERTY_WORDS = frozenset(
-    {"你", "推", "停", "赢", "浮", "热", "融", "开", "关", "传", "败"}
-)
 ALL_WORDS = NOUN_WORDS | CONNECTOR_WORDS | PROPERTY_WORDS
 
 _WORD_COLORS: dict[str, Color] = {

@@ -1,12 +1,13 @@
-"""Pygame 关卡预览窗口（Day 1：只渲染，不处理移动）。"""
+"""Pygame 游戏窗口：渲染、输入、HUD。"""
 
 from __future__ import annotations
 
 import sys
 from pathlib import Path
 
+from ..core.game import Game
 from ..core.level import load_level
-from ..core.world import World
+from ..core.rules import parse_rules
 
 ROOT = Path(__file__).resolve().parents[3]
 DEFAULT_LEVEL = ROOT / "content" / "levels" / "01-first-step.txt"
@@ -17,8 +18,10 @@ FLOOR_B = (56, 60, 74)
 GRID_LINE = (34, 36, 46)
 TITLE = (236, 238, 245)
 HINT = (150, 155, 170)
+RULE_TEXT = (196, 202, 218)
 TEXT_DARK = (26, 26, 32)
 TEXT_LIGHT = (242, 242, 248)
+WIN = (255, 226, 128)
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -30,17 +33,17 @@ def main(argv: list[str] | None = None) -> int:
         print(f"找不到关卡：{level_path}", file=sys.stderr)
         return 2
 
-    world = World(load_level(level_path))
+    game = Game(load_level(level_path))
 
     try:
         import pygame  # noqa: F401
     except ImportError:
         print("没有安装 pygame，先用文本模式显示关卡：\n")
-        print(world.to_ascii())
+        print(game.world.to_ascii())
         print("\n安装：pip install pygame")
         return 0
 
-    return _run(world, frames, shot)
+    return _run(game, frames, shot)
 
 
 def _parse_args(args: list[str]) -> tuple[Path | None, int, Path | None]:
@@ -51,7 +54,9 @@ def _parse_args(args: list[str]) -> tuple[Path | None, int, Path | None]:
     while i < len(args):
         arg = args[i]
         if arg in ("-h", "--help"):
-            print("用法：python run.py [关卡文件] [--frames N] [--shot 图片路径]")
+            print(
+                "用法：python run.py [关卡文件] [--frames N] [--shot 图片路径]"
+            )
             return None, 0, None
         if arg == "--frames":
             try:
@@ -73,7 +78,7 @@ def _parse_args(args: list[str]) -> tuple[Path | None, int, Path | None]:
     return level_path, frames, shot
 
 
-def _run(world: World, frames: int, shot: Path | None = None) -> int:
+def _run(game: Game, frames: int, shot: Path | None = None) -> int:
     import pygame
 
     pygame.init()
@@ -83,25 +88,42 @@ def _run(world: World, frames: int, shot: Path | None = None) -> int:
         print(f"无法创建窗口：{exc}", file=sys.stderr)
         return 1
 
-    pygame.display.set_caption(f"RuleBox · {world.name}")
+    pygame.display.set_caption(f"RuleBox · {game.level.name}")
+    pygame.key.set_repeat(180, 100)
     clock = pygame.time.Clock()
 
     margin = 40
-    top = 92
+    top = 100
+    bottom = 140
     width, height = 980, 680
+    world = game.world
     cell = min(
         (width - margin * 2) // world.width,
-        (height - top - margin) // world.height,
+        (height - top - bottom) // world.height,
         56,
     )
     grid_w, grid_h = cell * world.width, cell * world.height
     ox = (width - grid_w) // 2
-    oy = top + (height - top - margin - grid_h) // 2
+    oy = top + (height - top - bottom - grid_h) // 2
 
-    title_font = _font(26)
-    hint_font = _font(15)
-    object_font = _font(max(14, cell // 2))
-    word_font = _font(max(12, cell // 3))
+    fonts = {
+        "title": _font(26),
+        "hint": _font(15),
+        "rule": _font(16),
+        "object": _font(max(14, cell // 2)),
+        "word": _font(max(12, cell // 3)),
+    }
+
+    moves = {
+        pygame.K_UP: (-1, 0),
+        pygame.K_w: (-1, 0),
+        pygame.K_DOWN: (1, 0),
+        pygame.K_s: (1, 0),
+        pygame.K_LEFT: (0, -1),
+        pygame.K_a: (0, -1),
+        pygame.K_RIGHT: (0, 1),
+        pygame.K_d: (0, 1),
+    }
 
     running = True
     drawn = 0
@@ -109,19 +131,18 @@ def _run(world: World, frames: int, shot: Path | None = None) -> int:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
-            elif event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
-                running = False
+            elif event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_ESCAPE:
+                    running = False
+                elif event.key == pygame.K_r:
+                    game.reset()
+                elif event.key == pygame.K_z:
+                    game.undo()
+                elif event.key in moves and not game.won:
+                    dr, dc = moves[event.key]
+                    game.move(dr, dc)
 
-        _draw(
-            screen,
-            world,
-            (ox, oy),
-            cell,
-            title_font,
-            hint_font,
-            object_font,
-            word_font,
-        )
+        _draw(screen, game, (ox, oy), cell, fonts)
         pygame.display.flip()
 
         drawn += 1
@@ -148,13 +169,16 @@ def _font(size: int):
     return pygame.font.Font(None, size)
 
 
-def _draw(screen, world, origin, cell, title_font, hint_font, object_font, word_font):
+def _draw(screen, game: Game, origin, cell: int, fonts) -> None:
     import pygame
 
+    world = game.world
     ox, oy = origin
     screen.fill(BG)
-    screen.blit(title_font.render(world.name, True, TITLE), (ox, 28))
-    screen.blit(hint_font.render("Day 1 预览 · Esc 退出", True, HINT), (ox, 62))
+
+    screen.blit(fonts["title"].render(world.name, True, TITLE), (40, 24))
+    moves_text = fonts["hint"].render(f"步数 {game.moves}", True, HINT)
+    screen.blit(moves_text, (980 - 40 - moves_text.get_width(), 34))
 
     for row in range(world.height):
         for col in range(world.width):
@@ -180,9 +204,37 @@ def _draw(screen, world, origin, cell, title_font, hint_font, object_font, word_
                 )
                 continue
 
-            font = word_font if entity.is_word else object_font
+            font = fonts["word"] if entity.is_word else fonts["object"]
             label = font.render(entity.text, True, _text_color(entity.color))
             screen.blit(label, label.get_rect(center=rect.center))
+
+    # 规则面板
+    rules = parse_rules(world)
+    panel_y = oy + world.height * cell + 18
+    screen.blit(fonts["hint"].render("规则", True, HINT), (ox, panel_y))
+    panel_y += 24
+    if not rules:
+        screen.blit(fonts["rule"].render("（没有生效的规则）", True, RULE_TEXT), (ox, panel_y))
+    for rule in rules[:5]:
+        screen.blit(fonts["rule"].render("· " + rule.display(), True, RULE_TEXT), (ox, panel_y))
+        panel_y += 21
+    if len(rules) > 5:
+        screen.blit(fonts["hint"].render("…", True, HINT), (ox, panel_y))
+
+    hint = "方向键 / WASD 移动 · Z 撤销 · R 重开 · Esc 退出"
+    hint_surface = fonts["hint"].render(hint, True, HINT)
+    screen.blit(hint_surface, (40, 680 - 34))
+
+    if game.won:
+        overlay = pygame.Surface((980, 680), pygame.SRCALPHA)
+        overlay.fill((10, 10, 16, 170))
+        screen.blit(overlay, (0, 0))
+        big = fonts["title"].render("过关！", True, WIN)
+        screen.blit(big, big.get_rect(center=(490, 300)))
+        sub = fonts["rule"].render(
+            f"用了 {game.moves} 步 · 按 R 重来", True, (232, 232, 240)
+        )
+        screen.blit(sub, sub.get_rect(center=(490, 345)))
 
 
 def _text_color(bg: tuple[int, int, int]) -> tuple[int, int, int]:

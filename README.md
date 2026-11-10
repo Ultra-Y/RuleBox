@@ -26,10 +26,17 @@ pip install -r requirements.txt
 
 ```powershell
 python run.py
-python run.py content/levels/01-first-step.txt
+python run.py content/levels/02-move-aside.txt
 ```
 
-Esc 退出。没有安装 pygame 时会自动退化为文本输出。
+| 按键 | 作用 |
+| :--- | :--- |
+| 方向键 / WASD | 移动 |
+| Z | 撤销 |
+| R | 重开本关 |
+| Esc | 退出 |
+
+没有安装 pygame 时会自动退化为文本输出。
 
 ## 测试
 
@@ -37,14 +44,24 @@ Esc 退出。没有安装 pygame 时会自动退化为文本输出。
 pytest
 ```
 
+## 关卡
+
+| # | 名称 | 教什么 |
+| :-: | :--- | :--- |
+| 01 | 第一步 | 移动、走到旗子即胜 |
+| 02 | 让开 | 推箱子，把挡路的箱子推开 |
+
+![第 2 关](docs/preview_02.png)
+
 ## 当前进度
 
 - [x] 仓库初始化
 - [x] 关卡 DSL 与加载
 - [x] 世界快照与撤销
-- [x] Pygame 关卡预览
-- [ ] 移动与推箱
-- [ ] 规则解析（你 / 推 / 停 / 赢）
+- [x] 移动、推箱、推词
+- [x] 规则解析：`你 / 推 / 停 / 赢`，含 `和`、`不`、变形句的解析
+- [x] 胜负判定与过关界面
+- [ ] 变形、水、热、开关、传送的结算（Day 3）
 - [ ] 12 关完整内容
 
 ## 目录
@@ -55,8 +72,12 @@ RuleBox/
 │   ├── core/           # 纯逻辑，不依赖 pygame
 │   │   ├── entities.py
 │   │   ├── level.py
-│   │   └── world.py
-│   └── ui/app.py       # Pygame 渲染
+│   │   ├── world.py
+│   │   ├── rules.py
+│   │   ├── resolve.py
+│   │   ├── movement.py
+│   │   └── game.py
+│   └── ui/app.py       # Pygame 渲染与输入
 ├── content/levels/     # 关卡文本
 ├── tests/              # pytest
 ├── run.py              # 启动器
