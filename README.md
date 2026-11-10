@@ -11,11 +11,15 @@
 
 ![菜单](docs/menu.png)
 
+![选关](docs/select.png)
+
+![关卡编辑器](docs/editor.png)
+
 ## 给接手的开发者 / Agent
 
 - 先读 [`AGENTS.md`](AGENTS.md)（代理操作规范）和 [`docs/HANDOFF.md`](docs/HANDOFF.md)（状态快照、下一步、设计债）
 - 原计划见 [`docs/plan.md`](docs/plan.md)，行动清单见 [`docs/checklist.md`](docs/checklist.md)
-- 当前基线：92 条测试全过，第 1–3 关可玩
+- 当前基线：99 条测试全过，第 1–3 关可玩，关卡编辑器可用
 
 ## 环境
 
@@ -34,6 +38,7 @@ pip install -r requirements.txt
 
 ```powershell
 python run.py                                  # 开始菜单
+python run.py --editor                         # 直接打开关卡编辑器
 python run.py content/levels/02-move-aside.txt # 直接进某一关
 ```
 
@@ -47,8 +52,22 @@ python run.py content/levels/02-move-aside.txt # 直接进某一关
 | 游戏 | R | 重开本关 |
 | 游戏 | N / Enter | 过关后下一关 |
 | 游戏 | Esc | 返回菜单 |
+| 编辑器 | 左键 / 右键 | 放置 / 擦除 |
+| 编辑器 | Ctrl+S / Ctrl+E / Ctrl+I | 保存 / 导出分享码 / 导入分享码 |
 
 通关记录保存在 `progress.json`（已 gitignore），菜单和选关会显示完成状态。
+
+## 关卡编辑器
+
+菜单 → **关卡编辑器**。固定 11×8 画布，左下角调色板包含物件和词块：
+
+1. 点调色板选一个符号，左键画、右键擦；
+2. 点「关卡名」可以输入标题；
+3. **保存到关卡库**：写入 `content/levels/custom-*.txt`，回到选关即可看到；
+4. **导出分享码**：在 `exports/` 生成 `.txt` 和 `.code`，并尝试复制分享码到剪贴板；
+5. **导入分享码**：读取剪贴板里的分享码，校验后写入关卡库。
+
+自定义关卡和导出目录都在 `.gitignore` 里，不会污染仓库。
 
 没有安装 pygame 时会自动退化为文本输出。
 
@@ -94,6 +113,7 @@ pytest
 - [x] 每关「墙 是 停」阻挡
 - [x] 开始菜单、选关、通关进度与下一关
 - [x] 第 3 关《路被堵住了？》（第 2 关地图，箱子下移一格）
+- [x] 关卡编辑器、分享码导入导出
 - [ ] 12 关完整内容
 
 ## 目录
@@ -109,8 +129,11 @@ RuleBox/
 │   │   ├── resolve.py
 │   │   ├── movement.py
 │   │   ├── game.py
-│   │   └── catalog.py
-│   └── ui/app.py       # Pygame 菜单、选关、渲染与输入
+│   │   ├── catalog.py
+│   │   └── level_builder.py
+│   └── ui/
+│       ├── app.py      # 菜单、选关、渲染与输入
+│       └── editor.py   # 关卡编辑器
 ├── content/levels/     # 关卡文本
 ├── tests/              # pytest
 ├── run.py              # 启动器
