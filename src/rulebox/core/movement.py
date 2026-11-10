@@ -2,7 +2,7 @@
 
 每一步的流程：
     快照 -> 解析规则 -> 找出所有「你」 -> 逐个尝试移动
-    -> 接触结算 -> 变形 -> 失败则回滚
+    -> 传送 -> 接触结算 -> 变形 -> 失败则回滚
 """
 
 from __future__ import annotations
@@ -12,9 +12,10 @@ from dataclasses import dataclass
 from .entities import Entity
 from .resolve import (
     apply_contacts,
+    apply_teleports,
     apply_transforms,
     has_prop,
-    is_hazard,
+    is_obstacle,
     you_positions,
 )
 from .rules import parse_rules, property_map, transform_map
@@ -42,10 +43,12 @@ def try_move(world: World, dr: int, dc: int) -> MoveResult:
         world.undo()
         return MoveResult(False)
 
+    # 这一步真正移动过的物件，传送结算只认它们。
+    trail: list[Entity] = []
     moved_any = False
     won = False
     for row, col in movers:
-        result = _move_one(world, row, col, dr, dc, props, can_win=True)
+        result = _move_one(world, row, col, dr, dc, props, trail, can_win=True)
         if result.won:
             won = True
             break
@@ -56,7 +59,8 @@ def try_move(world: World, dr: int, dc: int) -> MoveResult:
         return MoveResult(False)
 
     if not won:
-        # 接触结算用回合开始时解析出的属性，和水/热是否被推动无关。
+        # 传送和接触结算都用回合开始时解析出的属性，和水/热/门是否被推动无关。
+        apply_teleports(world, props, trail)
         apply_contacts(world, props)
 
     # 接触结算后统一变形；变形可能制造或消灭「你」，所以之后要重新解析再判负。
@@ -74,6 +78,7 @@ def _move_one(
     dr: int,
     dc: int,
     props: dict[str, set[str]],
+    trail: list[Entity],
     *,
     can_win: bool,
 ) -> MoveResult:
@@ -88,10 +93,15 @@ def _move_one(
 
     targets = world.entities_at(target_row, target_col)
     if not targets:
-        _relocate(world, row, col, target_row, target_col, entity)
+        _relocate(world, row, col, target_row, target_col, entity, trail)
         return MoveResult(True)
 
     if any(has_prop(target, props, "STOP") for target in targets):
+        return MoveResult(False)
+
+    # 门关着：只有带 OPEN 的移动方能进，进去后由接触结算把门毁掉。
+    opener = has_prop(entity, props, "OPEN")
+    if not opener and any(has_prop(target, props, "SHUT") for target in targets):
         return MoveResult(False)
 
     if any(has_prop(target, props, "WIN") for target in targets):
@@ -109,21 +119,23 @@ def _move_one(
         None,
     )
     if pushable is not None:
-        pushed = _move_one(world, target_row, target_col, dr, dc, props, can_win=False)
+        pushed = _move_one(
+            world, target_row, target_col, dr, dc, props, trail, can_win=False
+        )
         if not pushed.moved:
             return MoveResult(False)
-        _relocate(world, row, col, target_row, target_col, entity)
+        _relocate(world, row, col, target_row, target_col, entity, trail)
         return MoveResult(True)
 
     # 推链里的非「你」物件不能进入占用格；「你」也不能与另一个「你」重叠。
-    # 格子里只有水/热时不算占用：推进去由接触结算决定生死。
+    # 格子里只有水/热/传送门，或者门对 OPEN 移动方让路时，不算占用。
     if any(has_prop(target, props, "YOU") for target in targets):
         return MoveResult(False)
-    occupied = any(not is_hazard(target, props) for target in targets)
+    occupied = any(is_obstacle(target, props, opener=opener) for target in targets)
     if occupied and not can_win:
         return MoveResult(False)
 
-    _relocate(world, row, col, target_row, target_col, entity)
+    _relocate(world, row, col, target_row, target_col, entity, trail)
     return MoveResult(True)
 
 
@@ -134,7 +146,9 @@ def _relocate(
     target_row: int,
     target_col: int,
     entity: Entity,
+    trail: list[Entity],
 ) -> None:
     """只移动指定实体，保留来源格和目标格里的其他实体。"""
     world.remove(row, col, entity)
     world.add(target_row, target_col, entity)
+    trail.append(entity)
