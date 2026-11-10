@@ -13,7 +13,7 @@
 
 - 先读 [`AGENTS.md`](AGENTS.md)（代理操作规范）和 [`docs/HANDOFF.md`](docs/HANDOFF.md)（状态快照、下一步、设计债）
 - 原计划见 [`docs/plan.md`](docs/plan.md)，行动清单见 [`docs/checklist.md`](docs/checklist.md)
-- 当前基线：62 条测试全过，第 1、2 关可玩
+- 当前基线：82 条测试全过，第 1、2 关可玩
 
 ## 环境
 
@@ -78,7 +78,7 @@ pytest
 - [x] 胜负判定与过关界面
 - [x] 变形结算
 - [x] 水/浮、热/融接触结算与失败界面
-- [ ] 开/关、传的结算
+- [x] 开/关、传送结算
 - [ ] 12 关完整内容
 
 ## 目录
