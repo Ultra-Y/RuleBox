@@ -1,14 +1,14 @@
 # 交接说明（Handoff）
 
-> 快照：2026-11-10（5.1 文档收尾）
-> 5.1 代码提交：`b8e8604`（最新提交以 `git log` 为准）
+> 快照：2026-11-10（5.2 文档收尾）
+> 最新代码提交：`da6c1b4`（以 `git log` 为准）
 > 仓库：https://github.com/Ultra-Y/RuleBox （public）
 > 交接 tag：`handoff-2026-11-10`
 
 ## 1. 一句话状态
 
-Day 2 和 5.1 完成：能走、能推箱、能推词、能解析规则、能判胜负、能撤销重开；无「停」普通物件可与「你」重叠；38 条测试全过；第 1、2 关可玩。
-下一项是 5.2：**让变形规则 `A 是 B` 在移动结算后真正生效**。
+Day 2、5.1、5.2 完成：能走、能推箱、能推词、能解析规则、能判胜负、能撤销重开；无「停」的普通物件可与「你」重叠；变形 `A 是 B` 在移动结算后生效；44 条测试全过；第 1、2 关可玩。
+下一项是 5.3：**水/浮、热/融、开/关、传**（先做水/浮与热/融）。
 
 ## 2. 资源清单
 
@@ -16,7 +16,7 @@ Day 2 和 5.1 完成：能走、能推箱、能推词、能解析规则、能判
 | :--- | :--- | :--- |
 | 源码 | `src/rulebox/` | core 纯逻辑，ui 用 Pygame |
 | 关卡 | `content/levels/01-*.txt`、`02-*.txt` | 文本 DSL |
-| 测试 | `tests/` | 38 条 |
+| 测试 | `tests/` | 44 条 |
 | 计划 | `docs/plan.md` | 12 关、6 周的原计划（快照） |
 | 清单 | `docs/checklist.md` | 每日/每周行动清单（快照） |
 | 截图 | `docs/preview_01.png`、`preview_02.png` | README 用 |
@@ -70,9 +70,17 @@ py -3.10 -m venv .venv
 
 验证：38 passed；第 2 关两帧渲染启动正常；SDL dummy 的重叠局面渲染正常；`core/` 无 `pygame` 导入。
 
-### 5.2 变形结算
+### 5.2 已完成：变形结算
 
-`石 是 箱` 目前只解析、不生效。移动结算后统一替换，注意不要替换词块自身。
+行为（由测试锁定）：
+
+- `石 是 箱` 在移动结算后统一生效；同一回合按开始时的身份只替换一次。
+- 词块不参与变形。
+- 同格其他实体与层叠顺序保留（`World.replace`）。
+- 变形后下一步重新解析规则，属性随之变化。
+
+实现：`movement.try_move` 在接触结算后调用 `resolve.apply_transforms`；`rules.transform_map` 提供映射；`World.replace` 原地替换。
+验证：44 passed（新增 6 条变形测试）。
 
 ### 5.3 机关
 
@@ -84,7 +92,7 @@ py -3.10 -m venv .venv
 
 ## 6. 已知问题
 
-- 变形、水、热、开关、传送只解析、未结算。
+- 水、热、开关、传送只解析、未结算。
 - 没有选关、存档、提示系统。
 - 没有 `validate.py`，关卡“有解”目前只靠单关测试。
 - 键盘问题已修（焦点/IME/连发），但需要用户实机再确认；`--debug-keys` 可打印按键。
@@ -136,7 +144,7 @@ git clone RuleBox-handoff-2026-11-10.bundle RuleBox
 
 第一步：
 1. 读 AGENTS.md、docs/HANDOFF.md、docs/plan.md。
-2. 运行 .\.venv\Scripts\python.exe -m pytest -q，确认 38 passed。
+2. 运行 .\.venv\Scripts\python.exe -m pytest -q，确认 44 passed。
 3. 运行 .\.venv\Scripts\python.exe run.py content\levels\02-move-aside.txt，确认能启动。
 
 约束：
@@ -145,14 +153,14 @@ git clone RuleBox-handoff-2026-11-10.bundle RuleBox
 - 改行为前先写测试；改完跑全量 pytest。
 - 不要重写 UI，不要引入新框架。
 
-下一项只做 HANDOFF 第 5.2 节：让变形规则 `A 是 B` 在移动结算后生效，并补测试；不要替换词块自身。
+下一项只做 HANDOFF 第 5.3 节的第一部分：水/浮（FLOAT）与热/融（HOT/MELT）的结算，并补测试。
 先给我看实现计划和会新增/修改哪些测试，等我确认后再改代码，不要直接提交。
 ```
 
 ## 10. 交接检查清单
 
 - [x] 代码已推送，远程 = 本地
-- [x] 测试 38 passed
+- [x] 测试 44 passed
 - [x] 计划 / 清单 / AI 记录进仓库
 - [x] 交接 tag
 - [x] 新 agent 跑通测试
