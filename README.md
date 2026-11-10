@@ -9,11 +9,13 @@
 
 ![预览](docs/preview_01.png)
 
+![菜单](docs/menu.png)
+
 ## 给接手的开发者 / Agent
 
 - 先读 [`AGENTS.md`](AGENTS.md)（代理操作规范）和 [`docs/HANDOFF.md`](docs/HANDOFF.md)（状态快照、下一步、设计债）
 - 原计划见 [`docs/plan.md`](docs/plan.md)，行动清单见 [`docs/checklist.md`](docs/checklist.md)
-- 当前基线：82 条测试全过，第 1、2 关可玩
+- 当前基线：91 条测试全过，第 1、2 关可玩
 
 ## 环境
 
@@ -31,16 +33,22 @@ pip install -r requirements.txt
 ## 运行
 
 ```powershell
-python run.py
-python run.py content/levels/02-move-aside.txt
+python run.py                                  # 开始菜单
+python run.py content/levels/02-move-aside.txt # 直接进某一关
 ```
 
-| 按键 | 作用 |
-| :--- | :--- |
-| 方向键 / WASD | 移动 |
-| Z | 撤销 |
-| R | 重开本关 |
-| Esc | 退出 |
+| 场景 | 按键 | 作用 |
+| :--- | :--- | :--- |
+| 菜单 | ↑↓ / W S | 选择 |
+| 菜单 | Enter / Space | 确认 |
+| 选关 | ↑↓ / Enter | 选择并开始 |
+| 游戏 | 方向键 / WASD | 移动 |
+| 游戏 | Z | 撤销 |
+| 游戏 | R | 重开本关 |
+| 游戏 | N / Enter | 过关后下一关 |
+| 游戏 | Esc | 返回菜单 |
+
+通关记录保存在 `progress.json`（已 gitignore），菜单和选关会显示完成状态。
 
 没有安装 pygame 时会自动退化为文本输出。
 
@@ -63,8 +71,8 @@ pytest
 
 | # | 名称 | 教什么 |
 | :-: | :--- | :--- |
-| 01 | 第一步 | 移动、走到旗子即胜 |
-| 02 | 让开 | 推箱子，把挡路的箱子推开 |
+| 01 | 第一步 | 移动、走到旗子即胜；横排「墙 是 停」 |
+| 02 | 让开 | 推箱子；竖排「墙 / 是 / 停」演示竖向规则 |
 
 ![第 2 关](docs/preview_02.png)
 
@@ -79,6 +87,9 @@ pytest
 - [x] 变形结算
 - [x] 水/浮、热/融接触结算与失败界面
 - [x] 开/关、传送结算
+- [x] 相邻规则句（横排 / 竖排）解析
+- [x] 每关「墙 是 停」阻挡
+- [x] 开始菜单、选关、通关进度与下一关
 - [ ] 12 关完整内容
 
 ## 目录
@@ -93,8 +104,9 @@ RuleBox/
 │   │   ├── rules.py
 │   │   ├── resolve.py
 │   │   ├── movement.py
-│   │   └── game.py
-│   └── ui/app.py       # Pygame 渲染与输入
+│   │   ├── game.py
+│   │   └── catalog.py
+│   └── ui/app.py       # Pygame 菜单、选关、渲染与输入
 ├── content/levels/     # 关卡文本
 ├── tests/              # pytest
 ├── run.py              # 启动器

@@ -1,13 +1,13 @@
 # 交接说明（Handoff）
 
-> 快照：2026-11-10（5.3 全部收尾）
-> 最新代码提交：`46bdfce`（以 `git log` 为准）
+> 快照：2026-11-10（菜单与规则修复）
+> 最新代码提交：`5aea692`（以 `git log` 为准）
 > 仓库：https://github.com/Ultra-Y/RuleBox （public）
 > 交接 tag：`handoff-2026-11-10`
 
 ## 1. 一句话状态
 
-Day 2、5.1、5.2、5.3 完成：能走、能推箱、能推词、能解析规则、能判胜负、能撤销重开；无「停」的普通物件可与「你」重叠；变形 `A 是 B` 在移动结算后生效；水/浮、热/融、开/关、传全部结算；失去所有「你」判负；82 条测试全过；第 1、2 关可玩。
+Day 2、5.1、5.2、5.3 完成，并补上开始菜单、选关、通关进度、过关下一关；规则层修复了“相邻两句互相破坏”和“墙不阻挡”；第 2 关用竖排「墙/是/停」验证竖向规则；91 条测试全过；第 1、2 关可玩。
 下一项是 5.4：**第 3–8 关 + 每关解法回放测试**。
 
 ## 2. 资源清单
@@ -16,11 +16,11 @@ Day 2、5.1、5.2、5.3 完成：能走、能推箱、能推词、能解析规�
 | :--- | :--- | :--- |
 | 源码 | `src/rulebox/` | core 纯逻辑，ui 用 Pygame |
 | 关卡 | `content/levels/01-*.txt`、`02-*.txt` | 文本 DSL |
-| 测试 | `tests/` | 82 条 |
+| 测试 | `tests/` | 91 条 |
 | 子 agent 封装 | `tools/qoder_agent.py` | 调用 Qoder CN CLI，结果在 `docs/agent-runs/` |
 | 计划 | `docs/plan.md` | 12 关、6 周的原计划（快照） |
 | 清单 | `docs/checklist.md` | 每日/每周行动清单（快照） |
-| 截图 | `docs/preview_01.png`、`preview_02.png` | README 用 |
+| 截图 | `docs/preview_01.png`、`preview_02.png`、`menu.png` | README 用 |
 | AI 记录 | `docs/ai-log.md` | 真实协作记录，课程提交要用 |
 | 试玩 | `docs/playtest.md` | 模板，待填 |
 | 远端 | GitHub `Ultra-Y/RuleBox` | public，可直接 clone |
@@ -110,6 +110,19 @@ py -3.10 -m venv .venv
 验证：82 passed（新增 20 条开关/传送测试）。
 已知边界：传送落点没有重新检查 `STOP`/`SHUT`；门同时带 `PUSH`+`SHUT` 时 `OPEN` 会先推门而不是开门。等关卡需要时再收紧。
 
+### 5.3.1 规则句与墙修复（已完成）
+
+- 相邻的两句（横排或竖排）不再互相破坏：`rules.parse_run` 用 DP 切成句子数最多的合法切法。
+- 墙不再默认实心：每关显式放「墙 是 停」；第 1 关横排、第 2 关竖排「墙 / 是 / 停」。
+- 验证：91 passed（新增相邻句 2 条、目录/流程 7 条）。
+
+### 5.3.2 开始菜单、选关、进度（已完成）
+
+- `core/catalog.py`：`discover_levels`、`Progress`（读写 `progress.json`）、`next_index`、`first_unfinished`。
+- UI：菜单（开始游戏 / 选关 / 退出）、选关（✓ 标记已完成）、过关后 `N`/`Enter` 下一关、`Esc` 回菜单、失败 `R` 重开。
+- 进度文件 `progress.json` 已 gitignore。
+- 验证：91 passed，含无头 UI 流程 3 条。
+
 ### 5.4 关卡 3–8
 
 每关配 `solutions/XX.txt`（`URDL` 字符串），加回放测试；跑不通就不算关卡完成。
@@ -117,8 +130,8 @@ py -3.10 -m venv .venv
 ## 6. 已知问题
 
 - 传送落点未复查 `STOP`/`SHUT`；`PUSH`+`SHUT` 门的开关优先级待关卡验证。
-- 没有选关、存档、提示系统。
-- 没有 `validate.py`，关卡“有解”目前只靠单关测试。
+- 没有提示系统，也没有 `validate.py`；关卡“有解”目前只靠单关测试。
+- 关卡 3–8 尚未制作；`progress.json` 只记录完成，不记录最佳步数。
 - 键盘问题已修（焦点/IME/连发），但需要用户实机再确认；`--debug-keys` 可打印按键。
 
 ## 7. 网络（这台机器）
@@ -168,8 +181,8 @@ git clone RuleBox-handoff-2026-11-10.bundle RuleBox
 
 第一步：
 1. 读 AGENTS.md、docs/HANDOFF.md、docs/plan.md。
-2. 运行 .\.venv\Scripts\python.exe -m pytest -q，确认 82 passed。
-3. 运行 .\.venv\Scripts\python.exe run.py content\levels\02-move-aside.txt，确认能启动。
+2. 运行 .\.venv\Scripts\python.exe -m pytest -q，确认 91 passed。
+3. 运行 .\.venv\Scripts\python.exe run.py，确认开始菜单能启动。
 
 约束：
 - 不要用 PATH 里的 python（MSYS2，没有 pip）。
@@ -184,7 +197,7 @@ git clone RuleBox-handoff-2026-11-10.bundle RuleBox
 ## 10. 交接检查清单
 
 - [x] 代码已推送，远程 = 本地
-- [x] 测试 82 passed
+- [x] 测试 91 passed
 - [x] 计划 / 清单 / AI 记录进仓库
 - [x] 交接 tag
 - [x] 新 agent 跑通测试
