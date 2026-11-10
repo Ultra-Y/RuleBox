@@ -55,13 +55,15 @@ def try_move(world: World, dr: int, dc: int) -> MoveResult:
         world.undo()
         return MoveResult(False)
 
-    lost = False
     if not won:
         # 接触结算用回合开始时解析出的属性，和水/热是否被推动无关。
-        lost = apply_contacts(world, props)
+        apply_contacts(world, props)
 
-    # 接触结算后统一变形；下一步和 UI 会重新解析变形后的属性。
+    # 接触结算后统一变形；变形可能制造或消灭「你」，所以之后要重新解析再判负。
     apply_transforms(world, transforms)
+    lost = False
+    if not won:
+        lost = not you_positions(world, property_map(parse_rules(world)))
     return MoveResult(True, won=won, lost=lost)
 
 

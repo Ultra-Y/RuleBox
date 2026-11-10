@@ -236,6 +236,33 @@ def test_water_resolves_before_heat():
     assert ids_at(world, 4, 4) == ["water"]
 
 
+# ---------- 变形后的胜负判定 ----------
+
+
+def test_transform_creates_new_you_prevents_loss():
+    words = rule(0, "人", "你") + rule(1, "石", "人")
+    world = make_world(
+        words=words,
+        objects=[(4, 1, "baba"), (4, 2, "water"), (4, 3, "rock")],
+    )
+
+    result = try_move(world, 0, 1)
+
+    assert result.moved and not result.lost
+    assert ids_at(world, 4, 2) == ["water"]
+    assert world.get(4, 3).id == "baba"
+
+
+def test_transform_removes_last_you_causes_loss():
+    words = rule(0, "人", "你") + rule(1, "人", "石")
+    world = make_world(words=words, objects=[(4, 1, "baba")])
+
+    result = try_move(world, 0, 1)
+
+    assert result.moved and result.lost
+    assert world.get(4, 2).id == "rock"
+
+
 # ---------- UI ----------
 
 

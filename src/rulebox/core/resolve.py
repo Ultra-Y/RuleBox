@@ -49,13 +49,12 @@ def is_hazard(entity: Entity, props: dict[str, set[str]]) -> bool:
     return _is_water(entity) or has_prop(entity, props, "HOT")
 
 
-def apply_contacts(world: World, props: dict[str, set[str]]) -> bool:
-    """接触结算：先水，再热/融。返回场上是否已没有「你」。"""
+def apply_contacts(world: World, props: dict[str, set[str]]) -> None:
+    """接触结算：先水，再热/融。毁灭结果由调用方在变形后统一判定。"""
     for row, col, entity in _sink_victims(world, props):
         world.remove(row, col, entity)
     for row, col, entity in _melt_victims(world, props):
         world.remove(row, col, entity)
-    return not you_positions(world, props)
 
 
 def _sink_victims(world: World, props: dict[str, set[str]]) -> list[tuple[int, int, Entity]]:

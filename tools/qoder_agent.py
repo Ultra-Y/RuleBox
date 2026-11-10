@@ -49,7 +49,7 @@ def parse_result(raw: str) -> dict | None:
             obj = json.loads(line)
         except json.JSONDecodeError:
             continue
-        if isinstance(obj, dict) and "result" in obj:
+        if isinstance(obj, dict) and (obj.get("type") == "result" or "result" in obj):
             return obj
     return None
 
@@ -59,7 +59,7 @@ def main() -> int:
     parser.add_argument("--prompt", required=True)
     parser.add_argument("--workspace", default=str(ROOT))
     parser.add_argument("--permission-mode", default="auto", choices=MODES)
-    parser.add_argument("--max-turns", type=int, default=40)
+    parser.add_argument("--max-turns", type=int, default=80)
     parser.add_argument("--model", default="")
     parser.add_argument("--allowed-tools", default="")
     parser.add_argument("--out-dir", default="docs/agent-runs")
@@ -109,10 +109,14 @@ def main() -> int:
         print(f"无法解析 Qoder CN 输出，原始日志：{raw_path}", file=sys.stderr)
         return 2
 
-    result = str(obj.get("result", ""))
+    result = str(obj.get("result") or "")
+    if not result:
+        errors = obj.get("errors") or [obj.get("subtype", "unknown")]
+        result = "Qoder CN 未返回正常结果：" + "; ".join(str(item) for item in errors)
     meta = (
         f"turns={obj.get('num_turns')} credits={obj.get('total_credits')} "
-        f"session={obj.get('session_id')} error={obj.get('is_error')}"
+        f"session={obj.get('session_id')} subtype={obj.get('subtype')} "
+        f"error={obj.get('is_error')}"
     )
     result_path.write_text(
         f"# Qoder CN run {stamp}\n\n"
@@ -127,6 +131,8 @@ def main() -> int:
     print(meta, file=sys.stderr)
     print(f"raw: {raw_path}", file=sys.stderr)
     print(f"result: {result_path}", file=sys.stderr)
+    if obj.get("is_error"):
+        print("Qoder CN 报告错误；若是 max_turns，调大 --max-turns 或拆分任务。", file=sys.stderr)
     return 1 if obj.get("is_error") else 0
 
 

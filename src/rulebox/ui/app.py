@@ -271,7 +271,7 @@ def _draw(screen, game: Game, origin, cell: int, fonts) -> None:
     elif game.lost:
         big = fonts["title"].render("失败", True, LOSE)
         screen.blit(big, big.get_rect(center=(490, 300)))
-        sub = fonts["rule"].render("你被摧毁了 · 按 R 重开", True, (232, 232, 240))
+        sub = fonts["rule"].render("没有可控制的「你」了 · 按 R 重开", True, (232, 232, 240))
         screen.blit(sub, sub.get_rect(center=(490, 345)))
 
 
