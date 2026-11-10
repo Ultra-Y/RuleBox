@@ -7,10 +7,13 @@ from rulebox.core.level_builder import (
     PALETTE,
     blank_cells,
     build_level_text,
+    cells_from_text,
+    safe_level_path,
     save_level_text,
     share_decode,
     share_encode,
 )
+from rulebox.ui.editor import Editor
 
 
 def test_palette_symbols_are_unique():
@@ -62,3 +65,49 @@ def test_save_level_text_is_unique(tmp_path):
 def test_build_rejects_tiny_grid():
     with pytest.raises(ValueError):
         build_level_text("小", [["#", "#"], ["#", "#"]])
+
+
+def test_cells_from_text_roundtrip():
+    cells = blank_cells()
+    cells[2][3] = "@"
+    cells[2][7] = "F"
+    cells[1][4] = "4"
+    text = build_level_text("回读", cells)
+
+    name, read_cells = cells_from_text(text)
+
+    assert name == "回读"
+    assert read_cells[2][3] == "@"
+    assert read_cells[2][7] == "F"
+    assert read_cells[1][4] == "4"
+
+
+def test_safe_level_path_avoids_overwrite(tmp_path):
+    first = safe_level_path(tmp_path, "同名")
+    first.write_text("x", encoding="utf-8")
+    second = safe_level_path(tmp_path, "同名")
+
+    assert first != second
+    assert first.exists()
+
+
+def test_editor_resize_and_build():
+    editor = Editor()
+    editor.resize(15, 12)
+
+    assert (editor.width, editor.height) == (15, 12)
+    text = editor.build_text()
+    level = load_level_from_text(text)
+    assert (level.width, level.height) == (15, 12)
+
+
+def load_level_from_text(text: str):
+    import tempfile
+
+    with tempfile.NamedTemporaryFile("w", suffix=".txt", encoding="utf-8", delete=False) as handle:
+        handle.write(text)
+        path = handle.name
+    try:
+        return load_level(path)
+    finally:
+        Path(path).unlink(missing_ok=True)

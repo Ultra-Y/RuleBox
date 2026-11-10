@@ -1,10 +1,10 @@
-"""关卡编辑器：调色板、放置、保存、分享码导入导出。"""
+"""关卡编辑器：可调尺寸、调色板、试玩、保存、重命名、删除、分享码。"""
 
 from __future__ import annotations
 
 from pathlib import Path
 
-from ..core.catalog import LEVELS_DIR, ROOT
+from ..core.catalog import CUSTOM_DIR, ROOT
 from ..core.entities import make_object, make_word
 from ..core.level import parse_level
 from ..core.level_builder import (
@@ -12,7 +12,8 @@ from ..core.level_builder import (
     PALETTE,
     blank_cells,
     build_level_text,
-    save_level_text,
+    cells_from_text,
+    safe_level_path,
     share_decode,
     share_encode,
 )
@@ -31,8 +32,8 @@ ACCENT = (255, 210, 120)
 TEXT_DARK = (26, 26, 32)
 TEXT_LIGHT = (242, 242, 248)
 
-GRID_X, GRID_Y, CELL = 40, 110, 44
-GRID_COLS, GRID_ROWS = 11, 8
+GRID_X, GRID_Y = 40, 110
+MAX_GRID_W, MAX_GRID_H = 520, 360
 PALETTE_X, PALETTE_Y = 40, 478
 PALETTE_COLS = 10
 PALETTE_TILE = 38
@@ -40,14 +41,19 @@ PALETTE_GAP = 4
 
 
 class Editor:
-    def __init__(self, on_changed=None, on_back=None):
-        self.cells = blank_cells(GRID_COLS, GRID_ROWS)
+    def __init__(self, on_changed=None, on_back=None, on_playtest=None, on_open=None):
+        self.width = 11
+        self.height = 8
+        self.cells = blank_cells(self.width, self.height)
         self.name = "自制关卡"
+        self.current_path: Path | None = None
         self.selected_symbol = "@"
         self.name_active = False
         self.message = "左键放置 · 右键擦除 · Ctrl+S 保存"
         self.on_changed = on_changed
         self.on_back = on_back
+        self.on_playtest = on_playtest
+        self.on_open = on_open
         try:
             import pygame
 
@@ -55,7 +61,7 @@ class Editor:
         except Exception:
             pass
 
-    # ---------- 操作 ----------
+    # ---------- 文件 ----------
 
     def build_text(self) -> str:
         text = build_level_text(self.name, self.cells)
@@ -65,25 +71,87 @@ class Editor:
     def save(self) -> None:
         try:
             text = self.build_text()
-            path = save_level_text(text, LEVELS_DIR, "custom")
+            path = safe_level_path(CUSTOM_DIR, self.name, self.current_path)
+            path.write_text(text, encoding="utf-8")
         except Exception as exc:
             self.message = f"保存失败：{exc}"
             return
-        self.message = f"已保存到关卡库：{path.name}"
+        self.current_path = path
+        self.message = f"已保存：{path.name}"
         if self.on_changed:
             self.on_changed()
+
+    def load_path(self, path: Path) -> None:
+        path = Path(path)
+        try:
+            text = path.read_text(encoding="utf-8")
+            name, cells = cells_from_text(text)
+        except Exception as exc:
+            self.message = f"打开失败：{exc}"
+            return
+        self.name = name
+        self.cells = cells
+        self.height = len(cells)
+        self.width = len(cells[0]) if cells else 0
+        self.current_path = path
+        self.message = f"已打开：{path.name}"
+
+    def rename(self) -> None:
+        if self.current_path is None:
+            self.message = "先保存，再重命名"
+            return
+        try:
+            target = safe_level_path(CUSTOM_DIR, self.name, self.current_path)
+            if target != self.current_path:
+                self.current_path.rename(target)
+                self.current_path = target
+        except Exception as exc:
+            self.message = f"重命名失败：{exc}"
+            return
+        self.message = f"已重命名：{self.current_path.name}"
+        if self.on_changed:
+            self.on_changed()
+
+    def delete(self) -> None:
+        if self.current_path is None:
+            self.message = "还没有保存过的自制关卡"
+            return
+        try:
+            self.current_path.unlink(missing_ok=True)
+        except Exception as exc:
+            self.message = f"删除失败：{exc}"
+            return
+        self.message = f"已删除：{self.current_path.name}"
+        self.current_path = None
+        if self.on_changed:
+            self.on_changed()
+
+    def playtest(self) -> None:
+        try:
+            text = self.build_text()
+        except Exception as exc:
+            self.message = f"试玩失败：{exc}"
+            return
+        if self.on_playtest and self.on_playtest(text):
+            return
+        self.message = "试玩启动失败"
+
+    def open_custom(self) -> None:
+        if self.on_open:
+            self.on_open()
 
     def export(self) -> None:
         try:
             text = self.build_text()
-            path = save_level_text(text, EXPORTS_DIR, "export")
+            path = safe_level_path(EXPORTS_DIR, self.name)
+            path.write_text(text, encoding="utf-8")
             code = share_encode(text)
             path.with_suffix(".code").write_text(code, encoding="utf-8")
         except Exception as exc:
             self.message = f"导出失败：{exc}"
             return
         copied = _clipboard_set(code)
-        tail = "，分享码已复制" if copied else "（剪贴板不可用，见 .code 文件）"
+        tail = "，分享码已复制" if copied else "（剪贴板不可用，见 .code）"
         self.message = f"已导出 {path.name}{tail}"
 
     def import_share(self) -> None:
@@ -97,17 +165,35 @@ class Editor:
             return
         try:
             text = share_decode(code)
-            path = save_level_text(text, LEVELS_DIR, "imported")
+            path = safe_level_path(CUSTOM_DIR, "导入关卡")
+            path.write_text(text, encoding="utf-8")
         except ValueError as exc:
             self.message = f"导入失败：{exc}"
             return
-        self.message = f"已导入到关卡库：{path.name}"
+        self.load_path(path)
+        self.message = f"已导入：{path.name}"
         if self.on_changed:
             self.on_changed()
 
     def clear(self) -> None:
-        self.cells = blank_cells(GRID_COLS, GRID_ROWS)
-        self.message = "已清空，保留边框"
+        self.cells = blank_cells(self.width, self.height)
+        self.current_path = None
+        self.message = "已清空，保留当前尺寸"
+
+    def resize(self, width: int, height: int) -> None:
+        width = max(5, min(20, width))
+        height = max(5, min(20, height))
+        if (width, height) == (self.width, self.height):
+            return
+        old = self.cells
+        self.width, self.height = width, height
+        self.cells = blank_cells(width, height)
+        for row in range(1, min(len(old), height) - 1):
+            for col in range(1, min(len(old[row]), width) - 1):
+                self.cells[row][col] = old[row][col]
+        self.message = f"尺寸：{width}×{height}"
+
+    # ---------- 输入 ----------
 
     def handle_text(self, text: str) -> None:
         if self.name_active and text and len(self.name) < 24:
@@ -137,13 +223,15 @@ class Editor:
         return None
 
     def handle_click(self, pos: tuple[int, int], button: int) -> None:
-        import pygame
-
         if self._name_rect().collidepoint(pos):
             self.name_active = True
             return
         self.name_active = False
 
+        for _label, rect, action in self._size_buttons():
+            if rect.collidepoint(pos):
+                action()
+                return
         for _label, rect, action in self._buttons():
             if rect.collidepoint(pos):
                 action()
@@ -166,22 +254,37 @@ class Editor:
 
         return pygame.Rect(590, 110, 340, 38)
 
+    def _size_buttons(self):
+        import pygame
+
+        specs = [
+            ("宽−", pygame.Rect(590, 160, 80, 32), lambda: self.resize(self.width - 1, self.height)),
+            ("宽＋", pygame.Rect(675, 160, 80, 32), lambda: self.resize(self.width + 1, self.height)),
+            ("高−", pygame.Rect(760, 160, 80, 32), lambda: self.resize(self.width, self.height - 1)),
+            ("高＋", pygame.Rect(845, 160, 85, 32), lambda: self.resize(self.width, self.height + 1)),
+        ]
+        return specs
+
     def _buttons(self):
         import pygame
 
-        rows = [
-            ("保存到关卡库", self.save),
-            ("导出分享码", self.export),
-            ("导入分享码", self.import_share),
-            ("清空", self.clear),
+        specs = [
+            ("保存", pygame.Rect(590, 250, 160, 40), self.save),
+            ("试玩", pygame.Rect(760, 250, 170, 40), self.playtest),
+            ("打开", pygame.Rect(590, 296, 160, 40), self.open_custom),
+            ("重命名", pygame.Rect(760, 296, 170, 40), self.rename),
+            ("删除", pygame.Rect(590, 342, 160, 40), self.delete),
+            ("导出码", pygame.Rect(760, 342, 170, 40), self.export),
+            ("导入码", pygame.Rect(590, 388, 160, 40), self.import_share),
+            ("清空", pygame.Rect(760, 388, 170, 40), self.clear),
+            ("返回菜单", pygame.Rect(590, 434, 340, 40), self.on_back or (lambda: None)),
         ]
-        result = []
-        for index, (label, action) in enumerate(rows):
-            result.append((label, pygame.Rect(590, 170 + index * 50, 340, 40), action))
-        result.append(
-            ("返回菜单", pygame.Rect(590, 370, 340, 40), self.on_back or (lambda: None))
-        )
-        return result
+        return specs
+
+    def _grid_layout(self) -> tuple[int, int, int]:
+        cell = min(MAX_GRID_W // max(1, self.width), MAX_GRID_H // max(1, self.height), 44)
+        cell = max(12, cell)
+        return GRID_X, GRID_Y, cell
 
     def _palette_rect(self, index: int):
         import pygame
@@ -201,12 +304,13 @@ class Editor:
         return None
 
     def _grid_cell_at(self, pos):
+        x0, y0, cell = self._grid_layout()
         x, y = pos
-        if not (GRID_X <= x < GRID_X + GRID_COLS * CELL):
+        if not (x0 <= x < x0 + self.width * cell):
             return None
-        if not (GRID_Y <= y < GRID_Y + GRID_ROWS * CELL):
+        if not (y0 <= y < y0 + self.height * cell):
             return None
-        return (y - GRID_Y) // CELL, (x - GRID_X) // CELL
+        return (y - y0) // cell, (x - x0) // cell
 
     # ---------- 绘制 ----------
 
@@ -214,8 +318,9 @@ class Editor:
         import pygame
 
         screen.fill(BG)
-        title = chrome["title"].render("关卡编辑器", True, TITLE)
-        screen.blit(title, (40, 24))
+        screen.blit(chrome["title"].render("关卡编辑器", True, TITLE), (40, 24))
+        size = chrome["hint"].render(f"画布：{self.width}×{self.height}", True, HINT)
+        screen.blit(size, (40, 66))
 
         name_rect = self._name_rect()
         pygame.draw.rect(screen, PANEL, name_rect, border_radius=6)
@@ -226,16 +331,22 @@ class Editor:
         screen.blit(name_label, (name_rect.x + 8, name_rect.y + 8))
         screen.set_clip(None)
 
-        for row in range(GRID_ROWS):
-            for col in range(GRID_COLS):
-                x = GRID_X + col * CELL
-                y = GRID_Y + row * CELL
+        for label, rect, _action in self._size_buttons():
+            pygame.draw.rect(screen, PANEL, rect, border_radius=5)
+            text = chrome["hint"].render(label, True, TITLE)
+            screen.blit(text, text.get_rect(center=rect.center))
+
+        gx, gy, cell = self._grid_layout()
+        for row in range(self.height):
+            for col in range(self.width):
+                x = gx + col * cell
+                y = gy + row * cell
                 floor = FLOOR_A if (row + col) % 2 == 0 else FLOOR_B
-                pygame.draw.rect(screen, floor, (x, y, CELL, CELL))
-                pygame.draw.rect(screen, GRID_LINE, (x, y, CELL, CELL), 1)
+                pygame.draw.rect(screen, floor, (x, y, cell, cell))
+                pygame.draw.rect(screen, GRID_LINE, (x, y, cell, cell), 1)
                 entity = _entity(self.cells[row][col])
                 if entity is not None:
-                    _draw_entity(screen, entity, x, y, CELL, chrome)
+                    _draw_entity(screen, entity, x, y, cell, chrome)
 
         for index, item in enumerate(PALETTE):
             rect = self._palette_rect(index)
@@ -252,7 +363,7 @@ class Editor:
             text = chrome["rule"].render(label, True, TITLE)
             screen.blit(text, text.get_rect(center=rect.center))
 
-        y = 440
+        y = 492
         for line in _wrap(self.message, chrome["hint"], 340):
             screen.blit(chrome["hint"].render(line, True, HINT), (590, y))
             y += 20
@@ -275,13 +386,13 @@ def _entity(symbol: str):
 def _draw_entity(screen, entity, x: int, y: int, cell: int, chrome) -> None:
     import pygame
 
-    inset = max(3, cell // 12)
+    inset = max(2, cell // 12)
     rect = pygame.Rect(x + inset, y + inset, cell - inset * 2, cell - inset * 2)
-    radius = max(4, cell // 8)
+    radius = max(3, cell // 8)
     pygame.draw.rect(screen, entity.color, rect, border_radius=radius)
     pygame.draw.rect(screen, (18, 18, 24), rect, 1, border_radius=radius)
     if entity.id == "wall":
-        inner = rect.inflate(-max(6, cell // 5), -max(6, cell // 5))
+        inner = rect.inflate(-max(4, cell // 5), -max(4, cell // 5))
         pygame.draw.rect(screen, (68, 72, 90), inner, 2, border_radius=max(2, radius - 2))
         return
     font = chrome["word"] if entity.is_word else chrome["object"]
@@ -307,7 +418,7 @@ def _wrap(text: str, font, width: int) -> list[str]:
             current = candidate
     if current:
         lines.append(current)
-    return lines[:4]
+    return lines[:3]
 
 
 def _clipboard_get() -> str:

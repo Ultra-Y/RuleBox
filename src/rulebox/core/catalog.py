@@ -10,7 +10,9 @@ from pathlib import Path
 from .level import load_level
 
 ROOT = Path(__file__).resolve().parents[3]
-LEVELS_DIR = ROOT / "content" / "levels"
+OFFICIAL_DIR = ROOT / "content" / "levels"
+CUSTOM_DIR = ROOT / "custom_levels"
+LEVELS_DIR = OFFICIAL_DIR
 PROGRESS_PATH = ROOT / "progress.json"
 
 
@@ -19,10 +21,16 @@ class LevelEntry:
     path: Path
     number: str
     name: str
+    source: str = "official"
+
+    @property
+    def key(self) -> str:
+        stem = self.path.stem
+        return stem if self.source == "official" else f"custom:{stem}"
 
     @property
     def id(self) -> str:
-        return self.path.stem
+        return self.key
 
     @property
     def display_name(self) -> str:
@@ -34,14 +42,22 @@ class LevelEntry:
         return f"{self.number} {self.name}"
 
 
-def discover_levels(levels_dir: Path = LEVELS_DIR) -> list[LevelEntry]:
+def discover_levels(
+    levels_dir: Path = OFFICIAL_DIR, source: str = "official"
+) -> list[LevelEntry]:
     """按文件名排序读取关卡，编号取文件名第一段。"""
     entries: list[LevelEntry] = []
-    for path in sorted(levels_dir.glob("*.txt")):
+    for path in sorted(Path(levels_dir).glob("*.txt")):
         level = load_level(path)
         number = path.stem.split("-", 1)[0]
-        entries.append(LevelEntry(path=path, number=number, name=level.name))
+        entries.append(
+            LevelEntry(path=path, number=number, name=level.name, source=source)
+        )
     return entries
+
+
+def discover_custom() -> list[LevelEntry]:
+    return discover_levels(CUSTOM_DIR, source="custom")
 
 
 class Progress:
@@ -83,6 +99,6 @@ def next_index(entries: list[LevelEntry], index: int) -> int | None:
 
 def first_unfinished(entries: list[LevelEntry], progress: Progress) -> int:
     for index, entry in enumerate(entries):
-        if not progress.is_completed(entry.id):
+        if not progress.is_completed(entry.key):
             return index
     return 0

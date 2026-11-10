@@ -11,5 +11,6 @@ build/
 dist/
 exports/
 imports/
+custom_levels/
 content/levels/custom-*.txt
 content/levels/imported-*.txt

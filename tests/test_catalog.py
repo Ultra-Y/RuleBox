@@ -61,6 +61,15 @@ def test_display_name_strips_number():
     assert entry.title == "01 01 第一步"
 
 
+def test_custom_level_key_is_prefixed(tmp_path):
+    write_level(tmp_path, "my-level", "我的关卡")
+    entries = discover_levels(tmp_path, source="custom")
+
+    assert len(entries) == 1
+    assert entries[0].key == "custom:my-level"
+    assert entries[0].display_name == "我的关卡"
+
+
 def test_first_unfinished_and_next():
     entries = [
         LevelEntry(Path("01.txt"), "01", "一"),

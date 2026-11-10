@@ -6,9 +6,14 @@ import re
 import sys
 from pathlib import Path
 
-from ..core.catalog import Progress, discover_levels, first_unfinished
+from ..core.catalog import (
+    Progress,
+    discover_custom,
+    discover_levels,
+    first_unfinished,
+)
 from ..core.game import Game
-from ..core.level import load_level
+from ..core.level import load_level, parse_level
 from ..core.rules import parse_rules
 from .editor import Editor
 
@@ -27,39 +32,55 @@ TEXT_LIGHT = (242, 242, 248)
 WIN = (255, 226, 128)
 LOSE = (255, 150, 150)
 SELECT_BG = (62, 72, 100)
-MENU_OPTIONS = ("开始游戏", "选关", "关卡编辑器", "退出")
+MENU_OPTIONS = ("开始游戏", "官方关卡", "自制关卡", "关卡编辑器", "退出")
 
 
 class _App:
-    def __init__(self, entries, progress: Progress):
-        self.entries = entries
+    def __init__(self, official, progress: Progress, custom=None):
+        self.official = official
+        self.custom = list(custom or [])
+        self.entries = official
         self.progress = progress
         self.screen = "menu"  # menu | select | play | editor
         self.menu_index = 0
         self.select_index = 0
+        self.select_mode = "official"
+        self.select_entries = list(official)
+        self.select_for_edit = False
         self.level_index: int | None = None
+        self.play_entries: list = []
+        self.play_return = "menu"
         self.game: Game | None = None
         self.editor: Editor | None = None
         self.layout: tuple[int, int, int] | None = None
         self.fonts: dict | None = None
 
-    def start_index(self, index: int) -> None:
-        if not (0 <= index < len(self.entries)):
+    def start_index(self, index: int, entries=None) -> None:
+        entries = list(entries) if entries is not None else list(self.entries)
+        if not (0 <= index < len(entries)):
             return
+        self.play_entries = entries
         self.level_index = index
-        self._load(self.entries[index].path)
+        self.play_return = "menu"
+        self._load(entries[index].path)
 
     def start_path(self, path: Path) -> None:
         path = Path(path)
-        for index, entry in enumerate(self.entries):
-            if entry.path.resolve() == path.resolve():
-                self.start_index(index)
-                return
+        for entries in (self.official, self.custom):
+            for index, entry in enumerate(entries):
+                if entry.path.resolve() == path.resolve():
+                    self.start_index(index, entries)
+                    return
+        self.play_entries = []
         self.level_index = None
+        self.play_return = "menu"
         self._load(path)
 
     def _load(self, path: Path) -> None:
-        self.game = Game(load_level(path))
+        self._prepare_level(load_level(path))
+
+    def _prepare_level(self, level) -> None:
+        self.game = Game(level)
         try:
             import pygame
 
@@ -83,22 +104,33 @@ class _App:
         self.screen = "play"
 
     def mark_win(self) -> None:
-        if self.level_index is not None:
-            self.progress.mark(self.entries[self.level_index].id)
+        if self.level_index is not None and self.level_index < len(self.play_entries):
+            self.progress.mark(self.play_entries[self.level_index].key)
 
     def next_level(self) -> None:
-        if self.level_index is None:
-            self.screen = "select"
+        if self.play_return == "editor":
+            self.open_editor()
+            return
+        if not self.play_entries or self.level_index is None:
+            self.open_select(self.select_mode)
             return
         index = self.level_index + 1
-        if index < len(self.entries):
-            self.start_index(index)
+        if index < len(self.play_entries):
+            self.start_index(index, self.play_entries)
         else:
-            self.select_index = self.level_index
-            self.screen = "select"
+            self.open_select(self.select_mode)
 
-    def open_select(self) -> None:
-        self.select_index = self.level_index if self.level_index is not None else 0
+    def open_select(self, mode: str = "official", for_edit: bool = False) -> None:
+        self.select_mode = mode
+        self.select_entries = list(self.official if mode == "official" else self.custom)
+        self.select_for_edit = for_edit
+        self.select_index = 0
+        if self.level_index is not None and self.play_entries:
+            current = self.play_entries[self.level_index]
+            for index, entry in enumerate(self.select_entries):
+                if entry.path.resolve() == current.path.resolve():
+                    self.select_index = index
+                    break
         self.screen = "select"
 
     def open_editor(self) -> None:
@@ -106,6 +138,8 @@ class _App:
             self.editor = Editor(
                 on_changed=self.reload_entries,
                 on_back=self.back_to_menu,
+                on_playtest=self.play_editor_level,
+                on_open=lambda: self.open_select("custom", for_edit=True),
             )
         self.screen = "editor"
         try:
@@ -114,6 +148,24 @@ class _App:
             pygame.key.start_text_input()
         except Exception:
             pass
+
+    def edit_custom(self, index: int) -> None:
+        if not (0 <= index < len(self.custom)):
+            return
+        self.open_editor()
+        self.editor.load_path(self.custom[index].path)
+
+    def play_editor_level(self, text: str) -> bool:
+        try:
+            level = parse_level(text, source="<editor>")
+        except Exception:
+            return False
+        self.game = Game(level)
+        self._prepare_level(level)
+        self.play_entries = []
+        self.level_index = None
+        self.play_return = "editor"
+        return True
 
     def back_to_menu(self) -> None:
         self.screen = "menu"
@@ -125,7 +177,12 @@ class _App:
             pass
 
     def reload_entries(self) -> None:
-        self.entries = discover_levels()
+        self.official = discover_levels()
+        self.custom = discover_custom()
+        self.entries = self.official
+        self.select_entries = (
+            self.official if self.select_mode == "official" else self.custom
+        )
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -138,7 +195,8 @@ def main(argv: list[str] | None = None) -> int:
         print(f"找不到关卡：{level_path}", file=sys.stderr)
         return 2
 
-    entries = discover_levels()
+    official = discover_levels()
+    custom = discover_custom()
     progress = Progress()
 
     try:
@@ -147,14 +205,26 @@ def main(argv: list[str] | None = None) -> int:
         if level_path is not None:
             print(Game(load_level(level_path)).world.to_ascii())
         else:
-            for entry in entries:
-                mark = "*" if progress.is_completed(entry.id) else " "
+            print("官方关卡：")
+            for entry in official:
+                mark = "*" if progress.is_completed(entry.key) else " "
+                print(f"[{mark}] {entry.display_name}")
+            print("自制关卡：")
+            for entry in custom:
+                mark = "*" if progress.is_completed(entry.key) else " "
                 print(f"[{mark}] {entry.display_name}")
         print("\n安装：pip install pygame")
         return 0
 
     return _run(
-        entries, progress, level_path, frames, shot, debug_keys, start_editor
+        official,
+        custom,
+        progress,
+        level_path,
+        frames,
+        shot,
+        debug_keys,
+        start_editor,
     )
 
 
@@ -202,7 +272,8 @@ def _parse_args(args: list[str]):
 
 
 def _run(
-    entries,
+    official,
+    custom,
     progress: Progress,
     initial_level,
     frames: int,
@@ -236,7 +307,7 @@ def _run(
         "object": _font(22),
         "word": _font(14),
     }
-    app = _App(entries, progress)
+    app = _App(official, progress, custom)
     if start_editor:
         app.open_editor()
     elif initial_level is not None:
@@ -353,10 +424,12 @@ def _handle_menu(app: _App, key: int) -> bool:
         app.menu_index = (app.menu_index + 1) % len(MENU_OPTIONS)
     elif key in (pygame.K_RETURN, pygame.K_KP_ENTER, pygame.K_SPACE):
         if app.menu_index == 0:
-            app.start_index(first_unfinished(app.entries, app.progress))
+            app.start_index(first_unfinished(app.official, app.progress))
         elif app.menu_index == 1:
-            app.open_select()
+            app.open_select("official")
         elif app.menu_index == 2:
+            app.open_select("custom")
+        elif app.menu_index == 3:
             app.open_editor()
         else:
             return False
@@ -368,18 +441,28 @@ def _handle_menu(app: _App, key: int) -> bool:
 def _handle_select(app: _App, key: int) -> bool:
     import pygame
 
-    if not app.entries:
+    entries = app.select_entries
+    if not entries:
         if key == pygame.K_ESCAPE:
-            app.screen = "menu"
+            if app.select_for_edit:
+                app.open_editor()
+            else:
+                app.screen = "menu"
         return True
     if key in (pygame.K_UP, pygame.K_w):
-        app.select_index = (app.select_index - 1) % len(app.entries)
+        app.select_index = (app.select_index - 1) % len(entries)
     elif key in (pygame.K_DOWN, pygame.K_s):
-        app.select_index = (app.select_index + 1) % len(app.entries)
+        app.select_index = (app.select_index + 1) % len(entries)
     elif key in (pygame.K_RETURN, pygame.K_KP_ENTER, pygame.K_SPACE):
-        app.start_index(app.select_index)
+        if app.select_for_edit:
+            app.edit_custom(app.select_index)
+        else:
+            app.start_index(app.select_index, entries)
     elif key == pygame.K_ESCAPE:
-        app.screen = "menu"
+        if app.select_for_edit:
+            app.open_editor()
+        else:
+            app.screen = "menu"
     return True
 
 
@@ -392,11 +475,18 @@ def _handle_play(app: _App, key: int, text: str, moves) -> bool:
         return True
 
     if key == pygame.K_ESCAPE:
-        app.screen = "menu"
+        if app.play_return == "editor":
+            app.open_editor()
+        else:
+            app.back_to_menu()
         return True
-    if game.won and (
-        key in (pygame.K_n, pygame.K_RETURN, pygame.K_KP_ENTER, pygame.K_SPACE)
-        or (text or "").lower() == "n"
+    if (
+        game.won
+        and app.play_return != "editor"
+        and (
+            key in (pygame.K_n, pygame.K_RETURN, pygame.K_KP_ENTER, pygame.K_SPACE)
+            or (text or "").lower() == "n"
+        )
     ):
         app.next_level()
         return True
@@ -473,37 +563,47 @@ def _draw_menu(screen, app: _App, chrome) -> None:
     for index, option in enumerate(MENU_OPTIONS):
         color = TITLE if index == app.menu_index else HINT
         label = chrome["menu"].render(option, True, color)
-        rect = label.get_rect(center=(WIDTH // 2, 340 + index * 58))
+        rect = label.get_rect(center=(WIDTH // 2, 310 + index * 52))
         if index == app.menu_index:
             pygame.draw.rect(screen, SELECT_BG, rect.inflate(150, 18), border_radius=10)
         screen.blit(label, rect)
 
-    done = len(app.progress.completed)
+    done = len([entry for entry in app.official if app.progress.is_completed(entry.key)])
     status = chrome["hint"].render(
-        f"已完成 {done} / {len(app.entries)} 关", True, HINT
+        f"官方关卡 {done} / {len(app.official)} · 自制关卡 {len(app.custom)}", True, HINT
     )
-    screen.blit(status, status.get_rect(center=(WIDTH // 2, 560)))
+    screen.blit(status, status.get_rect(center=(WIDTH // 2, 575)))
     tip = chrome["hint"].render("↑↓ 选择 · Enter 确认 · Esc 退出", True, HINT)
-    screen.blit(tip, tip.get_rect(center=(WIDTH // 2, 620)))
+    screen.blit(tip, tip.get_rect(center=(WIDTH // 2, 630)))
 
 
 def _draw_select(screen, app: _App, chrome) -> None:
     import pygame
 
     screen.fill(BG)
-    title = chrome["title"].render("选关", True, TITLE)
+    if app.select_for_edit:
+        heading = "选择要编辑的自制关卡"
+    else:
+        heading = "官方关卡" if app.select_mode == "official" else "自制关卡"
+    title = chrome["title"].render(heading, True, TITLE)
     screen.blit(title, title.get_rect(center=(WIDTH // 2, 100)))
 
-    if not app.entries:
-        empty = chrome["rule"].render("content/levels 下还没有关卡", True, HINT)
+    entries = app.select_entries
+    if not entries:
+        message = (
+            "content/levels 下还没有官方关卡"
+            if app.select_mode == "official"
+            else "还没有自制关卡，去关卡编辑器做一个"
+        )
+        empty = chrome["rule"].render(message, True, HINT)
         screen.blit(empty, empty.get_rect(center=(WIDTH // 2, 300)))
     else:
         max_rows = 9
-        start = max(0, min(app.select_index - 3, len(app.entries) - max_rows))
+        start = max(0, min(app.select_index - 3, len(entries) - max_rows))
         start = max(0, start)
-        for offset, entry in enumerate(app.entries[start : start + max_rows]):
+        for offset, entry in enumerate(entries[start : start + max_rows]):
             index = start + offset
-            completed = app.progress.is_completed(entry.id)
+            completed = app.progress.is_completed(entry.key)
             color = TITLE if index == app.select_index else (RULE_TEXT if completed else HINT)
             label = chrome["menu"].render(entry.display_name, True, color)
             rect = label.get_rect(center=(WIDTH // 2, 180 + offset * 46))
@@ -511,7 +611,8 @@ def _draw_select(screen, app: _App, chrome) -> None:
                 pygame.draw.rect(screen, SELECT_BG, rect.inflate(260, 14), border_radius=10)
             screen.blit(label, rect)
 
-    tip = chrome["hint"].render("↑↓ 选择 · Enter 开始 · Esc 返回", True, HINT)
+    action = "Enter 编辑 · Esc 返回" if app.select_for_edit else "↑↓ 选择 · Enter 开始 · Esc 返回"
+    tip = chrome["hint"].render(action, True, HINT)
     screen.blit(tip, tip.get_rect(center=(WIDTH // 2, 620)))
 
 
@@ -577,14 +678,18 @@ def _draw_play(screen, app: _App, chrome) -> None:
     if game.won:
         big = fonts["title"].render("过关！", True, WIN)
         screen.blit(big, big.get_rect(center=(WIDTH // 2, 300)))
-        last = app.level_index is not None and app.level_index >= len(app.entries) - 1
-        tail = "这是最后一关 · Esc 选关" if last else "Enter / N 下一关 · R 重来 · Esc 菜单"
+        if app.play_return == "editor":
+            tail = "试玩结束 · Esc 回编辑器"
+        else:
+            last = app.level_index is not None and app.level_index >= len(app.play_entries) - 1
+            tail = "这是最后一关 · Esc 选关" if last else "Enter / N 下一关 · R 重来 · Esc 菜单"
         sub = fonts["rule"].render(f"用了 {game.moves} 步 · {tail}", True, (232, 232, 240))
         screen.blit(sub, sub.get_rect(center=(WIDTH // 2, 345)))
     elif game.lost:
         big = fonts["title"].render("失败", True, LOSE)
         screen.blit(big, big.get_rect(center=(WIDTH // 2, 300)))
-        sub = fonts["rule"].render("R 重开 · Esc 菜单", True, (232, 232, 240))
+        back = "Esc 回编辑器" if app.play_return == "editor" else "Esc 菜单"
+        sub = fonts["rule"].render(f"R 重开 · {back}", True, (232, 232, 240))
         screen.blit(sub, sub.get_rect(center=(WIDTH // 2, 345)))
 
 

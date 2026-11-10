@@ -4,11 +4,12 @@ from __future__ import annotations
 
 import base64
 import binascii
+import re
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
 
-from .level import parse_level
+from .level import Level, parse_level
 
 
 @dataclass(frozen=True)
@@ -61,6 +62,10 @@ PALETTE: list[PaletteItem] = [
 ] + [PaletteItem(symbol, "word", value, label) for symbol, value, label in _WORDS]
 
 BY_SYMBOL = {item.symbol: item for item in PALETTE}
+WORD_SYMBOL = {item.value: item.symbol for item in PALETTE if item.kind == "word"}
+OBJECT_SYMBOL = {
+    item.value: item.symbol for item in PALETTE if item.kind == "object"
+}
 
 
 def blank_cells(width: int = 11, height: int = 8) -> list[list[str]]:
@@ -126,3 +131,47 @@ def save_level_text(text: str, directory: Path, prefix: str = "custom") -> Path:
         index += 1
     path.write_text(text, encoding="utf-8")
     return path
+
+
+def _cells_from_level(level: Level) -> list[list[str]]:
+    cells: list[list[str]] = []
+    for row in level.cells:
+        symbols: list[str] = []
+        for entity in row:
+            if entity is None:
+                symbols.append(".")
+            elif entity.is_word:
+                symbols.append(WORD_SYMBOL.get(entity.text, "."))
+            else:
+                symbols.append(OBJECT_SYMBOL.get(entity.id, "."))
+        cells.append(symbols)
+    return cells
+
+
+def cells_from_text(text: str) -> tuple[str, list[list[str]]]:
+    """把已有 DSL 关卡转回编辑器格子。"""
+    level = parse_level(text, source="<level>")
+    name = re.sub(r"^\s*\d+\s*", "", level.name).strip() or level.name
+    return name, _cells_from_level(level)
+
+
+def safe_level_path(
+    directory: Path, name: str, current: Path | None = None
+) -> Path:
+    directory = Path(directory)
+    directory.mkdir(parents=True, exist_ok=True)
+    slug = re.sub(r'[\\/:*?"<>|]', "_", (name or "").strip()) or "custom"
+    candidate = directory / f"{slug}.txt"
+    if current is not None and candidate.resolve() == Path(current).resolve():
+        return candidate
+    index = 2
+    while candidate.exists():
+        candidate = directory / f"{slug}-{index}.txt"
+        index += 1
+    return candidate
+
+
+def level_to_text(level: Level) -> str:
+    """把已解析的关卡落成编辑器可再打开的 DSL。"""
+    name = re.sub(r"^\s*\d+\s*", "", level.name).strip() or level.name
+    return build_level_text(name, _cells_from_level(level))
