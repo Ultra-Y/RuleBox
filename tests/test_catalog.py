@@ -55,6 +55,12 @@ def test_progress_tolerates_missing_or_bad_file(tmp_path):
     assert Progress(bad).completed == set()
 
 
+def test_display_name_strips_number():
+    entry = LevelEntry(Path("01-a.txt"), "01", "01 第一步")
+    assert entry.display_name == "第一步"
+    assert entry.title == "01 01 第一步"
+
+
 def test_first_unfinished_and_next():
     entries = [
         LevelEntry(Path("01.txt"), "01", "一"),

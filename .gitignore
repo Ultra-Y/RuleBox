@@ -9,3 +9,7 @@ progress.json
 *.egg-info/
 build/
 dist/
+exports/
+imports/
+content/levels/custom-*.txt
+content/levels/imported-*.txt

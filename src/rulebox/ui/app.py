@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 import sys
 from pathlib import Path
 
@@ -9,6 +10,7 @@ from ..core.catalog import Progress, discover_levels, first_unfinished
 from ..core.game import Game
 from ..core.level import load_level
 from ..core.rules import parse_rules
+from .editor import Editor
 
 WIDTH, HEIGHT = 980, 680
 MARGIN, TOP, BOTTOM = 40, 100, 170
@@ -25,18 +27,19 @@ TEXT_LIGHT = (242, 242, 248)
 WIN = (255, 226, 128)
 LOSE = (255, 150, 150)
 SELECT_BG = (62, 72, 100)
-MENU_OPTIONS = ("开始游戏", "选关", "退出")
+MENU_OPTIONS = ("开始游戏", "选关", "关卡编辑器", "退出")
 
 
 class _App:
     def __init__(self, entries, progress: Progress):
         self.entries = entries
         self.progress = progress
-        self.screen = "menu"  # menu | select | play
+        self.screen = "menu"  # menu | select | play | editor
         self.menu_index = 0
         self.select_index = 0
         self.level_index: int | None = None
         self.game: Game | None = None
+        self.editor: Editor | None = None
         self.layout: tuple[int, int, int] | None = None
         self.fonts: dict | None = None
 
@@ -57,6 +60,12 @@ class _App:
 
     def _load(self, path: Path) -> None:
         self.game = Game(load_level(path))
+        try:
+            import pygame
+
+            pygame.key.stop_text_input()
+        except Exception:
+            pass
         world = self.game.world
         cell = min(
             (WIDTH - MARGIN * 2) // world.width,
@@ -92,13 +101,39 @@ class _App:
         self.select_index = self.level_index if self.level_index is not None else 0
         self.screen = "select"
 
+    def open_editor(self) -> None:
+        if self.editor is None:
+            self.editor = Editor(
+                on_changed=self.reload_entries,
+                on_back=self.back_to_menu,
+            )
+        self.screen = "editor"
+        try:
+            import pygame
+
+            pygame.key.start_text_input()
+        except Exception:
+            pass
+
+    def back_to_menu(self) -> None:
+        self.screen = "menu"
+        try:
+            import pygame
+
+            pygame.key.stop_text_input()
+        except Exception:
+            pass
+
+    def reload_entries(self) -> None:
+        self.entries = discover_levels()
+
 
 def main(argv: list[str] | None = None) -> int:
     args = list(sys.argv[1:] if argv is None else argv)
     parsed = _parse_args(args)
     if parsed is None:
         return 0
-    level_path, frames, shot, debug_keys = parsed
+    level_path, frames, shot, debug_keys, start_editor = parsed
     if level_path is not None and not level_path.exists():
         print(f"找不到关卡：{level_path}", file=sys.stderr)
         return 2
@@ -114,11 +149,13 @@ def main(argv: list[str] | None = None) -> int:
         else:
             for entry in entries:
                 mark = "*" if progress.is_completed(entry.id) else " "
-                print(f"[{mark}] {entry.title}")
+                print(f"[{mark}] {entry.display_name}")
         print("\n安装：pip install pygame")
         return 0
 
-    return _run(entries, progress, level_path, frames, shot, debug_keys)
+    return _run(
+        entries, progress, level_path, frames, shot, debug_keys, start_editor
+    )
 
 
 def _parse_args(args: list[str]):
@@ -126,12 +163,14 @@ def _parse_args(args: list[str]):
     frames = 0
     shot: Path | None = None
     debug_keys = False
+    start_editor = False
     i = 0
     while i < len(args):
         arg = args[i]
         if arg in ("-h", "--help"):
             print(
-                "用法：python run.py [关卡文件] [--frames N] [--shot 图片路径] [--debug-keys]"
+                "用法：python run.py [关卡文件] [--editor] [--frames N] "
+                "[--shot 图片路径] [--debug-keys]"
             )
             return None
         if arg == "--frames":
@@ -153,12 +192,24 @@ def _parse_args(args: list[str]):
             debug_keys = True
             i += 1
             continue
+        if arg == "--editor":
+            start_editor = True
+            i += 1
+            continue
         level_path = Path(arg)
         i += 1
-    return level_path, frames, shot, debug_keys
+    return level_path, frames, shot, debug_keys, start_editor
 
 
-def _run(entries, progress: Progress, initial_level, frames: int, shot, debug_keys: bool) -> int:
+def _run(
+    entries,
+    progress: Progress,
+    initial_level,
+    frames: int,
+    shot,
+    debug_keys: bool,
+    start_editor: bool = False,
+) -> int:
     import pygame
 
     pygame.init()
@@ -182,9 +233,13 @@ def _run(entries, progress: Progress, initial_level, frames: int, shot, debug_ke
         "menu": _font(24),
         "hint": _font(15),
         "rule": _font(18),
+        "object": _font(22),
+        "word": _font(14),
     }
     app = _App(entries, progress)
-    if initial_level is not None:
+    if start_editor:
+        app.open_editor()
+    elif initial_level is not None:
         app.start_path(initial_level)
     else:
         app.screen = "menu"
@@ -207,6 +262,18 @@ def _run(entries, progress: Progress, initial_level, frames: int, shot, debug_ke
                     repeat_at = pygame.time.get_ticks() + 180
                 if not _handle_event(app, event.key, event.unicode, moves):
                     running = False
+            elif (
+                event.type == pygame.TEXTINPUT
+                and app.screen == "editor"
+                and app.editor is not None
+            ):
+                app.editor.handle_text(event.text)
+            elif (
+                event.type == pygame.MOUSEBUTTONDOWN
+                and app.screen == "editor"
+                and app.editor is not None
+            ):
+                app.editor.handle_click(event.pos, event.button)
 
         now = pygame.time.get_ticks()
         game = app.game
@@ -261,7 +328,20 @@ def _handle_event(app: _App, key: int, text: str, moves) -> bool:
         return _handle_menu(app, key)
     if app.screen == "select":
         return _handle_select(app, key)
+    if app.screen == "editor":
+        return _handle_editor(app, key, text)
     return _handle_play(app, key, text, moves)
+
+
+def _handle_editor(app: _App, key: int, text: str) -> bool:
+    import pygame
+
+    if app.editor is None:
+        app.screen = "menu"
+        return True
+    if app.editor.handle_key(key, text, pygame.key.get_mods()) == "back":
+        app.back_to_menu()
+    return True
 
 
 def _handle_menu(app: _App, key: int) -> bool:
@@ -276,6 +356,8 @@ def _handle_menu(app: _App, key: int) -> bool:
             app.start_index(first_unfinished(app.entries, app.progress))
         elif app.menu_index == 1:
             app.open_select()
+        elif app.menu_index == 2:
+            app.open_editor()
         else:
             return False
     elif key == pygame.K_ESCAPE:
@@ -369,6 +451,8 @@ def _draw(screen, app: _App, chrome) -> None:
         _draw_menu(screen, app, chrome)
     elif app.screen == "select":
         _draw_select(screen, app, chrome)
+    elif app.screen == "editor" and app.editor is not None:
+        app.editor.draw(screen, chrome)
     else:
         _draw_play(screen, app, chrome)
 
@@ -419,8 +503,9 @@ def _draw_select(screen, app: _App, chrome) -> None:
         start = max(0, start)
         for offset, entry in enumerate(app.entries[start : start + max_rows]):
             index = start + offset
-            mark = "✓" if app.progress.is_completed(entry.id) else "·"
-            label = chrome["menu"].render(f"{mark}  {entry.title}", True, TITLE if index == app.select_index else HINT)
+            completed = app.progress.is_completed(entry.id)
+            color = TITLE if index == app.select_index else (RULE_TEXT if completed else HINT)
+            label = chrome["menu"].render(entry.display_name, True, color)
             rect = label.get_rect(center=(WIDTH // 2, 180 + offset * 46))
             if index == app.select_index:
                 pygame.draw.rect(screen, SELECT_BG, rect.inflate(260, 14), border_radius=10)
@@ -441,7 +526,7 @@ def _draw_play(screen, app: _App, chrome) -> None:
     fonts = {**chrome, **app.fonts}
     screen.fill(BG)
 
-    screen.blit(fonts["title"].render(world.name, True, TITLE), (MARGIN, 24))
+    screen.blit(fonts["title"].render(_display_title(world.name), True, TITLE), (MARGIN, 24))
     moves_text = fonts["hint"].render(f"步数 {game.moves}", True, HINT)
     screen.blit(moves_text, (WIDTH - MARGIN - moves_text.get_width(), 34))
 
@@ -507,6 +592,10 @@ def _text_color(bg: tuple[int, int, int]) -> tuple[int, int, int]:
     r, g, b = bg
     luminance = 0.299 * r + 0.587 * g + 0.114 * b
     return TEXT_DARK if luminance > 140 else TEXT_LIGHT
+
+
+def _display_title(text: str) -> str:
+    return re.sub(r"^\s*\d+\s*", "", text).strip() or text
 
 
 def _focus_window(pygame) -> None:

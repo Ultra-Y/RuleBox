@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import re
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -22,6 +23,11 @@ class LevelEntry:
     @property
     def id(self) -> str:
         return self.path.stem
+
+    @property
+    def display_name(self) -> str:
+        """去掉关卡名前面的编号，只留标题。"""
+        return re.sub(r"^\s*\d+\s*", "", self.name).strip() or self.name
 
     @property
     def title(self) -> str:
