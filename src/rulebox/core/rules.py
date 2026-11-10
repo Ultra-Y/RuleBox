@@ -61,6 +61,8 @@ def parse_sentence(tokens: list[str]) -> Rule | None:
     if i >= len(tokens) or tokens[i] != "是":
         return None
     i += 1
+    if i >= len(tokens):
+        return None
 
     negated = False
     if i < len(tokens) and tokens[i] == "不":
@@ -96,6 +98,39 @@ def parse_sentence(tokens: list[str]) -> Rule | None:
     return Rule(frozenset(nouns), frozenset(props))
 
 
+def parse_run(tokens: list[str]) -> list[Rule]:
+    """把一段连续词块切成尽量多的合法句子。
+
+    相邻的两句（例如「墙 是 停 人 是 你」）不再互相破坏：
+    整段解析失败时，退回按前缀切分，取句子数最多的切法。
+    """
+    total = len(tokens)
+    memo: dict[int, list[Rule] | None] = {}
+
+    def solve(start: int) -> list[Rule] | None:
+        if start == total:
+            return []
+        if start in memo:
+            return memo[start]
+
+        best: list[Rule] | None = None
+        for end in range(start + 3, total + 1):
+            rule = parse_sentence(tokens[start:end])
+            if rule is None:
+                continue
+            rest = solve(end)
+            if rest is None:
+                continue
+            candidate = [rule, *rest]
+            if best is None or len(candidate) > len(best):
+                best = candidate
+
+        memo[start] = best
+        return best
+
+    return solve(0) or []
+
+
 def parse_rules(world: World) -> list[Rule]:
     """扫描所有横向、纵向连续词块，返回生效的规则。"""
     rules: list[Rule] = []
@@ -109,9 +144,7 @@ def parse_rules(world: World) -> list[Rule]:
                     col += 1
                 if col - start >= 3:
                     tokens = [_word_text(world, row, c) for c in range(start, col)]
-                    rule = parse_sentence(tokens)
-                    if rule:
-                        rules.append(rule)
+                    rules.extend(parse_run(tokens))
             else:
                 col += 1
 
@@ -124,13 +157,11 @@ def parse_rules(world: World) -> list[Rule]:
                     row += 1
                 if row - start >= 3:
                     tokens = [_word_text(world, r, col) for r in range(start, row)]
-                    rule = parse_sentence(tokens)
-                    if rule:
-                        rules.append(rule)
+                    rules.extend(parse_run(tokens))
             else:
                 row += 1
 
-    return rules
+    return list(dict.fromkeys(rules))
 
 
 def property_map(rules: list[Rule]) -> dict[str, set[str]]:

@@ -99,6 +99,38 @@ def test_you_positions():
     assert you_positions(world, props) == [(4, 4)]
 
 
+def test_adjacent_sentences_in_one_row():
+    world = make_world(
+        words=[
+            (1, 1, "墙"),
+            (1, 2, "是"),
+            (1, 3, "停"),
+            (1, 4, "人"),
+            (1, 5, "是"),
+            (1, 6, "你"),
+        ]
+    )
+    rules = parse_rules(world)
+    assert len(rules) == 2
+    assert {rule.display() for rule in rules} == {"墙 是 停", "人 是 你"}
+
+
+def test_adjacent_sentences_in_one_column():
+    world = make_world(
+        words=[
+            (1, 1, "墙"),
+            (2, 1, "是"),
+            (3, 1, "停"),
+            (4, 1, "人"),
+            (5, 1, "是"),
+            (6, 1, "你"),
+        ]
+    )
+    rules = parse_rules(world)
+    assert len(rules) == 2
+    assert {rule.display() for rule in rules} == {"墙 是 停", "人 是 你"}
+
+
 def test_you_positions_scans_overlapped_entities():
     world = make_world(objects=[(4, 4, "rock")])
     world.add(4, 4, make_object("baba"))

@@ -55,8 +55,8 @@ def test_push_box():
 
     result = game.move(0, 1)
     assert result.moved
-    assert game.world.get(3, 5).id == "baba"
-    assert game.world.get(3, 6).id == "box"
+    assert game.world.get(4, 5).id == "baba"
+    assert game.world.get(4, 6).id == "box"
 
 
 def test_push_chain_blocked_by_wall():
