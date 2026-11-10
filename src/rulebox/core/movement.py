@@ -8,6 +8,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
+from .entities import Entity
 from .resolve import has_prop, you_positions
 from .rules import parse_rules, property_map
 from .world import World
@@ -55,6 +56,7 @@ def _move_one(
     *,
     can_win: bool,
 ) -> MoveResult:
+    """移动一个实体；can_win 为 True 表示它是最外层的「你」。"""
     entity = world.get(row, col)
     if entity is None:
         return MoveResult(False)
@@ -63,36 +65,51 @@ def _move_one(
     if not world.in_bounds(target_row, target_col):
         return MoveResult(False)
 
-    target = world.get(target_row, target_col)
-
-    if target is None:
-        world.set(target_row, target_col, entity)
-        world.set(row, col, None)
+    targets = world.entities_at(target_row, target_col)
+    if not targets:
+        _relocate(world, row, col, target_row, target_col, entity)
         return MoveResult(True)
 
-    # 词块永远可推，且不参与属性判定
-    if target.is_word:
-        pushed = _move_one(world, target_row, target_col, dr, dc, props, can_win=False)
-        if not pushed.moved:
-            return MoveResult(False)
-        world.set(target_row, target_col, entity)
-        world.set(row, col, None)
-        return MoveResult(True)
+    if any(has_prop(target, props, "STOP") for target in targets):
+        return MoveResult(False)
 
-    if has_prop(target, props, "WIN"):
+    if any(has_prop(target, props, "WIN") for target in targets):
         if can_win:
             return MoveResult(True, won=True)
         return MoveResult(False)
 
-    if has_prop(target, props, "STOP"):
-        return MoveResult(False)
-
-    if has_prop(target, props, "PUSH"):
+    # 词块永远可推，且不参与属性判定。
+    pushable = next(
+        (
+            target
+            for target in targets
+            if target.is_word or has_prop(target, props, "PUSH")
+        ),
+        None,
+    )
+    if pushable is not None:
         pushed = _move_one(world, target_row, target_col, dr, dc, props, can_win=False)
         if not pushed.moved:
             return MoveResult(False)
-        world.set(target_row, target_col, entity)
-        world.set(row, col, None)
+        _relocate(world, row, col, target_row, target_col, entity)
         return MoveResult(True)
 
-    return MoveResult(False)
+    # 推链里的非「你」物件不能进入占用格；「你」也不能与另一个「你」重叠。
+    if not can_win or any(has_prop(target, props, "YOU") for target in targets):
+        return MoveResult(False)
+
+    _relocate(world, row, col, target_row, target_col, entity)
+    return MoveResult(True)
+
+
+def _relocate(
+    world: World,
+    row: int,
+    col: int,
+    target_row: int,
+    target_col: int,
+    entity: Entity,
+) -> None:
+    """只移动指定实体，保留来源格和目标格里的其他实体。"""
+    world.remove(row, col, entity)
+    world.add(target_row, target_col, entity)

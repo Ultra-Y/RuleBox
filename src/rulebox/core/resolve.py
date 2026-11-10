@@ -23,6 +23,7 @@ def you_positions(world: World, props: dict[str, set[str]]) -> list[tuple[int, i
     found: list[tuple[int, int]] = []
     for row in range(world.height):
         for col in range(world.width):
-            if has_prop(world.get(row, col), props, "YOU"):
+            entities = world.entities_at(row, col)
+            if any(has_prop(entity, props, "YOU") for entity in entities):
                 found.append((row, col))
     return found

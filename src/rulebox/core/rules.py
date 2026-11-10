@@ -108,7 +108,7 @@ def parse_rules(world: World) -> list[Rule]:
                 while col < world.width and _is_word(world, row, col):
                     col += 1
                 if col - start >= 3:
-                    tokens = [world.get(row, c).text for c in range(start, col)]
+                    tokens = [_word_text(world, row, c) for c in range(start, col)]
                     rule = parse_sentence(tokens)
                     if rule:
                         rules.append(rule)
@@ -123,7 +123,7 @@ def parse_rules(world: World) -> list[Rule]:
                 while row < world.height and _is_word(world, row, col):
                     row += 1
                 if row - start >= 3:
-                    tokens = [world.get(r, col).text for r in range(start, row)]
+                    tokens = [_word_text(world, r, col) for r in range(start, row)]
                     rule = parse_sentence(tokens)
                     if rule:
                         rules.append(rule)
@@ -164,5 +164,9 @@ def transform_map(rules: list[Rule]) -> dict[str, str]:
 
 
 def _is_word(world: World, row: int, col: int) -> bool:
-    entity = world.get(row, col)
-    return entity is not None and entity.is_word
+    return any(entity.is_word for entity in world.entities_at(row, col))
+
+
+def _word_text(world: World, row: int, col: int) -> str:
+    """返回格内词块文字；调用前已由 _is_word 确认词块存在。"""
+    return next(entity.text for entity in world.entities_at(row, col) if entity.is_word)

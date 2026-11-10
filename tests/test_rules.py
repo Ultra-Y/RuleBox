@@ -97,3 +97,10 @@ def test_you_positions():
     )
     props = property_map(parse_rules(world))
     assert you_positions(world, props) == [(4, 4)]
+
+
+def test_you_positions_scans_overlapped_entities():
+    world = make_world(objects=[(4, 4, "rock")])
+    world.add(4, 4, make_object("baba"))
+    props = {"baba": {"YOU"}}
+    assert you_positions(world, props) == [(4, 4)]

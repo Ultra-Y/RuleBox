@@ -29,15 +29,23 @@ def test_move_into_empty():
 
 
 def test_wall_blocks():
-    game = Game(load_level(LEVEL1))
-    game.move(0, -1)
-    game.move(0, -1)
-    assert game.world.get(2, 1).id == "baba"
+    world = make_world(
+        words=[
+            (0, 0, "人"),
+            (0, 1, "是"),
+            (0, 2, "你"),
+            (1, 0, "墙"),
+            (1, 1, "是"),
+            (1, 2, "停"),
+        ],
+        objects=[(4, 1, "baba"), (4, 0, "wall")],
+    )
 
-    result = game.move(0, -1)
+    result = try_move(world, 0, -1)
     assert not result.moved
-    assert game.moves == 2
-    assert game.world.get(2, 1).id == "baba"
+    assert world.get(4, 1).id == "baba"
+    assert world.get(4, 0).id == "wall"
+    assert not world.can_undo
 
 
 def test_push_box():
@@ -147,3 +155,53 @@ def test_no_you_means_no_move():
     result = try_move(world, 0, 1)
     assert not result.moved
     assert not world.can_undo
+
+
+def test_you_can_pass_through_object_without_stop():
+    world = make_world(
+        words=[(0, 0, "人"), (0, 1, "是"), (0, 2, "你")],
+        objects=[(4, 1, "baba"), (4, 2, "wall")],
+    )
+
+    result = try_move(world, 0, 1)
+    assert result.moved
+    assert [entity.id for entity in world.entities_at(4, 2)] == ["wall", "baba"]
+
+    result = try_move(world, 0, 1)
+    assert result.moved
+    assert [entity.id for entity in world.entities_at(4, 2)] == ["wall"]
+    assert world.get(4, 3).id == "baba"
+
+
+def test_non_you_cannot_enter_occupied_cell():
+    world = make_world(
+        words=[
+            (0, 0, "人"),
+            (0, 1, "是"),
+            (0, 2, "你"),
+            (1, 0, "箱"),
+            (1, 1, "是"),
+            (1, 2, "推"),
+        ],
+        objects=[(4, 1, "baba"), (4, 2, "box"), (4, 3, "rock")],
+    )
+
+    result = try_move(world, 0, 1)
+    assert not result.moved
+    assert world.get(4, 1).id == "baba"
+    assert world.get(4, 2).id == "box"
+    assert world.get(4, 3).id == "rock"
+    assert not world.can_undo
+
+
+def test_undo_restores_overlapped_entities():
+    world = make_world(
+        words=[(0, 0, "人"), (0, 1, "是"), (0, 2, "你")],
+        objects=[(4, 1, "baba"), (4, 2, "rock")],
+    )
+
+    result = try_move(world, 0, 1)
+    assert result.moved
+    assert world.undo() is True
+    assert [entity.id for entity in world.entities_at(4, 1)] == ["baba"]
+    assert [entity.id for entity in world.entities_at(4, 2)] == ["rock"]

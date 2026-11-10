@@ -221,26 +221,22 @@ def _draw(screen, game: Game, origin, cell: int, fonts) -> None:
             pygame.draw.rect(screen, floor, (x, y, cell, cell))
             pygame.draw.rect(screen, GRID_LINE, (x, y, cell, cell), 1)
 
-            entity = world.get(row, col)
-            if entity is None:
-                continue
+            for entity in world.entities_at(row, col):
+                inset = max(3, cell // 12)
+                rect = pygame.Rect(x + inset, y + inset, cell - inset * 2, cell - inset * 2)
+                radius = max(4, cell // 8)
+                pygame.draw.rect(screen, entity.color, rect, border_radius=radius)
+                pygame.draw.rect(screen, (18, 18, 24), rect, 1, border_radius=radius)
 
-            inset = max(3, cell // 12)
-            rect = pygame.Rect(x + inset, y + inset, cell - inset * 2, cell - inset * 2)
-            radius = max(4, cell // 8)
-            pygame.draw.rect(screen, entity.color, rect, border_radius=radius)
-            pygame.draw.rect(screen, (18, 18, 24), rect, 1, border_radius=radius)
-
-            if entity.id == "wall":
-                inner = rect.inflate(-max(6, cell // 5), -max(6, cell // 5))
-                pygame.draw.rect(
-                    screen, (68, 72, 90), inner, 2, border_radius=max(2, radius - 2)
-                )
-                continue
-
-            font = fonts["word"] if entity.is_word else fonts["object"]
-            label = font.render(entity.text, True, _text_color(entity.color))
-            screen.blit(label, label.get_rect(center=rect.center))
+                if entity.id == "wall":
+                    inner = rect.inflate(-max(6, cell // 5), -max(6, cell // 5))
+                    pygame.draw.rect(
+                        screen, (68, 72, 90), inner, 2, border_radius=max(2, radius - 2)
+                    )
+                else:
+                    font = fonts["word"] if entity.is_word else fonts["object"]
+                    label = font.render(entity.text, True, _text_color(entity.color))
+                    screen.blit(label, label.get_rect(center=rect.center))
 
     # 规则面板
     rules = parse_rules(world)
