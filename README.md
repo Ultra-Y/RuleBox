@@ -38,6 +38,15 @@ python run.py content/levels/02-move-aside.txt
 
 没有安装 pygame 时会自动退化为文本输出。
 
+### 键盘没反应？
+
+1. 先点一下游戏窗口。窗口顶部出现「点击窗口后使用键盘」，说明焦点还在终端。
+2. 仍然不行时加 `--debug-keys` 运行，终端会打印每一次按键事件：
+
+```powershell
+python run.py --debug-keys
+```
+
 ## 测试
 
 ```powershell

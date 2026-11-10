@@ -103,7 +103,7 @@ def _run(game: Game, frames: int, shot: Path | None = None, debug_keys: bool = F
     _focus_window(pygame)
 
     pygame.display.set_caption(f"RuleBox · {game.level.name}")
-    pygame.key.set_repeat(180, 100)
+    pygame.key.set_repeat(0)  # 自己控制方向键的连发，Z/R 只触发一次
     clock = pygame.time.Clock()
 
     margin = 40
@@ -141,6 +141,7 @@ def _run(game: Game, frames: int, shot: Path | None = None, debug_keys: bool = F
 
     running = True
     drawn = 0
+    repeat_at = 0
     while running:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -151,12 +152,24 @@ def _run(game: Game, frames: int, shot: Path | None = None, debug_keys: bool = F
                         f"KEY key={event.key} unicode={event.unicode!r} "
                         f"focused={pygame.key.get_focused()}"
                     )
+                if event.key in moves:
+                    repeat_at = pygame.time.get_ticks() + 180
                 if not _handle_key(game, event.key, event.unicode, moves):
                     running = False
 
         # 事件被输入法/焦点吞掉时的兜底：直接轮询 Esc
         if pygame.key.get_pressed()[pygame.K_ESCAPE]:
             running = False
+
+        # 方向键按住时连续移动；Z/R 不在轮询里，避免连发
+        now = pygame.time.get_ticks()
+        if running and not game.won and now >= repeat_at:
+            pressed = pygame.key.get_pressed()
+            for key, (dr, dc) in moves.items():
+                if pressed[key]:
+                    game.move(dr, dc)
+                    repeat_at = now + 110
+                    break
 
         _draw(screen, game, (ox, oy), cell, fonts)
         pygame.display.flip()
