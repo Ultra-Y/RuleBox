@@ -9,6 +9,12 @@
 
 ![预览](docs/preview_01.png)
 
+## 给接手的开发者 / Agent
+
+- 先读 [`AGENTS.md`](AGENTS.md)（代理操作规范）和 [`docs/HANDOFF.md`](docs/HANDOFF.md)（状态快照、下一步、设计债）
+- 原计划见 [`docs/plan.md`](docs/plan.md)，行动清单见 [`docs/checklist.md`](docs/checklist.md)
+- 当前基线：34 条测试全过，第 1、2 关可玩
+
 ## 环境
 
 - Python 3.10+
