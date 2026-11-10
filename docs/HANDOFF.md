@@ -1,14 +1,14 @@
 # 交接说明（Handoff）
 
-> 快照：2026-11-10（菜单与规则修复）
-> 最新代码提交：`5aea692`（以 `git log` 为准）
+> 快照：2026-11-10（第 3 关加入）
+> 最新代码提交：以 `git log` 为准
 > 仓库：https://github.com/Ultra-Y/RuleBox （public）
 > 交接 tag：`handoff-2026-11-10`
 
 ## 1. 一句话状态
 
-Day 2、5.1、5.2、5.3 完成，并补上开始菜单、选关、通关进度、过关下一关；规则层修复了“相邻两句互相破坏”和“墙不阻挡”；第 2 关用竖排「墙/是/停」验证竖向规则；91 条测试全过；第 1、2 关可玩。
-下一项是 5.4：**第 3–8 关 + 每关解法回放测试**。
+Day 2、5.1、5.2、5.3 完成，并补上开始菜单、选关、通关进度、过关下一关；规则层支持相邻两句（横/竖）与显式「墙 是 停」；第 3 关《路被堵住了？》已加入（第 2 关地图，箱子下移一格堵住缺口）；92 条测试全过；第 1–3 关可玩。
+下一项是 5.4：**继续加第 4–8 关 + 每关解法回放测试**。
 
 ## 2. 资源清单
 
@@ -16,11 +16,11 @@ Day 2、5.1、5.2、5.3 完成，并补上开始菜单、选关、通关进度�
 | :--- | :--- | :--- |
 | 源码 | `src/rulebox/` | core 纯逻辑，ui 用 Pygame |
 | 关卡 | `content/levels/01-*.txt`、`02-*.txt` | 文本 DSL |
-| 测试 | `tests/` | 91 条 |
+| 测试 | `tests/` | 92 条 |
 | 子 agent 封装 | `tools/qoder_agent.py` | 调用 Qoder CN CLI，结果在 `docs/agent-runs/` |
 | 计划 | `docs/plan.md` | 12 关、6 周的原计划（快照） |
 | 清单 | `docs/checklist.md` | 每日/每周行动清单（快照） |
-| 截图 | `docs/preview_01.png`、`preview_02.png`、`menu.png` | README 用 |
+| 截图 | `docs/preview_01.png`、`preview_02.png`、`preview_03.png`、`menu.png` | README 用 |
 | AI 记录 | `docs/ai-log.md` | 真实协作记录，课程提交要用 |
 | 试玩 | `docs/playtest.md` | 模板，待填 |
 | 远端 | GitHub `Ultra-Y/RuleBox` | public，可直接 clone |
@@ -123,9 +123,10 @@ py -3.10 -m venv .venv
 - 进度文件 `progress.json` 已 gitignore。
 - 验证：91 passed，含无头 UI 流程 3 条。
 
-### 5.4 关卡 3–8
+### 5.4 关卡 3–8（进行中）
 
-每关配 `solutions/XX.txt`（`URDL` 字符串），加回放测试；跑不通就不算关卡完成。
+- **03 已加入**：`content/levels/03-blocked-road.txt`，第 2 关地图，箱子从 `(4,5)` 下移到缺口 `(5,5)`；布局测试锁住坐标。解法由策划提供，代码只保证加载、渲染和规则正确。
+- 04–08 待做；每关配 `solutions/XX.txt`（`URDL` 字符串）和回放测试，跑不通不算完成。
 
 ## 6. 已知问题
 
@@ -181,7 +182,7 @@ git clone RuleBox-handoff-2026-11-10.bundle RuleBox
 
 第一步：
 1. 读 AGENTS.md、docs/HANDOFF.md、docs/plan.md。
-2. 运行 .\.venv\Scripts\python.exe -m pytest -q，确认 91 passed。
+2. 运行 .\.venv\Scripts\python.exe -m pytest -q，确认 92 passed。
 3. 运行 .\.venv\Scripts\python.exe run.py，确认开始菜单能启动。
 
 约束：
@@ -190,14 +191,14 @@ git clone RuleBox-handoff-2026-11-10.bundle RuleBox
 - 改行为前先写测试；改完跑全量 pytest。
 - 不要重写 UI，不要引入新框架。
 
-下一项只做 HANDOFF 第 5.4 节：新增第 3–8 关，每关配 `solutions/XX.txt`（URDL 字符串）和回放测试。
+下一项按策划给的地图继续加第 4–8 关；每关配 `solutions/XX.txt` 和回放测试。
 先给我看关卡设计与测试计划，等我确认后再改代码，不要直接提交。
 ```
 
 ## 10. 交接检查清单
 
 - [x] 代码已推送，远程 = 本地
-- [x] 测试 91 passed
+- [x] 测试 92 passed
 - [x] 计划 / 清单 / AI 记录进仓库
 - [x] 交接 tag
 - [x] 新 agent 跑通测试
