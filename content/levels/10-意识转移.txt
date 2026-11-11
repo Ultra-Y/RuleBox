@@ -1,0 +1,42 @@
+name 10 意识转移
+size 10 6
+
+legend
+  # wall
+  . empty
+  @ baba
+  $ box
+  F flag
+  ~ water
+  ^ fire
+  o rock
+  D door
+  K key
+  P portal
+  1 word 人
+  2 word 是
+  3 word 你
+  4 word 墙
+  5 word 停
+  6 word 箱
+  7 word 推
+  8 word 旗
+  9 word 赢
+  0 word 传送
+  + word 和
+  - word 不
+  = word 浮
+  [ word 热
+  ] word 融
+  ( word 开
+  ) word 关
+  | word 传
+  ! word 败
+
+grid
+  #425######
+  #.+.#....#
+  #1@.#...F#
+  #2..#.829#
+  #3..#....#
+  ##########
