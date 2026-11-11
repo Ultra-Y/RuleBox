@@ -59,6 +59,27 @@ def test_push_box():
     assert game.world.get(4, 6).id == "box"
 
 
+def test_stop_and_push_object_is_pushable():
+    world = make_world(
+        words=[
+            (0, 0, "人"),
+            (0, 1, "是"),
+            (0, 2, "你"),
+            (1, 0, "箱"),
+            (1, 1, "是"),
+            (1, 2, "停"),
+            (1, 3, "和"),
+            (1, 4, "推"),
+        ],
+        objects=[(4, 1, "baba"), (4, 2, "box")],
+    )
+
+    result = try_move(world, 0, 1)
+    assert result.moved
+    assert world.get(4, 2).id == "baba"
+    assert world.get(4, 3).id == "box"
+
+
 def test_push_chain_blocked_by_wall():
     world = make_world(
         words=[

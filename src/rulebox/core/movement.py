@@ -71,6 +71,10 @@ def try_move(world: World, dr: int, dc: int) -> MoveResult:
     return MoveResult(True, won=won, lost=lost)
 
 
+def _is_pushable(entity: Entity, props: dict[str, set[str]]) -> bool:
+    return entity.is_word or has_prop(entity, props, "PUSH")
+
+
 def _move_one(
     world: World,
     row: int,
@@ -96,7 +100,13 @@ def _move_one(
         _relocate(world, row, col, target_row, target_col, entity, trail)
         return MoveResult(True)
 
-    if any(has_prop(target, props, "STOP") for target in targets):
+    # 停 + 推 的物件可以被推；只有“停但不可推”的物件才挡路。
+    stop_blockers = [
+        target
+        for target in targets
+        if has_prop(target, props, "STOP") and not _is_pushable(target, props)
+    ]
+    if stop_blockers:
         return MoveResult(False)
 
     # 门关着：只有带 OPEN 的移动方能进，进去后由接触结算把门毁掉。
@@ -111,11 +121,7 @@ def _move_one(
 
     # 词块永远可推，且不参与属性判定。
     pushable = next(
-        (
-            target
-            for target in targets
-            if target.is_word or has_prop(target, props, "PUSH")
-        ),
+        (target for target in targets if _is_pushable(target, props)),
         None,
     )
     if pushable is not None:
