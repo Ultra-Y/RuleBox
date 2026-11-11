@@ -22,7 +22,7 @@
 - 先读 [`AGENTS.md`](AGENTS.md)（代理操作规范）和 [`docs/HANDOFF.md`](docs/HANDOFF.md)（状态快照、下一步、设计债）
 - 全部机制（结算顺序、规则语法、属性表、边界）见 [`docs/MECHANICS.md`](docs/MECHANICS.md)
 - 原计划见 [`docs/plan.md`](docs/plan.md)，行动清单见 [`docs/checklist.md`](docs/checklist.md)
-- 当前基线：114 条测试全过，第 1–3 关可玩，关卡编辑器可用
+- 当前基线：119 条测试全过，第 1–8 关可玩，关卡编辑器可用
 
 ## 环境
 
@@ -125,10 +125,17 @@ pytest
 | 01 | 第一步 | 移动、走到旗子即胜；横排「墙 是 停」 |
 | 02 | 让开 | 推箱子；竖排「墙 / 是 / 停」演示竖向规则 |
 | 03 | 路被堵住了？ | 第 2 关地图，箱子下移一格堵住缺口 |
+| 04 | 拆掉规则 | 把「停」推出「墙 是 停」，规则失效后穿过墙 |
+| 05 | 过河 | 把「浮」推进「人 是」句子，获得浮水能力 |
+| 06 | 开门 | 组成「人 是 开」，进入并摧毁关着的门 |
+| 07 | 传送门 | 两个传送门成对传送，越过整排墙 |
+| 08 | 融化 | 把带「融」的石头推进火里，清出通道 |
 
 ![第 2 关](docs/preview_02.png)
 
-![第 3 关](docs/preview_03.png)
+![第 8 关](docs/preview_08.png)
+
+04–08 每关配 `solutions/编号.txt` 解法，`tests/test_solutions.py` 会回放并验证通关。
 
 ## 当前进度
 
@@ -145,9 +152,11 @@ pytest
 - [x] 每关「墙 是 停」阻挡
 - [x] 开始菜单、选关、通关进度与下一关
 - [x] 第 3 关《路被堵住了？》（第 2 关地图，箱子下移一格）
+- [x] 第 4–8 关：拆规则、浮水、开门、传送、融化
+- [x] 04–08 解法回放测试（`solutions/` + `tests/test_solutions.py`）
 - [x] 关卡编辑器、分享码导入导出
 - [x] 官方/自制关卡分离、可调画布、编辑器内试玩、重命名与删除
-- [ ] 12 关完整内容
+- [ ] 第 9–12 关
 
 ## 目录
 
@@ -169,6 +178,7 @@ RuleBox/
 │       └── editor.py   # 关卡编辑器
 ├── content/levels/     # 官方关卡文本
 ├── custom_levels/      # 自制关卡（gitignore）
+├── solutions/          # 每关解法（URDL）
 ├── assets/sprites/     # 16×16 像素精灵
 ├── tools/              # 素材生成、Qoder 子 agent 封装
 ├── tests/              # pytest
