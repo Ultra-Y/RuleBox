@@ -22,7 +22,7 @@
 - 先读 [`AGENTS.md`](AGENTS.md)（代理操作规范）和 [`docs/HANDOFF.md`](docs/HANDOFF.md)（状态快照、下一步、设计债）
 - 全部机制（结算顺序、规则语法、属性表、边界）见 [`docs/MECHANICS.md`](docs/MECHANICS.md)
 - 原计划见 [`docs/plan.md`](docs/plan.md)，行动清单见 [`docs/checklist.md`](docs/checklist.md)
-- 当前基线：107 条测试全过，第 1–3 关可玩，关卡编辑器可用
+- 当前基线：111 条测试全过，第 1–3 关可玩，关卡编辑器可用
 
 ## 环境
 
@@ -89,6 +89,14 @@ python run.py content/levels/02-move-aside.txt # 直接进某一关
 - 缺图时自动回退到原来的色块 + 文字。
 
 素材由 [`tools/generate_sprites.py`](tools/generate_sprites.py) 生成（需要 Pillow；**运行时不需要**）。
+
+## 词块生效状态
+
+- 被有效规则句子使用的词块保持原色；
+- 没进入任何有效句子的词块自动压暗；
+- 棋盘和编辑器使用同一套判定（`active_word_positions`）。
+
+![词块生效对比](docs/word_states.png)
 
 没有安装 pygame 时会自动退化为文本输出。
 

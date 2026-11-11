@@ -197,6 +197,7 @@
 - 官方关卡：`content/levels/*.txt`；自制关卡：`custom_levels/*.txt`（gitignore）。
 - 进度键：官方用文件 stem，自制用 `custom:<stem>`，互不干扰。
 - 选关只显示标题，不显示编号和符号；已完成关卡用淡色区分。
+- 生效规则中的词块保持原色；未进入任何有效句子的词块压暗（`active_word_positions`）。
 - 通关记录写入 `progress.json`（gitignore）。
 - 编辑器试玩不写进度，`Esc` 回到编辑器。
 

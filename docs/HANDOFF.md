@@ -1,13 +1,13 @@
 # 交接说明（Handoff）
 
-> 快照：2026-11-11（像素精灵加入）
+> 快照：2026-11-11（像素精灵 + 词块生效状态）
 > 最新代码提交：以 `git log` 为准
 > 仓库：https://github.com/Ultra-Y/RuleBox （public）
 > 交接 tag：`handoff-2026-11-10`
 
 ## 1. 一句话状态
 
-Day 2、5.1、5.2、5.3 完成，并补上开始菜单、官方/自制关卡分离、通关进度、过关下一关；规则层支持相邻两句（横/竖）与显式「墙 是 停」；第 3 关《路被堵住了？》已加入；编辑器支持 5×5–20×20、试玩、打开、重命名、删除、分享码；物件已换成 16×16 像素精灵；107 条测试全过；第 1–3 关可玩。
+Day 2、5.1、5.2、5.3 完成，并补上开始菜单、官方/自制关卡分离、通关进度、过关下一关；规则层支持相邻两句（横/竖）与显式「墙 是 停」；第 3 关《路被堵住了？》已加入；编辑器支持 5×5–20×20、试玩、打开、重命名、删除、分享码；物件已换成 16×16 像素精灵，未生效词块自动压暗；111 条测试全过；第 1–3 关可玩。
 下一项是 5.4：**继续加第 4–8 关 + 每关解法回放测试**。
 
 ## 2. 资源清单
@@ -16,7 +16,7 @@ Day 2、5.1、5.2、5.3 完成，并补上开始菜单、官方/自制关卡分�
 | :--- | :--- | :--- |
 | 源码 | `src/rulebox/` | core 纯逻辑，ui 用 Pygame |
 | 关卡 | `content/levels/01-*.txt`、`02-*.txt` | 文本 DSL |
-| 测试 | `tests/` | 107 条 |
+| 测试 | `tests/` | 111 条 |
 | 机制说明 | `docs/MECHANICS.md` | 结算顺序、规则语法、属性表、已知边界 |
 | 美术 | `assets/sprites/` | 10 个 16×16 像素精灵；生成脚本 `tools/generate_sprites.py` |
 | 子 agent 封装 | `tools/qoder_agent.py` | 调用 Qoder CN CLI，结果在 `docs/agent-runs/` |
@@ -132,14 +132,20 @@ py -3.10 -m venv .venv
 - `ui/editor.py`：5×5–20×20 画布、调色板、放置/擦除、试玩、打开、重命名、删除、导出/导入分享码。
 - 试玩不落盘：`App.play_editor_level` 直接构造 `Game`，Esc 回编辑器，不写进度。
 - 保存/导入前都用 `parse_level` 校验，坏码不会进关卡库。
-- 验证：107 passed（新增目录/编辑器/尺寸/素材测试 15 条）；菜单/官方选关/编辑器截图检查。
+- 验证：111 passed（新增目录/编辑器/尺寸/素材测试 19 条）；菜单/官方选关/编辑器截图检查。
 
 ### 5.3.4 像素精灵（已完成）
 
 - 10 个物件精灵：人、墙、箱、旗、水、火、石、门、钥、传送门，16×16 PNG，`assets/sprites/`。
 - `ui/sprites.py` 负责加载/缓存/最近邻缩放；棋盘与编辑器调色板共用；缺图回退色块+文字。
 - `tools/generate_sprites.py` 是生成脚本（需要 Pillow，运行时不需要）。
-- 验证：107 passed（新增素材完整性测试）；三关、菜单、官方选关、编辑器截图检查。
+- 验证：111 passed（新增素材完整性测试）；三关、菜单、官方选关、编辑器截图检查。
+
+### 5.3.5 词块生效状态（已完成）
+
+- `rules.active_word_positions` 复用 `parse_run_spans`，返回被有效句子占用的格子。
+- 棋盘与编辑器把未生效词块压暗（颜色 ×0.48），生效词块保持原色。
+- 验证：111 passed（新增横/竖/相邻/无效句判定）；`docs/word_states.png` 对比截图。
 
 ### 5.4 关卡 3–8（进行中）
 
@@ -203,7 +209,7 @@ git clone RuleBox-handoff-2026-11-10.bundle RuleBox
 
 第一步：
 1. 读 AGENTS.md、docs/HANDOFF.md、docs/plan.md。
-2. 运行 .\.venv\Scripts\python.exe -m pytest -q，确认 107 passed。
+2. 运行 .\.venv\Scripts\python.exe -m pytest -q，确认 111 passed。
 3. 运行 .\.venv\Scripts\python.exe run.py，确认开始菜单能启动。
 
 约束：
@@ -219,7 +225,7 @@ git clone RuleBox-handoff-2026-11-10.bundle RuleBox
 ## 10. 交接检查清单
 
 - [x] 代码已推送，远程 = 本地
-- [x] 测试 107 passed
+- [x] 测试 111 passed
 - [x] 计划 / 清单 / AI 记录进仓库
 - [x] 交接 tag
 - [x] 新 agent 跑通测试
