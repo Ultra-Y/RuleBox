@@ -1,4 +1,4 @@
-name 12 传送钥匙
+name 09 钥匙
 size 11 8
 
 legend
@@ -7,9 +7,7 @@ legend
   @ baba
   F flag
   D door
-  P portal
   k key
-  L word 传送
   人 word 人
   是 word 是
   你 word 你
@@ -23,14 +21,13 @@ legend
   开 word 开
   和 word 和
   推 word 推
-  传 word 传
 
 grid
   #人是你旗是赢墙是停#
-  #L是.传...@.#
-  #.......P.#
-  ###########
+  #..钥是开和.推.#
+  #........@#
+  #....k....#
+  #####D#####
   #.........#
-  #....PkD..#
-  #......F..#
-  #门是关钥是开和推.#
+  #.......F.#
+  #门是关......#
