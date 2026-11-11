@@ -1,6 +1,6 @@
 # RuleBox 机制说明
 
-> 对应代码：`src/rulebox/core/` 与 `src/rulebox/ui/`。测试基线 121 条。
+> 对应代码：`src/rulebox/core/` 与 `src/rulebox/ui/`。测试基线 123 条。
 > 这份文档解释“玩家看到的规则”和“代码实际的结算顺序”。
 
 ## 1. 世界模型
@@ -202,6 +202,7 @@
 ## 9. 界面、关卡与进度
 
 - 菜单：开始游戏 / 官方关卡 / 自制关卡 / 关卡编辑器 / 退出。
+- 官方关卡分类：`教程`（01–10）/ `第一章`（1-1）；进入分类后再选具体关卡。
 - 官方关卡：`content/levels/*.txt`；自制关卡：`custom_levels/*.txt`（gitignore）。
 - 进度键：官方用文件 stem，自制用 `custom:<stem>`，互不干扰。
 - 选关只显示标题，不显示编号和符号；已完成关卡用淡色区分。
@@ -250,3 +251,4 @@
 | 编辑器 DSL/分享码 | `core/level_builder.py` |
 | 菜单/选关/游戏 UI | `ui/app.py` |
 | 编辑器 UI | `ui/editor.py` |
+

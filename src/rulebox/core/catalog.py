@@ -50,6 +50,14 @@ class LevelEntry:
     def title(self) -> str:
         return f"{self.number} {self.name}"
 
+    @property
+    def category(self) -> str:
+        if self.source == "custom":
+            return "custom"
+        if self.path.stem.startswith("main-"):
+            return "main"
+        return "tutorial"
+
 
 def discover_levels(
     levels_dir: Path = OFFICIAL_DIR, source: str = "official"

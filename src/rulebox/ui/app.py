@@ -47,8 +47,9 @@ class _App:
         self.custom = list(custom or [])
         self.entries = official
         self.progress = progress
-        self.screen = "menu"  # menu | select | play | editor
+        self.screen = "menu"  # menu | official | select | play | editor
         self.menu_index = 0
+        self.official_index = 0
         self.select_index = 0
         self.select_mode = "official"
         self.select_entries = list(official)
@@ -126,9 +127,24 @@ class _App:
         else:
             self.open_select(self.select_mode)
 
+    def open_official(self) -> None:
+        self.official_index = 0
+        self.screen = "official"
+
     def open_select(self, mode: str = "official", for_edit: bool = False) -> None:
         self.select_mode = mode
-        self.select_entries = list(self.official if mode == "official" else self.custom)
+        if mode == "tutorial":
+            self.select_entries = [
+                entry for entry in self.official if entry.category == "tutorial"
+            ]
+        elif mode == "chapter1":
+            self.select_entries = [
+                entry for entry in self.official if entry.category == "main"
+            ]
+        elif mode == "custom":
+            self.select_entries = list(self.custom)
+        else:
+            self.select_entries = list(self.official)
         self.select_for_edit = for_edit
         self.select_index = 0
         if self.level_index is not None and self.play_entries:
@@ -186,9 +202,18 @@ class _App:
         self.official = discover_levels()
         self.custom = discover_custom()
         self.entries = self.official
-        self.select_entries = (
-            self.official if self.select_mode == "official" else self.custom
-        )
+        if self.select_mode == "tutorial":
+            self.select_entries = [
+                entry for entry in self.official if entry.category == "tutorial"
+            ]
+        elif self.select_mode == "chapter1":
+            self.select_entries = [
+                entry for entry in self.official if entry.category == "main"
+            ]
+        elif self.select_mode == "custom":
+            self.select_entries = self.custom
+        else:
+            self.select_entries = self.official
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -403,6 +428,8 @@ def _move_map() -> dict[int, tuple[int, int]]:
 def _handle_event(app: _App, key: int, text: str, moves) -> bool:
     if app.screen == "menu":
         return _handle_menu(app, key)
+    if app.screen == "official":
+        return _handle_official(app, key)
     if app.screen == "select":
         return _handle_select(app, key)
     if app.screen == "editor":
@@ -432,7 +459,7 @@ def _handle_menu(app: _App, key: int) -> bool:
         if app.menu_index == 0:
             app.start_index(first_unfinished(app.official, app.progress))
         elif app.menu_index == 1:
-            app.open_select("official")
+            app.open_official()
         elif app.menu_index == 2:
             app.open_select("custom")
         elif app.menu_index == 3:
@@ -444,6 +471,21 @@ def _handle_menu(app: _App, key: int) -> bool:
     return True
 
 
+def _handle_official(app: _App, key: int) -> bool:
+    import pygame
+
+    options = ("tutorial", "chapter1")
+    if key in (pygame.K_UP, pygame.K_w):
+        app.official_index = (app.official_index - 1) % len(options)
+    elif key in (pygame.K_DOWN, pygame.K_s):
+        app.official_index = (app.official_index + 1) % len(options)
+    elif key in (pygame.K_RETURN, pygame.K_KP_ENTER, pygame.K_SPACE):
+        app.open_select(options[app.official_index])
+    elif key == pygame.K_ESCAPE:
+        app.screen = "menu"
+    return True
+
+
 def _handle_select(app: _App, key: int) -> bool:
     import pygame
 
@@ -452,6 +494,8 @@ def _handle_select(app: _App, key: int) -> bool:
         if key == pygame.K_ESCAPE:
             if app.select_for_edit:
                 app.open_editor()
+            elif app.select_mode in ("tutorial", "chapter1"):
+                app.screen = "official"
             else:
                 app.screen = "menu"
         return True
@@ -467,6 +511,8 @@ def _handle_select(app: _App, key: int) -> bool:
     elif key == pygame.K_ESCAPE:
         if app.select_for_edit:
             app.open_editor()
+        elif app.select_mode in ("tutorial", "chapter1"):
+            app.screen = "official"
         else:
             app.screen = "menu"
     return True
@@ -545,6 +591,8 @@ def _draw(screen, app: _App, chrome) -> None:
 
     if app.screen == "menu":
         _draw_menu(screen, app, chrome)
+    elif app.screen == "official":
+        _draw_official(screen, app, chrome)
     elif app.screen == "select":
         _draw_select(screen, app, chrome)
     elif app.screen == "editor" and app.editor is not None:
@@ -583,28 +631,62 @@ def _draw_menu(screen, app: _App, chrome) -> None:
     screen.blit(tip, tip.get_rect(center=(WIDTH // 2, 630)))
 
 
+def _draw_official(screen, app: _App, chrome) -> None:
+    import pygame
+
+    screen.fill(BG)
+    title = chrome["title"].render("官方关卡", True, TITLE)
+    screen.blit(title, title.get_rect(center=(WIDTH // 2, 100)))
+
+    tutorials = [entry for entry in app.official if entry.category == "tutorial"]
+    main_levels = [entry for entry in app.official if entry.category == "main"]
+    options = [
+        (f"教程（{len(tutorials)} 关）", "tutorial"),
+        (f"第一章（{len(main_levels)} 关）", "chapter1"),
+    ]
+    for index, (label, _mode) in enumerate(options):
+        color = TITLE if index == app.official_index else HINT
+        text = chrome["menu"].render(label, True, color)
+        rect = text.get_rect(center=(WIDTH // 2, 280 + index * 60))
+        if index == app.official_index:
+            pygame.draw.rect(screen, SELECT_BG, rect.inflate(220, 16), border_radius=10)
+        screen.blit(text, rect)
+
+    tip = chrome["hint"].render("↑↓ 选择 · Enter 进入 · Esc 返回", True, HINT)
+    screen.blit(tip, tip.get_rect(center=(WIDTH // 2, 620)))
+
+
 def _draw_select(screen, app: _App, chrome) -> None:
     import pygame
 
     screen.fill(BG)
     if app.select_for_edit:
         heading = "选择要编辑的自制关卡"
+    elif app.select_mode == "tutorial":
+        heading = "教程"
+    elif app.select_mode == "chapter1":
+        heading = "第一章"
+    elif app.select_mode == "custom":
+        heading = "自制关卡"
     else:
-        heading = "官方关卡" if app.select_mode == "official" else "自制关卡"
+        heading = "官方关卡"
     title = chrome["title"].render(heading, True, TITLE)
     screen.blit(title, title.get_rect(center=(WIDTH // 2, 100)))
 
     entries = app.select_entries
     if not entries:
-        message = (
-            "content/levels 下还没有官方关卡"
-            if app.select_mode == "official"
-            else "还没有自制关卡，去关卡编辑器做一个"
-        )
+        if app.select_mode == "tutorial":
+            message = "教程还没有关卡"
+        elif app.select_mode == "chapter1":
+            message = "第一章还没有关卡"
+        elif app.select_mode == "custom":
+            message = "还没有自制关卡，去关卡编辑器做一个"
+        else:
+            message = "content/levels 下还没有官方关卡"
         empty = chrome["rule"].render(message, True, HINT)
         screen.blit(empty, empty.get_rect(center=(WIDTH // 2, 300)))
     else:
-        max_rows = 9
+        max_rows = 10
         start = max(0, min(app.select_index - 3, len(entries) - max_rows))
         start = max(0, start)
         for offset, entry in enumerate(entries[start : start + max_rows]):
@@ -619,7 +701,7 @@ def _draw_select(screen, app: _App, chrome) -> None:
 
     action = "Enter 编辑 · Esc 返回" if app.select_for_edit else "↑↓ 选择 · Enter 开始 · Esc 返回"
     tip = chrome["hint"].render(action, True, HINT)
-    screen.blit(tip, tip.get_rect(center=(WIDTH // 2, 620)))
+    screen.blit(tip, tip.get_rect(center=(WIDTH // 2, 650)))
 
 
 def _draw_play(screen, app: _App, chrome) -> None:

@@ -73,6 +73,16 @@ def test_custom_level_key_is_prefixed(tmp_path):
     assert entries[0].display_name == "我的关卡"
 
 
+def test_level_categories():
+    tutorial = LevelEntry(Path("01-a.txt"), "01", "01 第一步")
+    main = LevelEntry(Path("main-1-1.txt"), "main", "1-1")
+    custom = LevelEntry(Path("我的.txt"), "我的", "我的", source="custom")
+
+    assert tutorial.category == "tutorial"
+    assert main.category == "main"
+    assert custom.category == "custom"
+
+
 def test_next_official_number(tmp_path):
     write_level(tmp_path, "01-a", "第一关")
     write_level(tmp_path, "03-c", "第三关")
