@@ -15,12 +15,14 @@
 
 ![关卡编辑器](docs/editor.png)
 
+![像素精灵](docs/sprites.png)
+
 ## 给接手的开发者 / Agent
 
 - 先读 [`AGENTS.md`](AGENTS.md)（代理操作规范）和 [`docs/HANDOFF.md`](docs/HANDOFF.md)（状态快照、下一步、设计债）
 - 全部机制（结算顺序、规则语法、属性表、边界）见 [`docs/MECHANICS.md`](docs/MECHANICS.md)
 - 原计划见 [`docs/plan.md`](docs/plan.md)，行动清单见 [`docs/checklist.md`](docs/checklist.md)
-- 当前基线：106 条测试全过，第 1–3 关可玩，关卡编辑器可用
+- 当前基线：107 条测试全过，第 1–3 关可玩，关卡编辑器可用
 
 ## 环境
 
@@ -76,6 +78,17 @@ python run.py content/levels/02-move-aside.txt # 直接进某一关
 7. **导出码 / 导入码**：分享码写入 `exports/` 并尝试复制到剪贴板，导入时校验后落到 `custom_levels/`。
 
 自定义关卡、导出目录都在 `.gitignore` 里，不会污染仓库。
+
+## 美术
+
+物件使用 **16×16 像素精灵**，位于 `assets/sprites/`：
+
+- 人、墙、箱、旗、水、火、石、门、钥、传送门共 10 个；
+- Pygame 用最近邻缩放，保持像素边缘；
+- 编辑器调色板和棋盘共用同一套素材；
+- 缺图时自动回退到原来的色块 + 文字。
+
+素材由 [`tools/generate_sprites.py`](tools/generate_sprites.py) 生成（需要 Pillow；**运行时不需要**）。
 
 没有安装 pygame 时会自动退化为文本输出。
 
@@ -145,6 +158,8 @@ RuleBox/
 │       └── editor.py   # 关卡编辑器
 ├── content/levels/     # 官方关卡文本
 ├── custom_levels/      # 自制关卡（gitignore）
+├── assets/sprites/     # 16×16 像素精灵
+├── tools/              # 素材生成、Qoder 子 agent 封装
 ├── tests/              # pytest
 ├── run.py              # 启动器
 └── requirements.txt
