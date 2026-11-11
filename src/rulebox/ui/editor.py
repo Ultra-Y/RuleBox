@@ -17,6 +17,7 @@ from ..core.level_builder import (
     share_decode,
     share_encode,
 )
+from .sprites import draw_object
 
 EXPORTS_DIR = ROOT / "exports"
 
@@ -351,6 +352,12 @@ class Editor:
         for index, item in enumerate(PALETTE):
             rect = self._palette_rect(index)
             entity = _entity(item.symbol)
+            if entity is not None and not entity.is_word:
+                pygame.draw.rect(screen, PANEL, rect, border_radius=4)
+                if draw_object(screen, entity, rect.inflate(-4, -4)):
+                    if item.symbol == self.selected_symbol:
+                        pygame.draw.rect(screen, ACCENT, rect, 3, border_radius=4)
+                    continue
             color = entity.color if entity is not None else PANEL
             pygame.draw.rect(screen, color, rect, border_radius=4)
             label = chrome["hint"].render(item.label, True, _text_color(color))
@@ -388,6 +395,8 @@ def _draw_entity(screen, entity, x: int, y: int, cell: int, chrome) -> None:
 
     inset = max(2, cell // 12)
     rect = pygame.Rect(x + inset, y + inset, cell - inset * 2, cell - inset * 2)
+    if draw_object(screen, entity, rect):
+        return
     radius = max(3, cell // 8)
     pygame.draw.rect(screen, entity.color, rect, border_radius=radius)
     pygame.draw.rect(screen, (18, 18, 24), rect, 1, border_radius=radius)

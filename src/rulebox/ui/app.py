@@ -16,6 +16,7 @@ from ..core.game import Game
 from ..core.level import load_level, parse_level
 from ..core.rules import parse_rules
 from .editor import Editor
+from .sprites import draw_object
 
 WIDTH, HEIGHT = 980, 680
 MARGIN, TOP, BOTTOM = 40, 100, 170
@@ -641,6 +642,8 @@ def _draw_play(screen, app: _App, chrome) -> None:
             for entity in world.entities_at(row, col):
                 inset = max(3, cell // 12)
                 rect = pygame.Rect(x + inset, y + inset, cell - inset * 2, cell - inset * 2)
+                if draw_object(screen, entity, rect):
+                    continue
                 radius = max(4, cell // 8)
                 pygame.draw.rect(screen, entity.color, rect, border_radius=radius)
                 pygame.draw.rect(screen, (18, 18, 24), rect, 1, border_radius=radius)
