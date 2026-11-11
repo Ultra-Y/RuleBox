@@ -98,22 +98,22 @@ def parse_sentence(tokens: list[str]) -> Rule | None:
     return Rule(frozenset(nouns), frozenset(props))
 
 
-def parse_run(tokens: list[str]) -> list[Rule]:
-    """把一段连续词块切成尽量多的合法句子。
+def parse_run_spans(tokens: list[str]) -> list[tuple[int, int, Rule]]:
+    """把一段连续词块切成句子，并返回每句在 tokens 中的区间。
 
     相邻的两句（例如「墙 是 停 人 是 你」）不再互相破坏：
     整段解析失败时，退回按前缀切分，取句子数最多的切法。
     """
     total = len(tokens)
-    memo: dict[int, list[Rule] | None] = {}
+    memo: dict[int, list[tuple[int, int, Rule]] | None] = {}
 
-    def solve(start: int) -> list[Rule] | None:
+    def solve(start: int) -> list[tuple[int, int, Rule]] | None:
         if start == total:
             return []
         if start in memo:
             return memo[start]
 
-        best: list[Rule] | None = None
+        best: list[tuple[int, int, Rule]] | None = None
         for end in range(start + 3, total + 1):
             rule = parse_sentence(tokens[start:end])
             if rule is None:
@@ -121,7 +121,7 @@ def parse_run(tokens: list[str]) -> list[Rule]:
             rest = solve(end)
             if rest is None:
                 continue
-            candidate = [rule, *rest]
+            candidate = [(start, end, rule), *rest]
             if best is None or len(candidate) > len(best):
                 best = candidate
 
@@ -131,10 +131,12 @@ def parse_run(tokens: list[str]) -> list[Rule]:
     return solve(0) or []
 
 
-def parse_rules(world: World) -> list[Rule]:
-    """扫描所有横向、纵向连续词块，返回生效的规则。"""
-    rules: list[Rule] = []
+def parse_run(tokens: list[str]) -> list[Rule]:
+    return [rule for _start, _end, rule in parse_run_spans(tokens)]
 
+
+def _word_runs(world: World):
+    """产出 (行, 列, 行方向, 列方向, 词序列) 的所有词块长串。"""
     for row in range(world.height):
         col = 0
         while col < world.width:
@@ -144,7 +146,7 @@ def parse_rules(world: World) -> list[Rule]:
                     col += 1
                 if col - start >= 3:
                     tokens = [_word_text(world, row, c) for c in range(start, col)]
-                    rules.extend(parse_run(tokens))
+                    yield row, start, 0, 1, tokens
             else:
                 col += 1
 
@@ -157,11 +159,27 @@ def parse_rules(world: World) -> list[Rule]:
                     row += 1
                 if row - start >= 3:
                     tokens = [_word_text(world, r, col) for r in range(start, row)]
-                    rules.extend(parse_run(tokens))
+                    yield start, col, 1, 0, tokens
             else:
                 row += 1
 
+
+def parse_rules(world: World) -> list[Rule]:
+    """扫描所有横向、纵向连续词块，返回生效的规则。"""
+    rules: list[Rule] = []
+    for _row, _col, _dr, _dc, tokens in _word_runs(world):
+        rules.extend(parse_run(tokens))
     return list(dict.fromkeys(rules))
+
+
+def active_word_positions(world: World) -> set[tuple[int, int]]:
+    """返回被有效句子使用的词块坐标；未生效的词块不在其中。"""
+    active: set[tuple[int, int]] = set()
+    for row, col, dr, dc, tokens in _word_runs(world):
+        for start, end, _rule in parse_run_spans(tokens):
+            for offset in range(start, end):
+                active.add((row + dr * offset, col + dc * offset))
+    return active
 
 
 def property_map(rules: list[Rule]) -> dict[str, set[str]]:

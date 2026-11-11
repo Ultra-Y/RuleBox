@@ -6,7 +6,9 @@ from pathlib import Path
 
 from ..core.catalog import CUSTOM_DIR, ROOT
 from ..core.entities import make_object, make_word
-from ..core.level import parse_level
+from ..core.level import Level, parse_level
+from ..core.rules import active_word_positions
+from ..core.world import World
 from ..core.level_builder import (
     BY_SYMBOL,
     PALETTE,
@@ -287,6 +289,13 @@ class Editor:
         cell = max(12, cell)
         return GRID_X, GRID_Y, cell
 
+    def _active_word_positions(self) -> set[tuple[int, int]]:
+        cells = [[_entity(symbol) for symbol in row] for row in self.cells]
+        try:
+            return active_word_positions(World(Level("editor", self.width, self.height, cells)))
+        except Exception:
+            return set()
+
     def _palette_rect(self, index: int):
         import pygame
 
@@ -338,6 +347,7 @@ class Editor:
             screen.blit(text, text.get_rect(center=rect.center))
 
         gx, gy, cell = self._grid_layout()
+        active_words = self._active_word_positions()
         for row in range(self.height):
             for col in range(self.width):
                 x = gx + col * cell
@@ -347,7 +357,10 @@ class Editor:
                 pygame.draw.rect(screen, GRID_LINE, (x, y, cell, cell), 1)
                 entity = _entity(self.cells[row][col])
                 if entity is not None:
-                    _draw_entity(screen, entity, x, y, cell, chrome)
+                    color = entity.color
+                    if entity.is_word and (row, col) not in active_words:
+                        color = _dim_color(color)
+                    _draw_entity(screen, entity, x, y, cell, chrome, color)
 
         for index, item in enumerate(PALETTE):
             rect = self._palette_rect(index)
@@ -390,22 +403,24 @@ def _entity(symbol: str):
     return make_object(item.value)
 
 
-def _draw_entity(screen, entity, x: int, y: int, cell: int, chrome) -> None:
+def _draw_entity(screen, entity, x: int, y: int, cell: int, chrome, color=None) -> None:
     import pygame
 
     inset = max(2, cell // 12)
     rect = pygame.Rect(x + inset, y + inset, cell - inset * 2, cell - inset * 2)
     if draw_object(screen, entity, rect):
         return
+    if color is None:
+        color = entity.color
     radius = max(3, cell // 8)
-    pygame.draw.rect(screen, entity.color, rect, border_radius=radius)
+    pygame.draw.rect(screen, color, rect, border_radius=radius)
     pygame.draw.rect(screen, (18, 18, 24), rect, 1, border_radius=radius)
     if entity.id == "wall":
         inner = rect.inflate(-max(4, cell // 5), -max(4, cell // 5))
         pygame.draw.rect(screen, (68, 72, 90), inner, 2, border_radius=max(2, radius - 2))
         return
     font = chrome["word"] if entity.is_word else chrome["object"]
-    label = font.render(entity.text, True, _text_color(entity.color))
+    label = font.render(entity.text, True, _text_color(color))
     screen.blit(label, label.get_rect(center=rect.center))
 
 
@@ -413,6 +428,10 @@ def _text_color(bg: tuple[int, int, int]) -> tuple[int, int, int]:
     r, g, b = bg
     luminance = 0.299 * r + 0.587 * g + 0.114 * b
     return TEXT_DARK if luminance > 140 else TEXT_LIGHT
+
+
+def _dim_color(color: tuple[int, int, int], factor: float = 0.48) -> tuple[int, int, int]:
+    return tuple(max(0, int(channel * factor)) for channel in color)
 
 
 def _wrap(text: str, font, width: int) -> list[str]:

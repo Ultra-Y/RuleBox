@@ -1,7 +1,12 @@
 from rulebox.core.entities import make_object, make_word
 from rulebox.core.level import Level
 from rulebox.core.resolve import you_positions
-from rulebox.core.rules import parse_rules, parse_sentence, property_map
+from rulebox.core.rules import (
+    active_word_positions,
+    parse_rules,
+    parse_sentence,
+    property_map,
+)
 from rulebox.core.world import World
 
 
@@ -129,6 +134,46 @@ def test_adjacent_sentences_in_one_column():
     rules = parse_rules(world)
     assert len(rules) == 2
     assert {rule.display() for rule in rules} == {"墙 是 停", "人 是 你"}
+
+
+def test_active_word_positions_marks_rule_tiles():
+    world = make_world(
+        words=[(1, 1, "墙"), (1, 2, "是"), (1, 3, "停"), (1, 5, "人")]
+    )
+    assert active_word_positions(world) == {(1, 1), (1, 2), (1, 3)}
+
+
+def test_active_word_positions_marks_adjacent_sentences():
+    world = make_world(
+        words=[
+            (1, 1, "墙"),
+            (1, 2, "是"),
+            (1, 3, "停"),
+            (1, 4, "人"),
+            (1, 5, "是"),
+            (1, 6, "你"),
+        ]
+    )
+    assert active_word_positions(world) == {
+        (1, 1),
+        (1, 2),
+        (1, 3),
+        (1, 4),
+        (1, 5),
+        (1, 6),
+    }
+
+
+def test_active_word_positions_vertical():
+    world = make_world(
+        words=[(1, 1, "墙"), (2, 1, "是"), (3, 1, "停"), (5, 1, "人")]
+    )
+    assert active_word_positions(world) == {(1, 1), (2, 1), (3, 1)}
+
+
+def test_active_word_positions_empty_for_incomplete():
+    world = make_world(words=[(1, 1, "墙"), (1, 2, "是")])
+    assert active_word_positions(world) == set()
 
 
 def test_you_positions_scans_overlapped_entities():

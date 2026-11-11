@@ -14,7 +14,7 @@ from ..core.catalog import (
 )
 from ..core.game import Game
 from ..core.level import load_level, parse_level
-from ..core.rules import parse_rules
+from ..core.rules import active_word_positions, parse_rules
 from .editor import Editor
 from .sprites import draw_object
 
@@ -627,6 +627,7 @@ def _draw_play(screen, app: _App, chrome) -> None:
     ox, oy, cell = app.layout
     fonts = {**chrome, **app.fonts}
     screen.fill(BG)
+    active_words = active_word_positions(world)
 
     screen.blit(fonts["title"].render(_display_title(world.name), True, TITLE), (MARGIN, 24))
     moves_text = fonts["hint"].render(f"步数 {game.moves}", True, HINT)
@@ -644,8 +645,11 @@ def _draw_play(screen, app: _App, chrome) -> None:
                 rect = pygame.Rect(x + inset, y + inset, cell - inset * 2, cell - inset * 2)
                 if draw_object(screen, entity, rect):
                     continue
+                color = entity.color
+                if entity.is_word and (row, col) not in active_words:
+                    color = _dim_color(color)
                 radius = max(4, cell // 8)
-                pygame.draw.rect(screen, entity.color, rect, border_radius=radius)
+                pygame.draw.rect(screen, color, rect, border_radius=radius)
                 pygame.draw.rect(screen, (18, 18, 24), rect, 1, border_radius=radius)
 
                 if entity.id == "wall":
@@ -655,7 +659,7 @@ def _draw_play(screen, app: _App, chrome) -> None:
                     )
                 else:
                     font = fonts["word"] if entity.is_word else fonts["object"]
-                    label = font.render(entity.text, True, _text_color(entity.color))
+                    label = font.render(entity.text, True, _text_color(color))
                     screen.blit(label, label.get_rect(center=rect.center))
 
     rules = parse_rules(world)
@@ -700,6 +704,10 @@ def _text_color(bg: tuple[int, int, int]) -> tuple[int, int, int]:
     r, g, b = bg
     luminance = 0.299 * r + 0.587 * g + 0.114 * b
     return TEXT_DARK if luminance > 140 else TEXT_LIGHT
+
+
+def _dim_color(color: tuple[int, int, int], factor: float = 0.48) -> tuple[int, int, int]:
+    return tuple(max(0, int(channel * factor)) for channel in color)
 
 
 def _display_title(text: str) -> str:
