@@ -4,13 +4,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from ..core.catalog import (
-    CUSTOM_DIR,
-    IS_FROZEN,
-    OFFICIAL_DIR,
-    USER_ROOT,
-    next_official_number,
-)
+from ..core.catalog import CUSTOM_DIR, USER_ROOT
 from ..core.entities import make_object, make_word
 from ..core.level import Level, parse_level
 from ..core.rules import active_word_positions
@@ -138,25 +132,6 @@ class Editor:
         self._undo_stack.clear()
         self._redo_stack.clear()
         self.message = f"已打开：{path.name}"
-
-    def promote(self) -> None:
-        """把当前设计复制到官方关卡目录，自动取下一个编号。"""
-        if IS_FROZEN:
-            self.message = "打包版不写内置官方目录；请用源码版转官方"
-            return
-        try:
-            number = next_official_number(OFFICIAL_DIR)
-            clean = self.name.strip() or "自制关卡"
-            text = build_level_text(f"{number:02d} {clean}", self.cells)
-            parse_level(text, source="<official>")
-            path = safe_level_path(OFFICIAL_DIR, f"{number:02d}-{clean}")
-            path.write_text(text, encoding="utf-8")
-        except Exception as exc:
-            self.message = f"转官方失败：{exc}"
-            return
-        self.message = f"已复制为官方 {path.name}（自制文件保留）"
-        if self.on_changed:
-            self.on_changed()
 
     def rename(self) -> None:
         if self.current_path is None:
@@ -363,8 +338,7 @@ class Editor:
             ("导出码", pygame.Rect(760, 342, 170, 40), self.export),
             ("导入码", pygame.Rect(590, 388, 160, 40), self.import_share),
             ("清空", pygame.Rect(760, 388, 170, 40), self.clear),
-            ("转官方", pygame.Rect(590, 434, 160, 40), self.promote),
-            ("返回菜单", pygame.Rect(760, 434, 170, 40), self.on_back or (lambda: None)),
+            ("返回菜单", pygame.Rect(590, 434, 340, 40), self.on_back or (lambda: None)),
         ]
         return specs
 

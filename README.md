@@ -22,7 +22,7 @@
 - 先读 [`AGENTS.md`](AGENTS.md)（代理操作规范）和 [`docs/HANDOFF.md`](docs/HANDOFF.md)（状态快照、下一步、设计债）
 - 全部机制（结算顺序、规则语法、属性表、边界）见 [`docs/MECHANICS.md`](docs/MECHANICS.md)
 - 原计划见 [`docs/plan.md`](docs/plan.md)，行动清单见 [`docs/checklist.md`](docs/checklist.md)
-- 当前基线：120 条测试全过，第 1–9 关可玩，关卡编辑器可用
+- 当前基线：119 条测试全过，第 1–9 关可玩，关卡编辑器可用
 
 ## 环境
 
@@ -77,10 +77,21 @@ python run.py content/levels/02-move-aside.txt # 直接进某一关
 5. **打开**：从已保存的自制关卡中选一个继续编辑；
 6. **重命名 / 删除**：作用于当前打开或保存过的自制关卡；
 7. **撤销/重做**：`Ctrl+Z` / `Ctrl+Y`，最多 60 步；
-8. **转官方**：复制到 `content/levels/`，自动取下一个编号，自制文件保留；
-9. **导出码 / 导入码**：分享码写入 `exports/` 并尝试复制到剪贴板，导入时校验后落到 `custom_levels/`。
+8. **导出码 / 导入码**：分享码写入 `exports/` 并尝试复制到剪贴板，导入时校验后落到 `custom_levels/`。
 
 自定义关卡、导出目录都在 `.gitignore` 里，不会污染仓库。
+
+## 把自制关卡收进官方
+
+**编辑器不负责“转官方”**，官方收录由维护者单独做：
+
+1. 在编辑器里保存到 `custom_levels/`；
+2. 把文件名/标题发给维护者（不要直接手动塞进 `content/levels/`）；
+3. 维护者检查可解性，复制到 `content/levels/`，用下一个编号，并把 `name` 改成 `0X 标题`；
+4. 维护者补 `solutions/0X.txt`、解法回放测试、截图和文档；
+5. 跑全量测试、重新打发布包。
+
+直接把未验证的草稿放进 `content/levels/` 会被游戏当成正式官方关卡，所以不要这么做。
 
 ## 美术
 
