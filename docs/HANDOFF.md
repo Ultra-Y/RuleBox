@@ -1,6 +1,6 @@
 # 交接说明（Handoff）
 
-> 快照：2026-11-11（第 1–12 关完成）
+> 快照：2026-11-11（12 关 + Windows 免安装包）
 > 最新代码提交：以 `git log` 为准
 > 仓库：https://github.com/Ultra-Y/RuleBox （public）
 > 交接 tag：`handoff-2026-11-10`
@@ -8,7 +8,7 @@
 ## 1. 一句话状态
 
 Day 2、5.1、5.2、5.3 完成，并补上开始菜单、官方/自制关卡分离、通关进度、过关下一关；规则层支持相邻两句（横/竖）与显式「墙 是 停」；第 1–12 关已全部加入，04–12 每关配 `solutions/` 回放测试，静态规则尽量放在地图外沿；编辑器支持 5×5–20×20、试玩、打开、重命名、删除、撤销/重做、转官方、分享码；物件已换成 16×16 像素精灵，未生效词块自动压暗；123 条测试全过；第 1–12 关可玩。
-下一项是提示系统、`validate.py` 和最佳步数；关卡内容已完成。
+Windows 免安装包已构建并验证：`dist/RuleBox-Windows.zip`（约 13 MB，解压双击 `RuleBox.exe`）；下一项是提示系统、`validate.py` 和最佳步数。
 
 ## 2. 资源清单
 
@@ -20,6 +20,9 @@ Day 2、5.1、5.2、5.3 完成，并补上开始菜单、官方/自制关卡分�
 | 测试 | `tests/` | 123 条 |
 | 机制说明 | `docs/MECHANICS.md` | 结算顺序、规则语法、属性表、已知边界 |
 | 美术 | `assets/sprites/` | 10 个 16×16 像素精灵；生成脚本 `tools/generate_sprites.py` |
+| 发布包 | `dist/RuleBox-Windows.zip` | 约 13 MB，免安装 Windows 包；`dist/` gitignore，不提交 |
+| 发布脚本 | `tools/build_release.py` | PyInstaller；玩家说明 `docs/HOW-TO-PLAY.txt` |
+| 发布说明 | `docs/DISTRIBUTION.md` | 分发、SmartScreen、存档位置、重新打包 |
 | 子 agent 封装 | `tools/qoder_agent.py` | 调用 Qoder CN CLI，结果在 `docs/agent-runs/` |
 | 计划 | `docs/plan.md` | 12 关、6 周的原计划（快照） |
 | 清单 | `docs/checklist.md` | 每日/每周行动清单（快照） |
@@ -178,6 +181,7 @@ py -3.10 -m venv .venv
 1. 提示系统。
 2. `validate.py` 关卡校验器。
 3. 最佳步数与存档扩展。
+4. 发布包（已完成）：`tools/build_release.py` → `dist/RuleBox-Windows.zip`，解压双击 `RuleBox.exe`。
 
 ## 6. 已知问题
 
@@ -187,6 +191,7 @@ py -3.10 -m venv .venv
 - 编辑器画布上限 20×20；撤销栈最多 60 步；没有“官方转回自制”的按钮。
 - 导入依赖剪贴板，剪贴板不可用时需要手动复制 `.code`。
 - 美术是固定 16×16 静态精灵，没有动画/朝向；词块仍是文字色块。
+- 发布包未做代码签名，Windows SmartScreen 会提示“未知发布者”；分发时说明“更多信息 → 仍要运行”。
 - 键盘问题已修（焦点/IME/连发），但需要用户实机再确认；`--debug-keys` 可打印按键。
 
 ## 7. 网络（这台机器）

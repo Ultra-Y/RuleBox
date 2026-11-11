@@ -112,6 +112,24 @@ python run.py content/levels/02-move-aside.txt # 直接进某一关
 python run.py --debug-keys
 ```
 
+## 给别人体验 / 发布
+
+最省事的是 Windows 免安装包：
+
+```text
+dist/RuleBox-Windows.zip
+```
+
+解压后双击 `RuleBox.exe`，不需要安装 Python。详细步骤、SmartScreen 提示、存档位置和重新打包方法见
+[`docs/DISTRIBUTION.md`](docs/DISTRIBUTION.md)。
+
+自己打包：
+
+```powershell
+.\.venv\Scripts\python.exe -m pip install -r requirements-build.txt
+.\.venv\Scripts\python.exe tools\build_release.py
+```
+
 ## 测试
 
 ```powershell

@@ -57,6 +57,7 @@ RuleBox：中文词块推箱解谜。墙、箱子、旗子的行为由场上可�
 - 美术：10 个 16×16 像素精灵在 `assets/sprites/`；`ui/sprites.py` 加载，缺图回退色块。
 - 词块：`active_word_positions` 标记有效句子；未生效词块压暗，棋盘和编辑器共用。
 - 123 条测试全过；第 1–12 关可玩。
+- 发布：`tools/build_release.py` 打 Windows 免安装包，产物在 `dist/`（gitignore）；说明见 `docs/DISTRIBUTION.md`。
 - 当前真正生效：`你 / 推 / 停 / 赢`、变形、`浮 / 热 / 融 / 开 / 关 / 传`。
 
 ## 下一步

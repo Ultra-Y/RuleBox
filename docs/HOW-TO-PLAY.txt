@@ -1,0 +1,36 @@
+RuleBox 操作说明
+==============
+
+启动
+----
+解压整个文件夹后，双击 RuleBox.exe。
+不要直接在压缩包里运行，也不要只把 exe 单独拷出来。
+
+操作
+----
+菜单：↑↓ / W S 选择，Enter / Space 确认，Esc 退出
+游戏：方向键 / WASD 移动，Z 撤销，R 重开，Esc 返回菜单
+过关：Enter / N 下一关
+编辑器：左键放置，右键擦除，Ctrl+S 保存，Ctrl+Z 撤销，Ctrl+Y 重做
+
+关卡
+----
+官方关卡在游戏内「官方关卡」里，共 12 关。
+「自制关卡」和关卡编辑器可以自己画图、试玩、保存、导出/导入分享码。
+
+存档
+----
+progress.json、custom_levels/、exports/ 都会生成在 RuleBox.exe 旁边。
+换电脑时，把整个文件夹一起拷走即可保留自制关卡和通关记录。
+
+关于 Windows 提示
+----------------
+这个 exe 没有购买代码签名证书，Windows SmartScreen 可能提示“未知发布者”。
+点「更多信息」→「仍要运行」即可；也可以从源码运行。
+
+源码运行
+--------
+需要 Python 3.10：
+  py -3.10 -m venv .venv
+  .\.venv\Scripts\python.exe -m pip install -r requirements.txt
+  .\.venv\Scripts\python.exe run.py

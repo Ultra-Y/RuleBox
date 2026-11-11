@@ -117,6 +117,13 @@
 - 产出：09 石头变箱子、10 沉箱、11 钥匙、12 传送钥匙；静态规则全部放在上/下/左边界，场内只留必须操作的物件；04–08 的静态规则也迁到外沿。
 - 验证：123 passed（新增 8 条解法回放）；12 关截图检查，规则面板改为最多两列。
 
+## 2026-11-11 Windows 免安装包
+
+- 要求：让别人不用装 Python 也能体验。
+- 产出：`tools/build_release.py` + PyInstaller 打包脚本；冻结版资源从 `_MEIPASS` 读，进度/自制关卡写到 exe 旁边；生成 `dist/RuleBox-Windows.zip`（约 13 MB）。
+- 验证：解压 zip 后 `RuleBox.exe --shot`、官方关卡和像素素材在打包版中正常加载；123 passed。
+- 文档：`docs/DISTRIBUTION.md`、`docs/HOW-TO-PLAY.txt`。
+
 ## 待本人补充
 
 - 哪些 AI 建议被采纳、修改或否决，以及判断理由。
