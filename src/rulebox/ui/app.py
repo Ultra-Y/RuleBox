@@ -14,7 +14,12 @@ from ..core.catalog import (
 )
 from ..core.game import Game
 from ..core.level import load_level, parse_level
-from ..core.rules import active_word_positions, parse_rules
+from ..core.rules import (
+    active_word_positions,
+    blocked_transform_word_positions,
+    effective_rules,
+    parse_rules,
+)
 from .editor import Editor
 from .sprites import draw_object
 
@@ -628,6 +633,7 @@ def _draw_play(screen, app: _App, chrome) -> None:
     fonts = {**chrome, **app.fonts}
     screen.fill(BG)
     active_words = active_word_positions(world)
+    blocked_words = blocked_transform_word_positions(world)
 
     screen.blit(fonts["title"].render(_display_title(world.name), True, TITLE), (MARGIN, 24))
     moves_text = fonts["hint"].render(f"步数 {game.moves}", True, HINT)
@@ -661,8 +667,10 @@ def _draw_play(screen, app: _App, chrome) -> None:
                     font = fonts["word"] if entity.is_word else fonts["object"]
                     label = font.render(entity.text, True, _text_color(color))
                     screen.blit(label, label.get_rect(center=rect.center))
+                    if entity.is_word and (row, col) in blocked_words:
+                        _draw_cross(screen, rect)
 
-    rules = parse_rules(world)
+    rules = effective_rules(parse_rules(world))
     panel_y = oy + world.height * cell + 18
     screen.blit(fonts["hint"].render("规则", True, HINT), (ox, panel_y))
     panel_y += 24
@@ -720,6 +728,26 @@ def _text_color(bg: tuple[int, int, int]) -> tuple[int, int, int]:
 
 def _dim_color(color: tuple[int, int, int], factor: float = 0.48) -> tuple[int, int, int]:
     return tuple(max(0, int(channel * factor)) for channel in color)
+
+
+def _draw_cross(screen, rect, color=(238, 82, 82)) -> None:
+    import pygame
+
+    inset = max(4, rect.width // 5)
+    pygame.draw.line(
+        screen,
+        color,
+        (rect.left + inset, rect.top + inset),
+        (rect.right - inset, rect.bottom - inset),
+        3,
+    )
+    pygame.draw.line(
+        screen,
+        color,
+        (rect.right - inset, rect.top + inset),
+        (rect.left + inset, rect.bottom - inset),
+        3,
+    )
 
 
 def _display_title(text: str) -> str:

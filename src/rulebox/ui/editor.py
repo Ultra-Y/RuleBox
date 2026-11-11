@@ -7,7 +7,7 @@ from pathlib import Path
 from ..core.catalog import CUSTOM_DIR, USER_ROOT
 from ..core.entities import make_object, make_word
 from ..core.level import Level, parse_level
-from ..core.rules import active_word_positions
+from ..core.rules import active_word_positions, blocked_transform_word_positions
 from ..core.world import World
 from ..core.level_builder import (
     BY_SYMBOL,
@@ -354,6 +354,15 @@ class Editor:
         except Exception:
             return set()
 
+    def _blocked_word_positions(self) -> set[tuple[int, int]]:
+        cells = [[_entity(symbol) for symbol in row] for row in self.cells]
+        try:
+            return blocked_transform_word_positions(
+                World(Level("editor", self.width, self.height, cells))
+            )
+        except Exception:
+            return set()
+
     def _palette_rect(self, index: int):
         import pygame
 
@@ -411,6 +420,7 @@ class Editor:
 
         gx, gy, cell = self._grid_layout()
         active_words = self._active_word_positions()
+        blocked_words = self._blocked_word_positions()
         for row in range(self.height):
             for col in range(self.width):
                 x = gx + col * cell
@@ -424,6 +434,17 @@ class Editor:
                     if entity.is_word and (row, col) not in active_words:
                         color = _dim_color(color)
                     _draw_entity(screen, entity, x, y, cell, chrome, color)
+                    if entity.is_word and (row, col) in blocked_words:
+                        inset = max(2, cell // 12)
+                        _draw_cross(
+                            screen,
+                            pygame.Rect(
+                                x + inset,
+                                y + inset,
+                                cell - inset * 2,
+                                cell - inset * 2,
+                            ),
+                        )
 
         for index, item in enumerate(PALETTE):
             rect = self._palette_rect(index)
@@ -497,6 +518,26 @@ def _text_color(bg: tuple[int, int, int]) -> tuple[int, int, int]:
 
 def _dim_color(color: tuple[int, int, int], factor: float = 0.48) -> tuple[int, int, int]:
     return tuple(max(0, int(channel * factor)) for channel in color)
+
+
+def _draw_cross(screen, rect, color=(238, 82, 82)) -> None:
+    import pygame
+
+    inset = max(4, rect.width // 5)
+    pygame.draw.line(
+        screen,
+        color,
+        (rect.left + inset, rect.top + inset),
+        (rect.right - inset, rect.bottom - inset),
+        3,
+    )
+    pygame.draw.line(
+        screen,
+        color,
+        (rect.right - inset, rect.top + inset),
+        (rect.left + inset, rect.bottom - inset),
+        3,
+    )
 
 
 def _wrap(text: str, font, width: int) -> list[str]:

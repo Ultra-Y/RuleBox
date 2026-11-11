@@ -164,22 +164,67 @@ def _word_runs(world: World):
                 row += 1
 
 
+def _rule_spans(world: World):
+    """产出 (行, 列, 行方向, 列方向, 开始, 结束, 规则)。"""
+    for row, col, dr, dc, tokens in _word_runs(world):
+        for start, end, rule in parse_run_spans(tokens):
+            yield row, col, dr, dc, start, end, rule
+
+
 def parse_rules(world: World) -> list[Rule]:
-    """扫描所有横向、纵向连续词块，返回生效的规则。"""
-    rules: list[Rule] = []
-    for _row, _col, _dr, _dc, tokens in _word_runs(world):
-        rules.extend(parse_run(tokens))
+    """扫描所有横向、纵向连续词块，返回语法有效的规则。"""
+    rules = [span[-1] for span in _rule_spans(world)]
     return list(dict.fromkeys(rules))
 
 
+def locked_nouns(rules: list[Rule]) -> set[str]:
+    """自指规则 A 是 A 会锁定 A 的变形。"""
+    return {
+        noun
+        for rule in rules
+        if rule.transform
+        for noun in rule.nouns
+        if rule.transform == noun
+    }
+
+
+def is_blocked_transform(rule: Rule, locked: set[str]) -> bool:
+    """被自指规则锁住的非自身变形句。"""
+    if not rule.transform:
+        return False
+    return any(noun in locked and noun != rule.transform for noun in rule.nouns)
+
+
+def effective_rules(rules: list[Rule]) -> list[Rule]:
+    """去掉被锁住、实际不生效的变形句。"""
+    locked = locked_nouns(rules)
+    return [rule for rule in rules if not is_blocked_transform(rule, locked)]
+
+
 def active_word_positions(world: World) -> set[tuple[int, int]]:
-    """返回被有效句子使用的词块坐标；未生效的词块不在其中。"""
+    """返回被生效句子使用的词块坐标；被拒绝的变形句不算。"""
+    spans = list(_rule_spans(world))
+    rules = list(dict.fromkeys(span[-1] for span in spans))
+    locked = locked_nouns(rules)
     active: set[tuple[int, int]] = set()
-    for row, col, dr, dc, tokens in _word_runs(world):
-        for start, end, _rule in parse_run_spans(tokens):
-            for offset in range(start, end):
-                active.add((row + dr * offset, col + dc * offset))
+    for row, col, dr, dc, start, end, rule in spans:
+        if is_blocked_transform(rule, locked):
+            continue
+        for offset in range(start, end):
+            active.add((row + dr * offset, col + dc * offset))
     return active
+
+
+def blocked_transform_word_positions(world: World) -> set[tuple[int, int]]:
+    """返回被拒绝变形句的主语词块坐标，用于画叉。"""
+    spans = list(_rule_spans(world))
+    rules = list(dict.fromkeys(span[-1] for span in spans))
+    locked = locked_nouns(rules)
+    marks: set[tuple[int, int]] = set()
+    for row, col, dr, dc, start, _end, rule in spans:
+        if is_blocked_transform(rule, locked):
+            marks.add((row + dr * start, col + dc * start))
+    return marks
 
 
 def property_map(rules: list[Rule]) -> dict[str, set[str]]:
@@ -203,12 +248,14 @@ def property_map(rules: list[Rule]) -> dict[str, set[str]]:
 
 
 def transform_map(rules: list[Rule]) -> dict[str, str]:
-    """变形规则：物件 -> 目标物件。"""
+    """变形规则：物件 -> 目标物件；被自指规则锁住的变形不生效。"""
     mapping: dict[str, str] = {}
+    locked = locked_nouns(rules)
     for rule in rules:
-        if rule.transform:
-            for noun in rule.nouns:
-                mapping[noun] = rule.transform
+        if not rule.transform or is_blocked_transform(rule, locked):
+            continue
+        for noun in rule.nouns:
+            mapping[noun] = rule.transform
     return mapping
 
 

@@ -3,9 +3,13 @@ from rulebox.core.level import Level
 from rulebox.core.resolve import you_positions
 from rulebox.core.rules import (
     active_word_positions,
+    blocked_transform_word_positions,
+    effective_rules,
+    locked_nouns,
     parse_rules,
     parse_sentence,
     property_map,
+    transform_map,
 )
 from rulebox.core.world import World
 
@@ -70,6 +74,47 @@ def test_transform():
     rules = parse_rules(world)
     assert len(rules) == 1
     assert rules[0].transform == "box"
+
+
+def test_self_rule_locks_transform():
+    world = make_world(
+        width=12,
+        height=5,
+        words=[
+            (1, 1, "旗"),
+            (1, 2, "是"),
+            (1, 3, "旗"),
+            (3, 1, "旗"),
+            (3, 2, "是"),
+            (3, 3, "人"),
+        ],
+    )
+    rules = parse_rules(world)
+
+    assert len(rules) == 2
+    assert locked_nouns(rules) == {"flag"}
+    assert transform_map(rules) == {"flag": "flag"}
+    assert len(effective_rules(rules)) == 1
+    assert blocked_transform_word_positions(world) == {(3, 1)}
+    assert active_word_positions(world) == {(1, 1), (1, 2), (1, 3)}
+
+
+def test_self_rule_does_not_block_properties():
+    world = make_world(
+        words=[
+            (1, 1, "旗"),
+            (1, 2, "是"),
+            (1, 3, "旗"),
+            (3, 1, "旗"),
+            (3, 2, "是"),
+            (3, 3, "赢"),
+        ]
+    )
+    rules = parse_rules(world)
+
+    assert property_map(rules)["flag"] == {"WIN"}
+    assert transform_map(rules) == {"flag": "flag"}
+    assert len(effective_rules(rules)) == 2
 
 
 def test_incomplete_sentence_ignored():

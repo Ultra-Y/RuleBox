@@ -22,7 +22,7 @@
 - 先读 [`AGENTS.md`](AGENTS.md)（代理操作规范）和 [`docs/HANDOFF.md`](docs/HANDOFF.md)（状态快照、下一步、设计债）
 - 全部机制（结算顺序、规则语法、属性表、边界）见 [`docs/MECHANICS.md`](docs/MECHANICS.md)
 - 原计划见 [`docs/plan.md`](docs/plan.md)，行动清单见 [`docs/checklist.md`](docs/checklist.md)
-- 当前基线：119 条测试全过，第 1–10 关可玩，关卡编辑器可用
+- 当前基线：121 条测试全过，第 1–10 关可玩，关卡编辑器可用
 
 ## 环境
 
@@ -111,6 +111,16 @@ python run.py content/levels/02-move-aside.txt # 直接进某一关
 - 棋盘和编辑器使用同一套判定（`active_word_positions`）。
 
 ![词块生效对比](docs/word_states.png)
+
+## 自指规则锁与红叉
+
+- `A 是 A`（例如 `旗 是 旗`）会锁定 A 的变形；
+- 之后再出现 `A 是 B`（例如 `旗 是 人`）不会生效；
+- 被拒绝的规则整句压暗，并在主语 `A` 的图标上画红叉；
+- 自指规则优先级最高，与句子出现的位置/先后无关；
+- 属性规则不受影响，例如 `旗 是 赢` 仍然生效。
+
+![规则锁演示](docs/rule_lock.png)
 
 没有安装 pygame 时会自动退化为文本输出。
 
