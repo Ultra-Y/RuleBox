@@ -751,7 +751,7 @@ def _draw_cross(screen, rect, color=(238, 82, 82)) -> None:
 
 
 def _display_title(text: str) -> str:
-    return re.sub(r"^\s*\d+\s*", "", text).strip() or text
+    return re.sub(r"^\s*\d+\s+", "", text).strip() or text
 
 
 def _focus_window(pygame) -> None:

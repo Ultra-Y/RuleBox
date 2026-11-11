@@ -60,6 +60,8 @@ def test_display_name_strips_number():
     entry = LevelEntry(Path("01-a.txt"), "01", "01 第一步")
     assert entry.display_name == "第一步"
     assert entry.title == "01 01 第一步"
+    numbered = LevelEntry(Path("main-1-1.txt"), "main", "1-1")
+    assert numbered.display_name == "1-1"
 
 
 def test_custom_level_key_is_prefixed(tmp_path):

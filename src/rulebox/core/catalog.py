@@ -44,7 +44,7 @@ class LevelEntry:
     @property
     def display_name(self) -> str:
         """去掉关卡名前面的编号，只留标题。"""
-        return re.sub(r"^\s*\d+\s*", "", self.name).strip() or self.name
+        return re.sub(r"^\s*\d+\s+", "", self.name).strip() or self.name
 
     @property
     def title(self) -> str:
