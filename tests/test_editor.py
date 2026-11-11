@@ -1,6 +1,7 @@
 from pathlib import Path
 
 import rulebox.ui.editor as editor_module
+from rulebox.core.level import load_level
 from rulebox.ui.editor import Editor
 
 
@@ -54,3 +55,45 @@ def test_editor_resize_keeps_border(tmp_path, monkeypatch):
     assert editor.cells[0][0] == "#"
     assert editor.cells[-1][-1] == "#"
     assert editor.cells[2][2] == "."
+
+
+def test_editor_undo_redo():
+    editor = Editor()
+    editor.cells[2][3] = "@"
+    editor.resize(15, 12)
+    editor.clear()
+
+    editor.undo()
+    assert (editor.width, editor.height) == (15, 12)
+    assert editor.cells[2][3] == "@"
+
+    editor.undo()
+    assert (editor.width, editor.height) == (11, 8)
+    assert editor.cells[2][3] == "@"
+
+    editor.redo()
+    assert (editor.width, editor.height) == (15, 12)
+
+
+def test_editor_promote_to_official(tmp_path, monkeypatch):
+    custom = tmp_path / "custom"
+    official = tmp_path / "official"
+    monkeypatch.setattr(editor_module, "CUSTOM_DIR", custom)
+    monkeypatch.setattr(editor_module, "OFFICIAL_DIR", official)
+    monkeypatch.setattr(editor_module, "EXPORTS_DIR", tmp_path / "exports")
+
+    editor = Editor()
+    editor.name = "测试关"
+    editor.cells[2][3] = "@"
+    editor.cells[2][7] = "F"
+    editor.save()
+    editor.promote()
+
+    files = list(official.glob("*.txt"))
+    assert len(files) == 1
+    assert files[0].name == "01-测试关.txt"
+
+    level = load_level(files[0])
+    assert level.name == "01 测试关"
+    assert level.entity_at(2, 3).id == "baba"
+    assert level.entity_at(2, 7).id == "flag"

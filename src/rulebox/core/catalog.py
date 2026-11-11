@@ -60,6 +60,16 @@ def discover_custom() -> list[LevelEntry]:
     return discover_levels(CUSTOM_DIR, source="custom")
 
 
+def next_official_number(levels_dir: Path = OFFICIAL_DIR) -> int:
+    """下一个官方关卡编号：取现有数字前缀的最大值 + 1。"""
+    numbers: list[int] = []
+    for path in Path(levels_dir).glob("*.txt"):
+        token = path.stem.split("-", 1)[0]
+        if token.isdigit():
+            numbers.append(int(token))
+    return max(numbers, default=0) + 1
+
+
 class Progress:
     def __init__(self, path: Path = PROGRESS_PATH):
         self.path = Path(path)

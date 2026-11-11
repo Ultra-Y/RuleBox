@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from ..core.catalog import CUSTOM_DIR, ROOT
+from ..core.catalog import CUSTOM_DIR, OFFICIAL_DIR, ROOT, next_official_number
 from ..core.entities import make_object, make_word
 from ..core.level import Level, parse_level
 from ..core.rules import active_word_positions
@@ -52,6 +52,8 @@ class Editor:
         self.current_path: Path | None = None
         self.selected_symbol = "@"
         self.name_active = False
+        self._undo_stack: list[tuple] = []
+        self._redo_stack: list[tuple] = []
         self.message = "左键放置 · 右键擦除 · Ctrl+S 保存"
         self.on_changed = on_changed
         self.on_back = on_back
@@ -63,6 +65,36 @@ class Editor:
             pygame.scrap.init()
         except Exception:
             pass
+
+    # ---------- 历史 ----------
+
+    def _snapshot(self) -> tuple:
+        return (self.width, self.height, tuple(tuple(row) for row in self.cells))
+
+    def _push_undo(self) -> None:
+        self._undo_stack.append(self._snapshot())
+        del self._undo_stack[:-60]
+        self._redo_stack.clear()
+
+    def _restore(self, snapshot: tuple) -> None:
+        self.width, self.height, cells = snapshot
+        self.cells = [list(row) for row in cells]
+
+    def undo(self) -> None:
+        if not self._undo_stack:
+            self.message = "没有可撤销的操作"
+            return
+        self._redo_stack.append(self._snapshot())
+        self._restore(self._undo_stack.pop())
+        self.message = "已撤销"
+
+    def redo(self) -> None:
+        if not self._redo_stack:
+            self.message = "没有可重做的操作"
+            return
+        self._undo_stack.append(self._snapshot())
+        self._restore(self._redo_stack.pop())
+        self.message = "已重做"
 
     # ---------- 文件 ----------
 
@@ -97,7 +129,25 @@ class Editor:
         self.height = len(cells)
         self.width = len(cells[0]) if cells else 0
         self.current_path = path
+        self._undo_stack.clear()
+        self._redo_stack.clear()
         self.message = f"已打开：{path.name}"
+
+    def promote(self) -> None:
+        """把当前设计复制到官方关卡目录，自动取下一个编号。"""
+        try:
+            number = next_official_number(OFFICIAL_DIR)
+            clean = self.name.strip() or "自制关卡"
+            text = build_level_text(f"{number:02d} {clean}", self.cells)
+            parse_level(text, source="<official>")
+            path = safe_level_path(OFFICIAL_DIR, f"{number:02d}-{clean}")
+            path.write_text(text, encoding="utf-8")
+        except Exception as exc:
+            self.message = f"转官方失败：{exc}"
+            return
+        self.message = f"已复制为官方 {path.name}（自制文件保留）"
+        if self.on_changed:
+            self.on_changed()
 
     def rename(self) -> None:
         if self.current_path is None:
@@ -179,6 +229,7 @@ class Editor:
             self.on_changed()
 
     def clear(self) -> None:
+        self._push_undo()
         self.cells = blank_cells(self.width, self.height)
         self.current_path = None
         self.message = "已清空，保留当前尺寸"
@@ -188,6 +239,7 @@ class Editor:
         height = max(5, min(20, height))
         if (width, height) == (self.width, self.height):
             return
+        self._push_undo()
         old = self.cells
         self.width, self.height = width, height
         self.cells = blank_cells(width, height)
@@ -223,6 +275,13 @@ class Editor:
             self.export()
         elif ctrl and key == pygame.K_i:
             self.import_share()
+        elif ctrl and key == pygame.K_z:
+            if mods & pygame.KMOD_SHIFT:
+                self.redo()
+            else:
+                self.undo()
+        elif ctrl and key == pygame.K_y:
+            self.redo()
         return None
 
     def handle_click(self, pos: tuple[int, int], button: int) -> None:
@@ -232,6 +291,10 @@ class Editor:
         self.name_active = False
 
         for _label, rect, action in self._size_buttons():
+            if rect.collidepoint(pos):
+                action()
+                return
+        for _label, rect, action in self._history_buttons():
             if rect.collidepoint(pos):
                 action()
                 return
@@ -248,7 +311,10 @@ class Editor:
         cell = self._grid_cell_at(pos)
         if cell is not None:
             row, col = cell
-            self.cells[row][col] = self.selected_symbol if button == 1 else "."
+            symbol = self.selected_symbol if button == 1 else "."
+            if self.cells[row][col] != symbol:
+                self._push_undo()
+                self.cells[row][col] = symbol
 
     # ---------- 布局 ----------
 
@@ -268,6 +334,14 @@ class Editor:
         ]
         return specs
 
+    def _history_buttons(self):
+        import pygame
+
+        return [
+            ("撤销", pygame.Rect(590, 205, 160, 34), self.undo),
+            ("重做", pygame.Rect(760, 205, 170, 34), self.redo),
+        ]
+
     def _buttons(self):
         import pygame
 
@@ -280,7 +354,8 @@ class Editor:
             ("导出码", pygame.Rect(760, 342, 170, 40), self.export),
             ("导入码", pygame.Rect(590, 388, 160, 40), self.import_share),
             ("清空", pygame.Rect(760, 388, 170, 40), self.clear),
-            ("返回菜单", pygame.Rect(590, 434, 340, 40), self.on_back or (lambda: None)),
+            ("转官方", pygame.Rect(590, 434, 160, 40), self.promote),
+            ("返回菜单", pygame.Rect(760, 434, 170, 40), self.on_back or (lambda: None)),
         ]
         return specs
 
@@ -346,6 +421,11 @@ class Editor:
             text = chrome["hint"].render(label, True, TITLE)
             screen.blit(text, text.get_rect(center=rect.center))
 
+        for label, rect, _action in self._history_buttons():
+            pygame.draw.rect(screen, PANEL, rect, border_radius=5)
+            text = chrome["hint"].render(label, True, TITLE)
+            screen.blit(text, text.get_rect(center=rect.center))
+
         gx, gy, cell = self._grid_layout()
         active_words = self._active_word_positions()
         for row in range(self.height):
@@ -389,7 +469,9 @@ class Editor:
             y += 20
 
         hint = chrome["hint"].render(
-            "左键放置 · 右键擦除 · Ctrl+S 保存 · Ctrl+E 导出 · Esc 返回", True, HINT
+            "左键放置 · 右键擦除 · Ctrl+S 保存 · Ctrl+Z 撤销 · Ctrl+Y 重做 · Esc 返回",
+            True,
+            HINT,
         )
         screen.blit(hint, (40, 640))
 

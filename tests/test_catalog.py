@@ -6,6 +6,7 @@ from rulebox.core.catalog import (
     discover_levels,
     first_unfinished,
     next_index,
+    next_official_number,
 )
 
 
@@ -68,6 +69,13 @@ def test_custom_level_key_is_prefixed(tmp_path):
     assert len(entries) == 1
     assert entries[0].key == "custom:my-level"
     assert entries[0].display_name == "我的关卡"
+
+
+def test_next_official_number(tmp_path):
+    write_level(tmp_path, "01-a", "第一关")
+    write_level(tmp_path, "03-c", "第三关")
+    assert next_official_number(tmp_path) == 4
+    assert next_official_number(tmp_path / "empty") == 1
 
 
 def test_first_unfinished_and_next():
