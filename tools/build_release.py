@@ -17,6 +17,13 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 DIST = ROOT / "dist"
 APP_NAME = "RuleBox"
+STALE_DIRS = ("RuleBox-Windows", "RuleBox-test", "package-test", "extracted")
+
+
+def clean_dir(path: Path) -> None:
+    if path.is_dir():
+        shutil.rmtree(path, ignore_errors=True)
+        print(f"清理旧解压目录：{path}")
 
 
 def main() -> int:
@@ -25,6 +32,9 @@ def main() -> int:
     except ImportError:
         print("缺少 PyInstaller：pip install pyinstaller")
         return 1
+
+    for name in STALE_DIRS:
+        clean_dir(DIST / name)
 
     cmd = [
         sys.executable,
@@ -71,8 +81,10 @@ def main() -> int:
         for path in sorted(app_dir.rglob("*")):
             if path.is_file():
                 archive.write(path, Path(APP_NAME) / path.relative_to(app_dir))
-    print(f"\n完成：{app_dir}")
-    print(f"压缩包：{zip_path}（{zip_path.stat().st_size / 1024 / 1024:.1f} MB）")
+    print(f"\n压缩包：{zip_path}（{zip_path.stat().st_size / 1024 / 1024:.1f} MB）")
+    shutil.rmtree(app_dir, ignore_errors=True)
+    print(f"已清理构建目录：{app_dir}")
+    print("dist/ 只保留最新 zip")
     return 0
 
 

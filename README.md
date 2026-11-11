@@ -141,6 +141,8 @@ dist/RuleBox-Windows.zip
 .\.venv\Scripts\python.exe tools\build_release.py
 ```
 
+打包脚本会清理 `dist/` 下的旧解压目录和构建目录，完成后只保留最新的 `RuleBox-Windows.zip`。
+
 ## 测试
 
 ```powershell

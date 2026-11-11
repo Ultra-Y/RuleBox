@@ -48,6 +48,13 @@ py -3.10 -m venv .venv
 脚本会调用 PyInstaller，把 `assets/`、`content/` 和 `run.py` 打进去，生成
 `dist/RuleBox/` 与 `dist/RuleBox-Windows.zip`。
 
+打包完成后脚本会自动清理：
+
+- `dist/RuleBox-Windows/`、`dist/RuleBox-test/`、`dist/package-test/` 等旧解压目录；
+- `dist/RuleBox/` 构建目录。
+
+所以正常结果只剩 `dist/RuleBox-Windows.zip`。如果你把旧包解压到了别的位置，脚本不会去动它，需要手动删除。
+
 - 打包机需要 Windows x64 + Python 3.10；
 - 生成的 exe 没有代码签名，SmartScreen 提示是正常的；
 - 更新关卡或素材后重新跑一次脚本即可；
