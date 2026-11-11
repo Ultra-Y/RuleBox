@@ -1,29 +1,29 @@
 # 交接说明（Handoff）
 
-> 快照：2026-11-11（第 1–8 关 + 解法回放）
+> 快照：2026-11-11（第 1–12 关完成）
 > 最新代码提交：以 `git log` 为准
 > 仓库：https://github.com/Ultra-Y/RuleBox （public）
 > 交接 tag：`handoff-2026-11-10`
 
 ## 1. 一句话状态
 
-Day 2、5.1、5.2、5.3 完成，并补上开始菜单、官方/自制关卡分离、通关进度、过关下一关；规则层支持相邻两句（横/竖）与显式「墙 是 停」；第 4–8 关已加入，每关配 `solutions/` 回放测试；编辑器支持 5×5–20×20、试玩、打开、重命名、删除、撤销/重做、转官方、分享码；物件已换成 16×16 像素精灵，未生效词块自动压暗；119 条测试全过；第 1–8 关可玩。
-下一项是 5.4：**继续加第 9–12 关 + 每关解法回放测试**。
+Day 2、5.1、5.2、5.3 完成，并补上开始菜单、官方/自制关卡分离、通关进度、过关下一关；规则层支持相邻两句（横/竖）与显式「墙 是 停」；第 1–12 关已全部加入，04–12 每关配 `solutions/` 回放测试，静态规则尽量放在地图外沿；编辑器支持 5×5–20×20、试玩、打开、重命名、删除、撤销/重做、转官方、分享码；物件已换成 16×16 像素精灵，未生效词块自动压暗；123 条测试全过；第 1–12 关可玩。
+下一项是提示系统、`validate.py` 和最佳步数；关卡内容已完成。
 
 ## 2. 资源清单
 
 | 资源 | 位置 | 说明 |
 | :--- | :--- | :--- |
 | 源码 | `src/rulebox/` | core 纯逻辑，ui 用 Pygame |
-| 关卡 | `content/levels/01-*.txt` 到 `08-*.txt` | 文本 DSL |
+| 关卡 | `content/levels/01-*.txt` 到 `12-*.txt` | 文本 DSL |
 | 解法 | `solutions/*.txt` | `URDL` 回放串 |
-| 测试 | `tests/` | 119 条 |
+| 测试 | `tests/` | 123 条 |
 | 机制说明 | `docs/MECHANICS.md` | 结算顺序、规则语法、属性表、已知边界 |
 | 美术 | `assets/sprites/` | 10 个 16×16 像素精灵；生成脚本 `tools/generate_sprites.py` |
 | 子 agent 封装 | `tools/qoder_agent.py` | 调用 Qoder CN CLI，结果在 `docs/agent-runs/` |
 | 计划 | `docs/plan.md` | 12 关、6 周的原计划（快照） |
 | 清单 | `docs/checklist.md` | 每日/每周行动清单（快照） |
-| 截图 | `docs/preview_01.png`–`preview_08.png`、`menu.png`、`select.png`、`editor.png`、`word_states.png`、`sprites.png` | README 用 |
+| 截图 | `docs/preview_01.png`–`preview_12.png`、`menu.png`、`select.png`、`editor.png`、`word_states.png`、`sprites.png` | README 用 |
 | AI 记录 | `docs/ai-log.md` | 真实协作记录，课程提交要用 |
 | 试玩 | `docs/playtest.md` | 模板，待填 |
 | 远端 | GitHub `Ultra-Y/RuleBox` | public，可直接 clone |
@@ -133,26 +133,26 @@ py -3.10 -m venv .venv
 - `ui/editor.py`：5×5–20×20 画布、调色板、放置/擦除、试玩、打开、重命名、删除、导出/导入分享码。
 - 试玩不落盘：`App.play_editor_level` 直接构造 `Game`，Esc 回编辑器，不写进度。
 - 保存/导入前都用 `parse_level` 校验，坏码不会进关卡库。
-- 验证：119 passed（新增目录/编辑器/尺寸/素材测试 22 条）；菜单/官方选关/编辑器截图检查。
+- 验证：123 passed（新增目录/编辑器/尺寸/素材测试 22 条）；菜单/官方选关/编辑器截图检查。
 
 ### 5.3.4 像素精灵（已完成）
 
 - 10 个物件精灵：人、墙、箱、旗、水、火、石、门、钥、传送门，16×16 PNG，`assets/sprites/`。
 - `ui/sprites.py` 负责加载/缓存/最近邻缩放；棋盘与编辑器调色板共用；缺图回退色块+文字。
 - `tools/generate_sprites.py` 是生成脚本（需要 Pillow，运行时不需要）。
-- 验证：119 passed（新增素材完整性测试）；八关、菜单、官方选关、编辑器截图检查。
+- 验证：123 passed（新增素材完整性测试）；十二关、菜单、官方选关、编辑器截图检查。
 
 ### 5.3.5 词块生效状态（已完成）
 
 - `rules.active_word_positions` 复用 `parse_run_spans`，返回被有效句子占用的格子。
 - 棋盘与编辑器把未生效词块压暗（颜色 ×0.48），生效词块保持原色。
-- 验证：119 passed（新增横/竖/相邻/无效句判定）；`docs/word_states.png` 对比截图。
+- 验证：123 passed（新增横/竖/相邻/无效句判定）；`docs/word_states.png` 对比截图。
 
 ### 5.3.6 编辑器撤销/重做与转官方（已完成）
 
 - 编辑器网格操作、尺寸调整、清空、放置/擦除进入撤销栈，最多 60 步；`Ctrl+Z` / `Ctrl+Y`。
 - 「转官方」把当前设计复制到 `content/levels/`，自动取下一个数字编号，写 `0X-标题.txt`，自制文件保留。
-- 验证：119 passed（撤销/重做、官方编号、转官方落盘）；编辑器截图检查。
+- 验证：123 passed（撤销/重做、官方编号、转官方落盘）；编辑器截图检查。
 
 ### 5.4 关卡 4–8（已完成）
 
@@ -162,15 +162,28 @@ py -3.10 -m venv .venv
 - **07 传送门**：两个 `TELE` 门成对传送，越过整排墙；解法 `RD`。
 - **08 融化**：把带「融」的石头推进火里，石头融化后穿过火；解法 `DDD`。
 - 每关配 `solutions/XX.txt`（`URDL` 字符串），`tests/test_solutions.py` 回放判定通关。
-- 验证：119 passed（新增 5 条解法回放）；第 4–8 关截图检查。
+- 验证：123 passed（新增 5 条解法回放）；第 4–8 关截图检查。
 
-### 5.5 关卡 9–12（下一项）
+### 5.5 关卡 9–12（已完成）
+
+- **09 石头变箱子**：石头在第一次移动后变成箱子，再推下缺口；解法 `RRRDDDRDRR`。
+- **10 沉箱**：浮水后把箱子推进水里，箱子沉掉，清出通道；解法 `RRRDDDDRRR`。
+- **11 钥匙**：钥匙带「开」和「推」，推进门里摧毁门；解法 `DDDRDRR`。
+- **12 传送钥匙**：传送门送进钥匙房，推钥匙开门；解法 `RRRRRRRDR`。
+- 09–12 的静态规则全部放在地图外沿（上/下/左边界），场内只留必须操作的物件。
+- 验证：123 passed（新增 4 条解法回放）；第 9–12 关截图检查。
+
+### 5.6 后续（非关卡）
+
+1. 提示系统。
+2. `validate.py` 关卡校验器。
+3. 最佳步数与存档扩展。
 
 ## 6. 已知问题
 
 - 传送落点未复查 `STOP`/`SHUT`；`PUSH`+`SHUT` 门的开关优先级待关卡验证。
-- 没有提示系统，也没有 `validate.py`；关卡“有解”目前只靠单关测试。
-- 关卡 9–12 尚未做完；`progress.json` 只记录完成，不记录最佳步数。
+- 没有提示系统，也没有 `validate.py`；关卡“有解”目前只靠解法回放测试。
+- `progress.json` 只记录完成，不记录最佳步数。
 - 编辑器画布上限 20×20；撤销栈最多 60 步；没有“官方转回自制”的按钮。
 - 导入依赖剪贴板，剪贴板不可用时需要手动复制 `.code`。
 - 美术是固定 16×16 静态精灵，没有动画/朝向；词块仍是文字色块。
@@ -223,7 +236,7 @@ git clone RuleBox-handoff-2026-11-10.bundle RuleBox
 
 第一步：
 1. 读 AGENTS.md、docs/HANDOFF.md、docs/plan.md。
-2. 运行 .\.venv\Scripts\python.exe -m pytest -q，确认 119 passed。
+2. 运行 .\.venv\Scripts\python.exe -m pytest -q，确认 123 passed。
 3. 运行 .\.venv\Scripts\python.exe run.py，确认开始菜单能启动。
 
 约束：
@@ -232,14 +245,14 @@ git clone RuleBox-handoff-2026-11-10.bundle RuleBox
 - 改行为前先写测试；改完跑全量 pytest。
 - 不要重写 UI，不要引入新框架。
 
-下一项按策划给的地图继续加第 4–8 关；每关配 `solutions/XX.txt` 和回放测试。
+下一项按 5.6 做提示系统、`validate.py` 或最佳步数；12 关内容已完成，改动关卡时继续配 `solutions/XX.txt` 回放。
 先给我看关卡设计与测试计划，等我确认后再改代码，不要直接提交。
 ```
 
 ## 10. 交接检查清单
 
 - [x] 代码已推送，远程 = 本地
-- [x] 测试 119 passed
+- [x] 测试 123 passed
 - [x] 计划 / 清单 / AI 记录进仓库
 - [x] 交接 tag
 - [x] 新 agent 跑通测试
