@@ -4,9 +4,9 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from ..core.catalog import ROOT
+from ..core.catalog import BUNDLE_ROOT
 
-SPRITE_DIR = ROOT / "assets" / "sprites"
+SPRITE_DIR = BUNDLE_ROOT / "assets" / "sprites"
 _CACHE: dict[tuple[str, int], object | None] = {}
 
 

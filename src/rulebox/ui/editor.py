@@ -4,7 +4,13 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from ..core.catalog import CUSTOM_DIR, OFFICIAL_DIR, ROOT, next_official_number
+from ..core.catalog import (
+    CUSTOM_DIR,
+    IS_FROZEN,
+    OFFICIAL_DIR,
+    USER_ROOT,
+    next_official_number,
+)
 from ..core.entities import make_object, make_word
 from ..core.level import Level, parse_level
 from ..core.rules import active_word_positions
@@ -21,7 +27,7 @@ from ..core.level_builder import (
 )
 from .sprites import draw_object
 
-EXPORTS_DIR = ROOT / "exports"
+EXPORTS_DIR = USER_ROOT / "exports"
 
 BG = (24, 26, 34)
 PANEL = (36, 40, 52)
@@ -135,6 +141,9 @@ class Editor:
 
     def promote(self) -> None:
         """把当前设计复制到官方关卡目录，自动取下一个编号。"""
+        if IS_FROZEN:
+            self.message = "打包版不写内置官方目录；请用源码版转官方"
+            return
         try:
             number = next_official_number(OFFICIAL_DIR)
             clean = self.name.strip() or "自制关卡"

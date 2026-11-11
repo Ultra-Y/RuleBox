@@ -4,16 +4,25 @@ from __future__ import annotations
 
 import json
 import re
+import sys
 from dataclasses import dataclass
 from pathlib import Path
 
 from .level import load_level
 
-ROOT = Path(__file__).resolve().parents[3]
-OFFICIAL_DIR = ROOT / "content" / "levels"
-CUSTOM_DIR = ROOT / "custom_levels"
+IS_FROZEN = bool(getattr(sys, "frozen", False))
+BUNDLE_ROOT = (
+    Path(sys._MEIPASS)
+    if IS_FROZEN and hasattr(sys, "_MEIPASS")
+    else Path(__file__).resolve().parents[3]
+)
+USER_ROOT = Path(sys.executable).resolve().parent if IS_FROZEN else BUNDLE_ROOT
+
+ROOT = USER_ROOT
+OFFICIAL_DIR = BUNDLE_ROOT / "content" / "levels"
+CUSTOM_DIR = USER_ROOT / "custom_levels"
 LEVELS_DIR = OFFICIAL_DIR
-PROGRESS_PATH = ROOT / "progress.json"
+PROGRESS_PATH = USER_ROOT / "progress.json"
 
 
 @dataclass(frozen=True)
