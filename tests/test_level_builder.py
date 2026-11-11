@@ -2,6 +2,7 @@ from pathlib import Path
 
 import pytest
 
+from rulebox.core.entities import NOUN_WORDS
 from rulebox.core.level import load_level
 from rulebox.core.level_builder import (
     PALETTE,
@@ -19,6 +20,11 @@ from rulebox.ui.editor import Editor
 def test_palette_symbols_are_unique():
     symbols = [item.symbol for item in PALETTE]
     assert len(symbols) == len(set(symbols))
+
+
+def test_palette_has_all_noun_words():
+    words = {item.value for item in PALETTE if item.kind == "word"}
+    assert NOUN_WORDS <= words
 
 
 def test_build_level_roundtrip(tmp_path):
