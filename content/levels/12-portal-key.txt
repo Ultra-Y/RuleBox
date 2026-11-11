@@ -1,0 +1,36 @@
+name 12 传送钥匙
+size 11 8
+
+legend
+  # wall
+  . empty
+  @ baba
+  F flag
+  D door
+  P portal
+  k key
+  L word 传送
+  人 word 人
+  是 word 是
+  你 word 你
+  旗 word 旗
+  赢 word 赢
+  墙 word 墙
+  停 word 停
+  门 word 门
+  关 word 关
+  钥 word 钥
+  开 word 开
+  和 word 和
+  推 word 推
+  传 word 传
+
+grid
+  #人是你旗是赢墙是停#
+  钥.@.....P.#
+  是.........#
+  开##########
+  和.........#
+  推....PkD..#
+  #......F..#
+  #门是关.L是传..#

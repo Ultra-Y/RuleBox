@@ -668,11 +668,23 @@ def _draw_play(screen, app: _App, chrome) -> None:
     panel_y += 24
     if not rules:
         screen.blit(fonts["rule"].render("（没有生效的规则）", True, RULE_TEXT), (ox, panel_y))
-    for rule in rules[:5]:
-        screen.blit(fonts["rule"].render("· " + rule.display(), True, RULE_TEXT), (ox, panel_y))
-        panel_y += 18
-    if len(rules) > 5:
-        screen.blit(fonts["hint"].render("…", True, HINT), (ox, panel_y))
+    else:
+        visible = rules[:6]
+        if len(visible) <= 3:
+            columns = [(ox, visible)]
+        else:
+            split = (len(visible) + 1) // 2
+            columns = [(ox, visible[:split]), (ox + 280, visible[split:])]
+        for x, column in columns:
+            line_y = panel_y
+            for rule in column:
+                screen.blit(
+                    fonts["rule"].render("· " + rule.display(), True, RULE_TEXT),
+                    (x, line_y),
+                )
+                line_y += 18
+        if len(rules) > 6:
+            screen.blit(fonts["hint"].render("…", True, HINT), (ox, panel_y + 54))
 
     hint = "方向键 / WASD 移动 · Z 撤销 · R 重开 · Esc 菜单"
     screen.blit(fonts["hint"].render(hint, True, HINT), (MARGIN, HEIGHT - 34))
