@@ -22,7 +22,7 @@
 - 先读 [`AGENTS.md`](AGENTS.md)（代理操作规范）和 [`docs/HANDOFF.md`](docs/HANDOFF.md)（状态快照、下一步、设计债）
 - 全部机制（结算顺序、规则语法、属性表、边界）见 [`docs/MECHANICS.md`](docs/MECHANICS.md)
 - 原计划见 [`docs/plan.md`](docs/plan.md)，行动清单见 [`docs/checklist.md`](docs/checklist.md)
-- 当前基线：111 条测试全过，第 1–3 关可玩，关卡编辑器可用
+- 当前基线：114 条测试全过，第 1–3 关可玩，关卡编辑器可用
 
 ## 环境
 
@@ -57,6 +57,7 @@ python run.py content/levels/02-move-aside.txt # 直接进某一关
 | 游戏 | Esc | 返回菜单 |
 | 编辑器 | 左键 / 右键 | 放置 / 擦除 |
 | 编辑器 | Ctrl+S / Ctrl+E / Ctrl+I | 保存 / 导出分享码 / 导入分享码 |
+| 编辑器 | Ctrl+Z / Ctrl+Y | 撤销 / 重做 |
 
 通关记录保存在 `progress.json`（已 gitignore），菜单和选关会显示完成状态。
 
@@ -75,7 +76,9 @@ python run.py content/levels/02-move-aside.txt # 直接进某一关
 4. **保存**：写入 `custom_levels/`，回到菜单「自制关卡」即可看到；
 5. **打开**：从已保存的自制关卡中选一个继续编辑；
 6. **重命名 / 删除**：作用于当前打开或保存过的自制关卡；
-7. **导出码 / 导入码**：分享码写入 `exports/` 并尝试复制到剪贴板，导入时校验后落到 `custom_levels/`。
+7. **撤销/重做**：`Ctrl+Z` / `Ctrl+Y`，最多 60 步；
+8. **转官方**：复制到 `content/levels/`，自动取下一个编号，自制文件保留；
+9. **导出码 / 导入码**：分享码写入 `exports/` 并尝试复制到剪贴板，导入时校验后落到 `custom_levels/`。
 
 自定义关卡、导出目录都在 `.gitignore` 里，不会污染仓库。
 
