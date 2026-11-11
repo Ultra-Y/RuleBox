@@ -80,6 +80,65 @@ def test_stop_and_push_object_is_pushable():
     assert world.get(4, 3).id == "box"
 
 
+def test_pushable_shut_door_is_pushed_like_other_objects():
+    world = make_world(
+        words=[
+            (0, 0, "人"),
+            (0, 1, "是"),
+            (0, 2, "你"),
+            (1, 0, "门"),
+            (1, 1, "是"),
+            (1, 2, "关"),
+            (1, 3, "和"),
+            (1, 4, "推"),
+        ],
+        objects=[(4, 1, "baba"), (4, 2, "door")],
+    )
+
+    result = try_move(world, 0, 1)
+    assert result.moved
+    assert world.get(4, 2).id == "baba"
+    assert world.get(4, 3).id == "door"
+
+
+def test_shut_door_without_push_still_blocks():
+    world = make_world(
+        words=[
+            (0, 0, "人"),
+            (0, 1, "是"),
+            (0, 2, "你"),
+            (1, 0, "门"),
+            (1, 1, "是"),
+            (1, 2, "关"),
+        ],
+        objects=[(4, 1, "baba"), (4, 2, "door")],
+    )
+
+    result = try_move(world, 0, 1)
+    assert not result.moved
+    assert world.get(4, 1).id == "baba"
+    assert world.get(4, 2).id == "door"
+
+
+def test_defeat_touch_loses():
+    world = make_world(
+        words=[
+            (0, 0, "人"),
+            (0, 1, "是"),
+            (0, 2, "你"),
+            (1, 0, "火"),
+            (1, 1, "是"),
+            (1, 2, "败"),
+        ],
+        objects=[(4, 1, "baba"), (4, 2, "fire")],
+    )
+
+    result = try_move(world, 0, 1)
+    assert result.moved
+    assert result.lost
+    assert not result.won
+
+
 def test_push_chain_blocked_by_wall():
     world = make_world(
         words=[

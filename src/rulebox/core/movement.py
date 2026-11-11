@@ -14,6 +14,7 @@ from .resolve import (
     apply_contacts,
     apply_teleports,
     apply_transforms,
+    has_defeat_touch,
     has_prop,
     is_obstacle,
     you_positions,
@@ -67,7 +68,9 @@ def try_move(world: World, dr: int, dc: int) -> MoveResult:
     apply_transforms(world, transforms)
     lost = False
     if not won:
-        lost = not you_positions(world, property_map(parse_rules(world)))
+        lost = has_defeat_touch(world, props) or not you_positions(
+            world, property_map(parse_rules(world))
+        )
     return MoveResult(True, won=won, lost=lost)
 
 
@@ -109,9 +112,15 @@ def _move_one(
     if stop_blockers:
         return MoveResult(False)
 
-    # 门关着：只有带 OPEN 的移动方能进，进去后由接触结算把门毁掉。
+    # 关 + 推 的门和其他可推物件一样可以被推；
+    # 只有“关但不可推”的门才挡住没有 OPEN 的移动方。
     opener = has_prop(entity, props, "OPEN")
-    if not opener and any(has_prop(target, props, "SHUT") for target in targets):
+    shut_blockers = [
+        target
+        for target in targets
+        if has_prop(target, props, "SHUT") and not _is_pushable(target, props)
+    ]
+    if not opener and shut_blockers:
         return MoveResult(False)
 
     if any(has_prop(target, props, "WIN") for target in targets):

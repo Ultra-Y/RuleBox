@@ -98,6 +98,17 @@ def apply_contacts(world: World, props: dict[str, set[str]]) -> None:
         world.remove(row, col, entity)
 
 
+def has_defeat_touch(world: World, props: dict[str, set[str]]) -> bool:
+    """「你」与带 DEFEAT 的物件同格时判负。"""
+    for row, col in _cells(world):
+        cell = world.entities_at(row, col)
+        if any(has_prop(entity, props, "YOU") for entity in cell) and any(
+            has_prop(entity, props, "DEFEAT") for entity in cell
+        ):
+            return True
+    return False
+
+
 def _shut_victims(world: World, props: dict[str, set[str]]) -> list[tuple[int, int, Entity]]:
     """带 OPEN 的格子里，摧毁同格的 SHUT 物件；自身也是 OPEN 的不自我摧毁。"""
     victims: list[tuple[int, int, Entity]] = []
