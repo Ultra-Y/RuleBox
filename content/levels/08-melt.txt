@@ -1,0 +1,35 @@
+name 08 融化
+size 11 10
+
+legend
+  # wall
+  . empty
+  @ baba
+  F flag
+  o rock
+  ^ fire
+  人 word 人
+  是 word 是
+  你 word 你
+  旗 word 旗
+  赢 word 赢
+  墙 word 墙
+  停 word 停
+  石 word 石
+  推 word 推
+  和 word 和
+  融 word 融
+  火 word 火
+  热 word 热
+
+grid
+  ###########
+  #墙是停......#
+  #.石是推和融...#
+  #.人是你.....#
+  #.火是热..旗是赢#
+  #....@....#
+  #####o#####
+  #####^#####
+  #....F....#
+  ###########

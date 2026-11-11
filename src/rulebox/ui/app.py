@@ -670,7 +670,7 @@ def _draw_play(screen, app: _App, chrome) -> None:
         screen.blit(fonts["rule"].render("（没有生效的规则）", True, RULE_TEXT), (ox, panel_y))
     for rule in rules[:5]:
         screen.blit(fonts["rule"].render("· " + rule.display(), True, RULE_TEXT), (ox, panel_y))
-        panel_y += 21
+        panel_y += 18
     if len(rules) > 5:
         screen.blit(fonts["hint"].render("…", True, HINT), (ox, panel_y))
 

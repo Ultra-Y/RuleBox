@@ -1,0 +1,29 @@
+name 07 传送门
+size 11 9
+
+legend
+  # wall
+  . empty
+  @ baba
+  F flag
+  P portal
+  人 word 人
+  是 word 是
+  你 word 你
+  旗 word 旗
+  赢 word 赢
+  墙 word 墙
+  停 word 停
+  L word 传送
+  传 word 传
+
+grid
+  ###########
+  #..人是你....#
+  #.旗是赢..墙是停#
+  #.....L是传.#
+  #.@P......#
+  ###########
+  #......P..#
+  #......F..#
+  ###########
