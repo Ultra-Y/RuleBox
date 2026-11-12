@@ -110,17 +110,22 @@ def has_defeat_touch(world: World, props: dict[str, set[str]]) -> bool:
 
 
 def _shut_victims(world: World, props: dict[str, set[str]]) -> list[tuple[int, int, Entity]]:
-    """带 OPEN 的格子里，抵消同格的 SHUT 物件；自身也是 OPEN 的不自我抵消。"""
+    """同格的 OPEN 与 SHUT 物件互相抵消；单个物件同时带两种属性时不自我抵消。"""
     victims: list[tuple[int, int, Entity]] = []
+    seen: set[int] = set()
     for row, col in _cells(world):
         cell = world.entities_at(row, col)
-        if not any(has_prop(entity, props, "OPEN") for entity in cell):
+        opens = [entity for entity in cell if has_prop(entity, props, "OPEN")]
+        shuts = [entity for entity in cell if has_prop(entity, props, "SHUT")]
+        if not opens or not shuts:
             continue
-        victims += [
-            (row, col, entity)
-            for entity in cell
-            if has_prop(entity, props, "SHUT") and not has_prop(entity, props, "OPEN")
-        ]
+        involved = opens + shuts
+        for entity in involved:
+            if id(entity) in seen:
+                continue
+            if any(other is not entity for other in involved):
+                seen.add(id(entity))
+                victims.append((row, col, entity))
     return victims
 
 

@@ -7,6 +7,7 @@ legend
   @ baba
   F flag
   D door
+  K key
   人 word 人
   是 word 是
   你 word 你
@@ -17,6 +18,9 @@ legend
   门 word 门
   关 word 关
   开 word 开
+  钥 word 钥
+  推 word 推
+  和 word 和
 
 grid
   #人是你旗是赢墙是停#
@@ -24,7 +28,7 @@ grid
   #..人是.开...#
   #......@..#
   #.........#
-  #.........#
+  #......K..#
   #######D###
   #......F..#
-  #门是关......#
+  #门是关钥是推和开.#

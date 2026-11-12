@@ -50,17 +50,17 @@ def test_shut_blocks_you_without_open():
     assert not world.can_undo
 
 
-def test_open_you_enters_and_destroys_shut():
+def test_open_you_and_shut_cancel_each_other():
     words = DOOR_RULES + rule(2, "人", "开")
     world = make_world(words=words, objects=[(4, 1, "baba"), (4, 2, "door")])
 
     result = try_move(world, 0, 1)
 
-    assert result.moved and not result.lost
-    assert ids_at(world, 4, 2) == ["baba"]
+    assert result.moved and result.lost
+    assert ids_at(world, 4, 2) == []
 
 
-def test_pushed_open_key_opens_shut():
+def test_pushed_open_key_and_shut_cancel_each_other():
     words = rule(0, "人", "你") + rule2(1, "钥", "推", "开") + rule(2, "门", "关")
     world = make_world(
         words=words, objects=[(4, 1, "baba"), (4, 2, "key"), (4, 3, "door")]
@@ -70,7 +70,7 @@ def test_pushed_open_key_opens_shut():
 
     assert result.moved and not result.lost
     assert world.get(4, 2).id == "baba"
-    assert ids_at(world, 4, 3) == ["key"]
+    assert ids_at(world, 4, 3) == []
 
 
 def test_pushed_box_without_open_stops_at_shut():
@@ -88,7 +88,7 @@ def test_pushed_box_without_open_stops_at_shut():
     assert not world.can_undo
 
 
-def test_open_and_shut_object_does_not_self_destruct():
+def test_open_key_cancels_with_open_shut_door():
     words = (
         rule(0, "人", "你")
         + rule2(1, "钥", "推", "开")
@@ -101,7 +101,7 @@ def test_open_and_shut_object_does_not_self_destruct():
     result = try_move(world, 0, 1)
 
     assert result.moved and not result.lost
-    assert ids_at(world, 4, 3) == ["door", "key"]
+    assert ids_at(world, 4, 3) == []
 
 
 def test_open_you_cancels_pushable_shut():
@@ -110,8 +110,8 @@ def test_open_you_cancels_pushable_shut():
 
     result = try_move(world, 0, 1)
 
-    assert result.moved and not result.lost
-    assert ids_at(world, 4, 2) == ["baba"]
+    assert result.moved and result.lost
+    assert ids_at(world, 4, 2) == []
     assert ids_at(world, 4, 3) == []
 
 
@@ -280,7 +280,7 @@ def test_word_is_not_teleported():
 
 
 def test_open_you_teleports_into_shut_and_breaks_it():
-    """传送先于开/关结算：传进门后面的 OPEN「你」把门毁掉。"""
+    """传送先于开/关结算：传进门后面的 OPEN「你」与门互相抵消。"""
     words = (
         rule(0, "人", "你")
         + rule(1, "人", "开")
@@ -295,9 +295,9 @@ def test_open_you_teleports_into_shut_and_breaks_it():
 
     result = try_move(world, 0, 1)
 
-    assert result.moved and not result.lost
+    assert result.moved and result.lost
     assert ids_at(world, 4, 2) == ["portal"]
-    assert ids_at(world, 4, 5) == ["portal", "baba"]
+    assert ids_at(world, 4, 5) == ["portal"]
 
 
 def test_teleport_resolves_only_once_per_step():

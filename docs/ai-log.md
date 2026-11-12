@@ -188,7 +188,7 @@
 
 - 要求：OPEN 物件与 SHUT 物件相碰抵消；操作的物件自身带 WIN 时直接胜利。
 - 产出：`OPEN` 移动方遇 `SHUT + PUSH` 不再推门，改为抵消门；`_move_one` 对自身带 WIN 的 YOU 直接返回胜利。
-- 保持：OPEN 物件保留，避免教程 06“开门”变成自杀；单个 OPEN+SHUT 物件不自毁。
+- 保持：`OPEN` 与 `SHUT` 双方一起消失；教程 06 改成推钥匙撞门，避免 OPEN 的 Baba 撞门后自杀。
 - 验证：130 passed；新增 OPEN+SHUT、OPEN+SHUT+PUSH、YOU+WIN 直胜测试。
 
 ## 待本人补充
