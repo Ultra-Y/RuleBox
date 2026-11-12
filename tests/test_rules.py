@@ -117,6 +117,41 @@ def test_self_rule_does_not_block_properties():
     assert len(effective_rules(rules)) == 2
 
 
+def test_overlapping_transform_and_property_sentences():
+    world = make_world(
+        words=[
+            (1, 1, "旗"),
+            (1, 2, "是"),
+            (1, 3, "箱"),
+            (1, 4, "是"),
+            (1, 5, "开"),
+        ]
+    )
+    rules = parse_rules(world)
+
+    assert {rule.display() for rule in rules} == {"旗 是 箱", "箱 是 开"}
+    assert transform_map(rules) == {"flag": "box"}
+    assert property_map(rules)["box"] == {"OPEN"}
+    assert active_word_positions(world) == {(1, 1), (1, 2), (1, 3), (1, 4), (1, 5)}
+
+
+def test_suffix_sentence_after_extra_noun():
+    world = make_world(words=[(1, 1, "人"), (1, 2, "旗"), (1, 3, "是"), (1, 4, "开")])
+    rules = parse_rules(world)
+
+    assert [rule.display() for rule in rules] == ["旗 是 开"]
+    assert active_word_positions(world) == {(1, 2), (1, 3), (1, 4)}
+
+
+def test_prefix_sentence_before_trailing_word():
+    world = make_world(words=[(1, 1, "旗"), (1, 2, "是"), (1, 3, "开"), (1, 4, "关")])
+    rules = parse_rules(world)
+
+    assert [rule.display() for rule in rules] == ["旗 是 开"]
+    assert property_map(rules)["flag"] == {"OPEN"}
+    assert active_word_positions(world) == {(1, 1), (1, 2), (1, 3)}
+
+
 def test_incomplete_sentence_ignored():
     assert parse_sentence(["墙", "是"]) is None
     assert parse_sentence(["墙", "是", "你", "和"]) is None

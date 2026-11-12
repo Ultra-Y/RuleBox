@@ -164,10 +164,41 @@ def _word_runs(world: World):
                 row += 1
 
 
+def _scan_run_spans(tokens: list[str]) -> list[tuple[int, int, Rule]]:
+    """扫描一段词块里所有合法子句；长句优先，允许子句重叠。
+
+    例如「旗 是 箱 是 开」会同时得到「旗 是 箱」和「箱 是 开」；
+    「人 旗 是 开」只取后缀「旗 是 开」；
+    「旗 是 开 关」只取前缀「旗 是 开」。
+    """
+    candidates: list[tuple[int, int, Rule]] = []
+    total = len(tokens)
+    for start in range(total):
+        for end in range(start + 3, total + 1):
+            rule = parse_sentence(tokens[start:end])
+            if rule is not None:
+                candidates.append((start, end, rule))
+
+    # 只保留不被其他合法句包含的候选，避免「人 是 你 和 推」再拆出「人 是 你」。
+    kept: list[tuple[int, int, Rule]] = []
+    for index, (start, end, rule) in enumerate(candidates):
+        contained = any(
+            other_index != index
+            and other_start <= start
+            and end <= other_end
+            and (other_start < start or end < other_end)
+            for other_index, (other_start, other_end, _other_rule) in enumerate(candidates)
+        )
+        if not contained:
+            kept.append((start, end, rule))
+    kept.sort(key=lambda item: (item[0], item[1]))
+    return kept
+
+
 def _rule_spans(world: World):
     """产出 (行, 列, 行方向, 列方向, 开始, 结束, 规则)。"""
     for row, col, dr, dc, tokens in _word_runs(world):
-        for start, end, rule in parse_run_spans(tokens):
+        for start, end, rule in _scan_run_spans(tokens):
             yield row, col, dr, dc, start, end, rule
 
 
