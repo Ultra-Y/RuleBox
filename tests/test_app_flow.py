@@ -61,6 +61,13 @@ def test_official_category_flow(tmp_path):
     assert app.select_mode == "chapter1"
     assert [entry.display_name for entry in app.select_entries] == ["1-1", "1-2"]
 
+    assert _handle_select(app, pygame.K_ESCAPE)
+    assert app.screen == "official"
+    app.official_index = 2
+    assert _handle_official(app, pygame.K_RETURN)
+    assert app.select_mode == "chapter2"
+    assert [entry.display_name for entry in app.select_entries] == ["2-1"]
+
 
 def test_win_then_next_level(tmp_path):
     app = new_app(tmp_path)

@@ -1,13 +1,13 @@
 # 交接说明（Handoff）
 
-> 快照：2026-11-11（教程 10 关 + 主线 1-1/1-2 + Windows 免安装包）
+> 快照：2026-11-11（教程 10 关 + 第一章 1-1/1-2 + 第二章 2-1 + Windows 免安装包）
 > 最新代码提交：以 `git log` 为准
 > 仓库：https://github.com/Ultra-Y/RuleBox （public）
 > 交接 tag：`handoff-2026-11-10`
 
 ## 1. 一句话状态
 
-Day 2、5.1、5.2、5.3 完成，并补上开始菜单、官方/自制关卡分离、官方关卡分类（教程 / 第一章）、通关进度、过关下一关；规则层支持相邻两句（横/竖）、显式「墙 是 停」和自指规则锁；第 1–10 关作为教程，主线从 1-1 开始，当前到 1-2；04–09 每关配 `solutions/` 回放测试，10 由作者实测通过；编辑器支持 5×5–20×20、试玩、打开、重命名、删除、撤销/重做、分享码；物件已换成 16×16 像素精灵，未生效词块自动压暗；140 条测试全过；教程 10 关 + 主线 1-1/1-2 可玩。
+Day 2、5.1、5.2、5.3 完成，并补上开始菜单、官方/自制关卡分离、官方关卡分类（教程 / 第一章 / 第二章）、通关进度、过关下一关；规则层支持相邻两句（横/竖）、显式「墙 是 停」和自指规则锁；第 1–10 关作为教程，主线从 1-1 开始，当前到 2-1；04–09 每关配 `solutions/` 回放测试，10 由作者实测通过；编辑器支持 5×5–20×20、试玩、打开、重命名、删除、撤销/重做、分享码；物件已换成 16×16 像素精灵，未生效词块自动压暗；140 条测试全过；教程 10 关 + 第一章 1-1/1-2 + 第二章 2-1 可玩。
 Windows 免安装包已构建并验证：`dist/RuleBox-Windows.zip`（约 13 MB，解压双击 `RuleBox.exe`）；第 11–12 关待补，之后可做提示系统、`validate.py` 和最佳步数。
 
 ## 2. 资源清单
@@ -15,7 +15,7 @@ Windows 免安装包已构建并验证：`dist/RuleBox-Windows.zip`（约 13 MB�
 | 资源 | 位置 | 说明 |
 | :--- | :--- | :--- |
 | 源码 | `src/rulebox/` | core 纯逻辑，ui 用 Pygame |
-| 关卡 | `content/levels/01-*.txt` 到 `10-*.txt` + `main-1-1.txt`、`main-1-2.txt` | 教程 01–10，主线 1-1/1-2 |
+| 关卡 | `content/levels/01-*.txt` 到 `10-*.txt` + `main-1-1.txt`、`main-1-2.txt`、`main-2-1.txt` | 教程 01–10，第一章 1-1/1-2，第二章 2-1 |
 | 解法 | `solutions/*.txt` | `URDL` 回放串 |
 | 测试 | `tests/` | 140 条 |
 | 机制说明 | `docs/MECHANICS.md` | 结算顺序、规则语法、属性表、已知边界 |
@@ -26,7 +26,7 @@ Windows 免安装包已构建并验证：`dist/RuleBox-Windows.zip`（约 13 MB�
 | 子 agent 封装 | `tools/qoder_agent.py` | 调用 Qoder CN CLI，结果在 `docs/agent-runs/` |
 | 计划 | `docs/plan.md` | 12 关、6 周的原计划（快照） |
 | 清单 | `docs/checklist.md` | 每日/每周行动清单（快照） |
-| 截图 | `docs/preview_01.png`–`preview_09.png`、`preview_main_1_1.png`、`preview_main_1_2.png`、`official.png`、`select_tutorial.png`、`select_chapter1.png`、`menu.png`、`select.png`、`editor.png`、`word_states.png`、`sprites.png` | README 用 |
+| 截图 | `docs/preview_01.png`–`preview_09.png`、`preview_main_1_1.png`、`preview_main_1_2.png`、`preview_main_2_1.png`、`official.png`、`select_tutorial.png`、`select_chapter1.png`、`select_chapter2.png`、`menu.png`、`select.png`、`editor.png`、`word_states.png`、`sprites.png` | README 用 |
 | AI 记录 | `docs/ai-log.md` | 真实协作记录，课程提交要用 |
 | 试玩 | `docs/playtest.md` | 模板，待填 |
 | 远端 | GitHub `Ultra-Y/RuleBox` | public，可直接 clone |
@@ -166,8 +166,8 @@ py -3.10 -m venv .venv
 
 ### 5.3.8 官方关卡分类（已完成）
 
-- 菜单 `官方关卡` 先进入分类页：`教程（10 关）` / `第一章（2 关）`。
-- 教程对应 01–10；第一章对应 `main-1-1.txt`、`main-1-2.txt`。
+- 菜单 `官方关卡` 先进入分类页：`教程（10 关）` / `第一章（2 关）` / `第二章（1 关）`。
+- 教程对应 01–10；第一章对应 `main-1-1.txt`、`main-1-2.txt`；第二章对应 `main-2-1.txt`。
 - 选关支持分类过滤，Esc 从子列表返回分类页。
 - 验证：140 passed（分类页/过滤/返回流程）；`docs/official.png` 等截图。
 
@@ -222,20 +222,21 @@ py -3.10 -m venv .venv
 - 每关配 `solutions/XX.txt`（`URDL` 字符串），`tests/test_solutions.py` 回放判定通关。
 - 验证：140 passed（新增 5 条解法回放）；第 4–8 关截图检查。
 
-### 5.5 第 09–10 关与主线 1-1/1-2
+### 5.5 第 09–10 关与主线 1-1/1-2/2-1
 
 - **09 钥匙**：先拼「钥 是 开 和 推」，再推钥匙开门；解法 `ULDLLLDDDRDRR`。
 - **10 意识转移**：作者自制并实测通过；关卡文本在 `content/levels/10-意识转移.txt`，暂无自动回放。
 - **主线 1-1**：`content/levels/main-1-1.txt`，16×12。
 - **主线 1-2**：`content/levels/main-1-2.txt`，16×14。
+- **主线 2-1**：`content/levels/main-2-1.txt`，12×9。
 - 第 09 关静态规则放在地图外沿，谜题规则故意留缺口。
 - 验证：140 passed；第 9 关截图检查，第 10 关由作者实测。
 - 原第 09《石头变箱子》、第 10《沉箱》、第 12《传送钥匙》已删除；《钥匙》顺延为 09。
-- 主线 1-3 及后续章节待补。
+- 主线 2-2 及后续章节待补。
 
 ### 5.6 后续（非关卡）
 
-1. 补主线 1-3 及后续章节。
+1. 补主线 2-2 及后续章节。
 2. 提示系统。
 3. `validate.py` 关卡校验器。
 4. 最佳步数与存档扩展。
@@ -256,7 +257,7 @@ py -3.10 -m venv .venv
 - 传送落点未复查 `STOP`/`SHUT`。
 - 没有提示系统，也没有 `validate.py`；关卡“有解”目前只靠解法回放测试。
 - `progress.json` 只记录完成，不记录最佳步数。
-- 主线 1-3 及后续章节待补；第 10 关、1-1、1-2 暂时只有作者实测，没有自动解法回放。
+- 主线 2-2 及后续章节待补；第 10 关、1-1、1-2、2-1 暂时只有作者实测，没有自动解法回放。
 - 编辑器画布上限 20×20；撤销栈最多 60 步；编辑器不提供“转官方”按钮，官方收录由维护者手动完成。
 - 导入依赖剪贴板，剪贴板不可用时需要手动复制 `.code`。
 - 美术是固定 16×16 静态精灵，没有动画/朝向；词块仍是文字色块。
@@ -319,7 +320,7 @@ git clone RuleBox-handoff-2026-11-10.bundle RuleBox
 - 改行为前先写测试；改完跑全量 pytest。
 - 不要重写 UI，不要引入新框架。
 
-下一项按 5.6 补主线 1-3 或做提示系统；改动关卡时继续配 `solutions/XX.txt` 回放。
+下一项按 5.6 补主线 2-2 或做提示系统；改动关卡时继续配 `solutions/XX.txt` 回放。
 先给我看关卡设计与测试计划，等我确认后再改代码，不要直接提交。
 ```
 

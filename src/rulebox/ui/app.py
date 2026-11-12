@@ -139,7 +139,11 @@ class _App:
             ]
         elif mode == "chapter1":
             self.select_entries = [
-                entry for entry in self.official if entry.category == "main"
+                entry for entry in self.official if entry.chapter == 1
+            ]
+        elif mode == "chapter2":
+            self.select_entries = [
+                entry for entry in self.official if entry.chapter == 2
             ]
         elif mode == "custom":
             self.select_entries = list(self.custom)
@@ -208,7 +212,11 @@ class _App:
             ]
         elif self.select_mode == "chapter1":
             self.select_entries = [
-                entry for entry in self.official if entry.category == "main"
+                entry for entry in self.official if entry.chapter == 1
+            ]
+        elif self.select_mode == "chapter2":
+            self.select_entries = [
+                entry for entry in self.official if entry.chapter == 2
             ]
         elif self.select_mode == "custom":
             self.select_entries = self.custom
@@ -474,7 +482,7 @@ def _handle_menu(app: _App, key: int) -> bool:
 def _handle_official(app: _App, key: int) -> bool:
     import pygame
 
-    options = ("tutorial", "chapter1")
+    options = ("tutorial", "chapter1", "chapter2")
     if key in (pygame.K_UP, pygame.K_w):
         app.official_index = (app.official_index - 1) % len(options)
     elif key in (pygame.K_DOWN, pygame.K_s):
@@ -639,15 +647,17 @@ def _draw_official(screen, app: _App, chrome) -> None:
     screen.blit(title, title.get_rect(center=(WIDTH // 2, 100)))
 
     tutorials = [entry for entry in app.official if entry.category == "tutorial"]
-    main_levels = [entry for entry in app.official if entry.category == "main"]
+    chapter1 = [entry for entry in app.official if entry.chapter == 1]
+    chapter2 = [entry for entry in app.official if entry.chapter == 2]
     options = [
         (f"教程（{len(tutorials)} 关）", "tutorial"),
-        (f"第一章（{len(main_levels)} 关）", "chapter1"),
+        (f"第一章（{len(chapter1)} 关）", "chapter1"),
+        (f"第二章（{len(chapter2)} 关）", "chapter2"),
     ]
     for index, (label, _mode) in enumerate(options):
         color = TITLE if index == app.official_index else HINT
         text = chrome["menu"].render(label, True, color)
-        rect = text.get_rect(center=(WIDTH // 2, 280 + index * 60))
+        rect = text.get_rect(center=(WIDTH // 2, 260 + index * 56))
         if index == app.official_index:
             pygame.draw.rect(screen, SELECT_BG, rect.inflate(220, 16), border_radius=10)
         screen.blit(text, rect)
@@ -666,6 +676,8 @@ def _draw_select(screen, app: _App, chrome) -> None:
         heading = "教程"
     elif app.select_mode == "chapter1":
         heading = "第一章"
+    elif app.select_mode == "chapter2":
+        heading = "第二章"
     elif app.select_mode == "custom":
         heading = "自制关卡"
     else:
@@ -679,6 +691,8 @@ def _draw_select(screen, app: _App, chrome) -> None:
             message = "教程还没有关卡"
         elif app.select_mode == "chapter1":
             message = "第一章还没有关卡"
+        elif app.select_mode == "chapter2":
+            message = "第二章还没有关卡"
         elif app.select_mode == "custom":
             message = "还没有自制关卡，去关卡编辑器做一个"
         else:

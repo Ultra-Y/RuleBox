@@ -81,6 +81,9 @@ def test_level_categories():
     assert tutorial.category == "tutorial"
     assert main.category == "main"
     assert custom.category == "custom"
+    assert main.chapter == 1
+    chapter2 = LevelEntry(Path("main-2-1.txt"), "main", "2-1")
+    assert chapter2.chapter == 2
 
 
 def test_next_official_number(tmp_path):

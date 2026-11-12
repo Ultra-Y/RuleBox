@@ -1,0 +1,50 @@
+name 2-1
+size 12 9
+
+legend
+  # wall
+  . empty
+  @ baba
+  $ box
+  F flag
+  ~ water
+  ^ fire
+  o rock
+  D door
+  K key
+  P portal
+  1 word 人
+  2 word 是
+  3 word 你
+  4 word 墙
+  5 word 停
+  6 word 箱
+  7 word 推
+  8 word 旗
+  9 word 赢
+  0 word 传送
+  + word 和
+  - word 不
+  = word 浮
+  [ word 热
+  ] word 融
+  ( word 开
+  ) word 关
+  | word 传
+  ! word 败
+  W word 水
+  H word 火
+  R word 石
+  M word 门
+  Y word 钥
+
+grid
+  .......~#..8
+  .......~#F.2
+  .......~#..9
+  W...1..~####
+  2...2@.~...4
+  W...3..~...2
+  +...+..~...=
+  [...=..~...+
+  12]....~...!

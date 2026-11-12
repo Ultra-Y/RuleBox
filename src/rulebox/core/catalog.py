@@ -58,6 +58,16 @@ class LevelEntry:
             return "main"
         return "tutorial"
 
+    @property
+    def chapter(self) -> int | None:
+        """官方主线的章号：main-2-1.txt → 2。"""
+        if self.source != "official" or not self.path.stem.startswith("main-"):
+            return None
+        parts = self.path.stem.split("-")
+        if len(parts) < 3 or not parts[1].isdigit():
+            return None
+        return int(parts[1])
+
 
 def discover_levels(
     levels_dir: Path = OFFICIAL_DIR, source: str = "official"
