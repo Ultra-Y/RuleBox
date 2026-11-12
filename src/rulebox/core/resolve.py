@@ -110,7 +110,7 @@ def has_defeat_touch(world: World, props: dict[str, set[str]]) -> bool:
 
 
 def _shut_victims(world: World, props: dict[str, set[str]]) -> list[tuple[int, int, Entity]]:
-    """带 OPEN 的格子里，摧毁同格的 SHUT 物件；自身也是 OPEN 的不自我摧毁。"""
+    """带 OPEN 的格子里，抵消同格的 SHUT 物件；自身也是 OPEN 的不自我抵消。"""
     victims: list[tuple[int, int, Entity]] = []
     for row, col in _cells(world):
         cell = world.entities_at(row, col)

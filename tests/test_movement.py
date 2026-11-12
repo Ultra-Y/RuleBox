@@ -139,6 +139,24 @@ def test_defeat_touch_loses():
     assert not result.won
 
 
+def test_you_with_win_wins_directly():
+    world = make_world(
+        words=[
+            (0, 0, "人"),
+            (0, 1, "是"),
+            (0, 2, "你"),
+            (0, 3, "和"),
+            (0, 4, "赢"),
+        ],
+        objects=[(4, 1, "baba"), (4, 2, "wall")],
+    )
+
+    result = try_move(world, 0, 1)
+    assert result.moved and result.won
+    assert world.get(4, 1).id == "baba"
+    assert world.get(4, 2).id == "wall"
+
+
 def test_push_chain_blocked_by_wall():
     world = make_world(
         words=[

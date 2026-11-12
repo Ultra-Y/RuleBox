@@ -104,6 +104,17 @@ def test_open_and_shut_object_does_not_self_destruct():
     assert ids_at(world, 4, 3) == ["door", "key"]
 
 
+def test_open_you_cancels_pushable_shut():
+    words = rule(0, "人", "你") + rule(1, "人", "开") + rule2(2, "门", "关", "推")
+    world = make_world(words=words, objects=[(4, 1, "baba"), (4, 2, "door")])
+
+    result = try_move(world, 0, 1)
+
+    assert result.moved and not result.lost
+    assert ids_at(world, 4, 2) == ["baba"]
+    assert ids_at(world, 4, 3) == []
+
+
 def test_word_does_not_open_shut():
     words = DOOR_RULES + [(4, 2, "墙")]
     world = make_world(words=words, objects=[(4, 1, "baba"), (4, 3, "door")])

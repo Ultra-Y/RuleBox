@@ -94,6 +94,10 @@ def _move_one(
     if entity is None:
         return MoveResult(False)
 
+    # 「你」自身带 WIN：操作它移动时直接胜利，不需要走进赢格。
+    if can_win and has_prop(entity, props, "WIN"):
+        return MoveResult(True, won=True)
+
     target_row, target_col = row + dr, col + dc
     if not world.in_bounds(target_row, target_col):
         return MoveResult(False)
@@ -128,9 +132,14 @@ def _move_one(
             return MoveResult(True, won=True)
         return MoveResult(False)
 
-    # 词块永远可推，且不参与属性判定。
+    # 带 OPEN 的移动方碰到 SHUT 时应抵消门，而不是把可推的门推走。
     pushable = next(
-        (target for target in targets if _is_pushable(target, props)),
+        (
+            target
+            for target in targets
+            if _is_pushable(target, props)
+            and not (opener and has_prop(target, props, "SHUT"))
+        ),
         None,
     )
     if pushable is not None:
