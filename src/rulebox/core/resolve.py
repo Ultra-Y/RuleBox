@@ -8,8 +8,6 @@ from __future__ import annotations
 from .entities import Entity, make_object
 from .world import World
 
-WATER_ID = "water"
-
 
 def has_prop(entity: Entity | None, props: dict[str, set[str]], prop: str) -> bool:
     """物件是否拥有某个属性。词块不参与属性系统。"""
@@ -55,8 +53,8 @@ def apply_transforms(world: World, transforms: dict[str, str]) -> None:
 
 
 def is_hazard(entity: Entity, props: dict[str, set[str]]) -> bool:
-    """水与带 HOT 的物件：本身不挡路，同格来客交给接触结算。"""
-    return _is_water(entity) or has_prop(entity, props, "HOT")
+    """带 HOT 的物件本身不挡路，同格来客交给接触结算。水不再有内建行为。"""
+    return has_prop(entity, props, "HOT")
 
 
 def is_obstacle(
@@ -103,10 +101,8 @@ def apply_teleports(
 
 
 def apply_contacts(world: World, props: dict[str, set[str]]) -> None:
-    """接触结算：先开/关，再水，最后热/融。毁灭结果由调用方在变形后统一判定。"""
+    """接触结算：先开/关，再热/融。毁灭结果由调用方在变形后统一判定。"""
     for row, col, entity in _shut_victims(world, props):
-        world.remove(row, col, entity)
-    for row, col, entity in _sink_victims(world, props):
         world.remove(row, col, entity)
     for row, col, entity in _melt_victims(world, props):
         world.remove(row, col, entity)
@@ -149,25 +145,6 @@ def _shut_victims(world: World, props: dict[str, set[str]]) -> list[tuple[int, i
     return victims
 
 
-def _sink_victims(world: World, props: dict[str, set[str]]) -> list[tuple[int, int, Entity]]:
-    """同层水摧毁不带 FLOAT 的物件；词块和水自身不受影响，浮物件可安全穿过。"""
-    victims: list[tuple[int, int, Entity]] = []
-    for row, col in _cells(world):
-        cell = world.entities_at(row, col)
-        for water in cell:
-            if not _is_water(water):
-                continue
-            victims += [
-                (row, col, entity)
-                for entity in cell
-                if not _is_water(entity)
-                and not entity.is_word
-                and same_layer(water, entity, props)
-                and not has_prop(entity, props, "FLOAT")
-            ]
-    return victims
-
-
 def _melt_victims(world: World, props: dict[str, set[str]]) -> list[tuple[int, int, Entity]]:
     """同层 HOT 与 MELT 接触时融化；不同层互不影响。"""
     victims: list[tuple[int, int, Entity]] = []
@@ -184,10 +161,6 @@ def _melt_victims(world: World, props: dict[str, set[str]]) -> list[tuple[int, i
                 and not has_prop(entity, props, "HOT")
             ]
     return victims
-
-
-def _is_water(entity: Entity) -> bool:
-    return entity.id == WATER_ID
 
 
 def _cells(world: World) -> list[tuple[int, int]]:

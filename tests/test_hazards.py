@@ -1,4 +1,4 @@
-"""水/浮、热/融的接触结算。"""
+"""普通水、浮层、热/融的接触结算。"""
 
 import pygame
 
@@ -39,54 +39,26 @@ def ids_at(world: World, row: int, col: int) -> list[str]:
     return [entity.id for entity in world.entities_at(row, col)]
 
 
-# ---------- 水 / 浮 ----------
+# ---------- 水是普通物件 ----------
 
 
-def test_water_drowns_you():
+def test_water_is_plain_object():
     world = make_world(words=rule(0, "人", "你"), objects=[(4, 1, "baba"), (4, 2, "water")])
 
     result = try_move(world, 0, 1)
 
-    assert result.moved and result.lost
-    assert world.get(4, 1) is None
-    assert ids_at(world, 4, 2) == ["water"]
+    assert result.moved and not result.lost
+    assert set(ids_at(world, 4, 2)) == {"water", "baba"}
 
 
-def test_game_tracks_loss_and_reset_clears_it():
-    game = Game(
-        make_level(words=rule(0, "人", "你"), objects=[(4, 1, "baba"), (4, 2, "water")])
-    )
-
-    assert game.move(0, 1).lost
-    assert game.lost and game.moves == 1
-
-    assert not game.move(0, 1).moved
-    assert ids_at(game.world, 4, 2) == ["water"]
-    assert game.moves == 1
-
-    game.reset()
-    assert not game.lost
-    assert game.moves == 0
-    assert game.world.get(4, 1).id == "baba"
-
-
-def test_undo_restores_drowned_you():
-    world = make_world(words=rule(0, "人", "你"), objects=[(4, 1, "baba"), (4, 2, "water")])
-
-    assert try_move(world, 0, 1).lost
-    assert world.undo() is True
-    assert world.get(4, 1).id == "baba"
-    assert ids_at(world, 4, 2) == ["water"]
-
-
-def test_float_you_survives_water():
+def test_float_you_overlaps_water():
     words = rule(0, "人", "你") + rule(1, "人", "浮")
     world = make_world(words=words, objects=[(4, 1, "baba"), (4, 2, "water")])
 
     result = try_move(world, 0, 1)
 
     assert result.moved and not result.lost
-    assert ids_at(world, 4, 2) == ["water", "baba"]
+    assert set(ids_at(world, 4, 2)) == {"water", "baba"}
 
 
 def test_float_object_leaves_water_intact():
@@ -101,29 +73,49 @@ def test_float_object_leaves_water_intact():
     assert ids_at(world, 4, 2) == ["water"]
 
 
-def test_word_pushed_into_water_survives():
-    words = rule(0, "人", "你") + [(4, 2, "墙")]
-    world = make_world(words=words, objects=[(4, 1, "baba"), (4, 3, "water")])
+def test_water_can_be_pushed_by_rule():
+    words = rule(0, "人", "你") + rule(1, "水", "推")
+    world = make_world(words=words, objects=[(4, 1, "baba"), (4, 2, "water")])
 
     result = try_move(world, 0, 1)
 
     assert result.moved and not result.lost
     assert world.get(4, 2).id == "baba"
-    assert ids_at(world, 4, 3) == ["water", "word:墙"]
+    assert ids_at(world, 4, 3) == ["water"]
 
 
-def test_losing_one_of_two_you_is_not_defeat():
-    world = make_world(
-        words=rule(0, "人", "你"),
-        objects=[(2, 4, "baba"), (4, 1, "baba"), (4, 2, "water")],
-    )
+def test_water_can_be_stopped_by_rule():
+    words = rule(0, "人", "你") + rule(1, "水", "停")
+    world = make_world(words=words, objects=[(4, 1, "baba"), (4, 2, "water")])
+
+    result = try_move(world, 0, 1)
+
+    assert not result.moved
+    assert world.get(4, 1).id == "baba"
+    assert ids_at(world, 4, 2) == ["water"]
+
+
+def test_water_can_be_melted_by_rule():
+    words = rule(0, "人", "你") + rule(1, "火", "热") + rule(2, "水", "融")
+    world = make_world(words=words, objects=[(4, 1, "baba"), (4, 2, "water")])
+    world.add(4, 2, make_object("fire"))
 
     result = try_move(world, 0, 1)
 
     assert result.moved and not result.lost
-    assert ids_at(world, 4, 2) == ["water"]
-    assert world.get(2, 4) is None
-    assert world.get(2, 5).id == "baba"
+    assert set(ids_at(world, 4, 2)) == {"fire", "baba"}
+
+
+def test_word_pushed_into_water_is_blocked():
+    words = rule(0, "人", "你") + [(4, 2, "墙")]
+    world = make_world(words=words, objects=[(4, 1, "baba"), (4, 3, "water")])
+
+    result = try_move(world, 0, 1)
+
+    assert not result.moved
+    assert world.get(4, 1).id == "baba"
+    assert ids_at(world, 4, 2) == ["word:墙"]
+    assert ids_at(world, 4, 3) == ["water"]
 
 
 def test_stop_still_blocks_water_cell():
@@ -136,6 +128,57 @@ def test_stop_still_blocks_water_cell():
     assert not result.moved
     assert world.get(4, 1).id == "baba"
     assert not world.can_undo
+
+
+# ---------- 失败、撤销、重置 ----------
+
+
+DEFEAT_RULES = rule(0, "人", "你") + rule(1, "火", "败")
+
+
+def test_game_tracks_defeat_and_reset_clears_it():
+    game = Game(make_level(words=DEFEAT_RULES, objects=[(4, 1, "baba"), (4, 2, "fire")]))
+
+    assert game.move(0, 1).lost
+    assert game.lost and game.moves == 1
+
+    assert not game.move(0, 1).moved
+    assert set(ids_at(game.world, 4, 2)) == {"fire", "baba"}
+    assert game.moves == 1
+
+    game.reset()
+    assert not game.lost
+    assert game.moves == 0
+    assert game.world.get(4, 1).id == "baba"
+
+
+def test_undo_restores_defeated_you():
+    world = make_world(words=DEFEAT_RULES, objects=[(4, 1, "baba"), (4, 2, "fire")])
+
+    assert try_move(world, 0, 1).lost
+    assert world.undo() is True
+    assert world.get(4, 1).id == "baba"
+    assert ids_at(world, 4, 2) == ["fire"]
+
+
+def test_key_handler_blocks_moves_after_loss():
+    game = Game(make_level(words=DEFEAT_RULES, objects=[(4, 1, "baba"), (4, 2, "fire")]))
+
+    assert game.move(0, 1).lost
+
+    assert _handle_key(game, pygame.K_RIGHT, "", MOVES) is True
+    assert game.moves == 1
+    assert set(ids_at(game.world, 4, 2)) == {"fire", "baba"}
+
+    assert _handle_key(game, pygame.K_z, "z", MOVES) is True
+    assert not game.lost
+    assert game.moves == 0
+    assert game.world.get(4, 1).id == "baba"
+
+    assert game.move(0, 1).lost
+    assert _handle_key(game, pygame.K_r, "r", MOVES) is True
+    assert not game.lost
+    assert game.world.get(4, 1).id == "baba"
 
 
 # ---------- 热 / 融 ----------
@@ -222,34 +265,25 @@ def test_hot_and_melt_object_does_not_self_destroy():
     assert ids_at(world, 4, 2) == ["fire", "baba"]
 
 
-# ---------- 结算顺序 ----------
-
-
-def test_water_resolves_before_heat():
-    words = rule(0, "人", "你") + rule(1, "火", "热") + rule(2, "水", "融")
-    world = make_world(words=words, objects=[(4, 1, "baba"), (4, 4, "water")])
-    world.add(4, 4, make_object("fire"))
-
-    result = try_move(world, 0, 1)
-
-    assert result.moved and not result.lost
-    assert ids_at(world, 4, 4) == ["water"]
-
-
 # ---------- 变形后的胜负判定 ----------
 
 
 def test_transform_creates_new_you_prevents_loss():
-    words = rule(0, "人", "你") + rule(1, "石", "人")
+    words = (
+        rule(0, "人", "你")
+        + rule(1, "石", "人")
+        + rule(2, "人", "融")
+        + rule(3, "火", "热")
+    )
     world = make_world(
         words=words,
-        objects=[(4, 1, "baba"), (4, 2, "water"), (4, 3, "rock")],
+        objects=[(4, 1, "baba"), (4, 2, "fire"), (4, 3, "rock")],
     )
 
     result = try_move(world, 0, 1)
 
     assert result.moved and not result.lost
-    assert ids_at(world, 4, 2) == ["water"]
+    assert ids_at(world, 4, 2) == ["fire"]
     assert world.get(4, 3).id == "baba"
 
 
@@ -261,28 +295,3 @@ def test_transform_removes_last_you_causes_loss():
 
     assert result.moved and result.lost
     assert world.get(4, 2).id == "rock"
-
-
-# ---------- UI ----------
-
-
-def test_key_handler_blocks_moves_after_loss():
-    game = Game(
-        make_level(words=rule(0, "人", "你"), objects=[(4, 1, "baba"), (4, 2, "water")])
-    )
-
-    assert game.move(0, 1).lost
-
-    assert _handle_key(game, pygame.K_RIGHT, "", MOVES) is True
-    assert game.moves == 1
-    assert ids_at(game.world, 4, 2) == ["water"]
-
-    assert _handle_key(game, pygame.K_z, "z", MOVES) is True
-    assert not game.lost
-    assert game.moves == 0
-    assert game.world.get(4, 1).id == "baba"
-
-    assert game.move(0, 1).lost
-    assert _handle_key(game, pygame.K_r, "r", MOVES) is True
-    assert not game.lost
-    assert game.world.get(4, 1).id == "baba"

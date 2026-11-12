@@ -223,7 +223,7 @@ def test_three_teleport_sites_do_not_move_you():
     assert ids_at(world, 4, 5) == ["portal"]
 
 
-def test_teleport_into_water_drowns_you():
+def test_teleport_into_water_is_plain_overlap():
     words = rule(0, "人", "你") + rule(1, "传送", "传")
     world = make_world(
         words=words,
@@ -233,9 +233,9 @@ def test_teleport_into_water_drowns_you():
 
     result = try_move(world, 0, 1)
 
-    assert result.moved and result.lost
+    assert result.moved and not result.lost
     assert ids_at(world, 4, 2) == ["portal"]
-    assert ids_at(world, 4, 5) == ["water"]
+    assert set(ids_at(world, 4, 5)) == {"portal", "water", "baba"}
 
 
 def test_float_portal_does_not_teleport_nonfloat_you():
