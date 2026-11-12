@@ -16,6 +16,7 @@ from .resolve import (
     apply_transforms,
     has_defeat_touch,
     has_prop,
+    is_floating,
     is_obstacle,
     same_layer,
     you_positions,
@@ -107,6 +108,7 @@ def _move_one(
         target
         for target in world.entities_at(target_row, target_col)
         if same_layer(entity, target, props)
+        or (target.is_word and is_floating(target, props))
     ]
     if not targets:
         _relocate(world, row, col, target_row, target_col, entity, trail)

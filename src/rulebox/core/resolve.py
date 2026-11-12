@@ -10,12 +10,12 @@ from .world import World
 
 
 def has_prop(entity: Entity | None, props: dict[str, set[str]], prop: str) -> bool:
-    """物件是否拥有某个属性。词块不参与属性系统。"""
-    return (
-        entity is not None
-        and entity.kind == "object"
-        and prop in props.get(entity.id, ())
-    )
+    """物件是否拥有某个属性；词块统一读取「词」名词的属性。"""
+    if entity is None:
+        return False
+    if entity.kind == "word":
+        return prop in props.get("word", ())
+    return entity.kind == "object" and prop in props.get(entity.id, ())
 
 
 def is_floating(entity: Entity | None, props: dict[str, set[str]]) -> bool:
@@ -25,11 +25,7 @@ def is_floating(entity: Entity | None, props: dict[str, set[str]]) -> bool:
 def same_layer(
     first: Entity | None, second: Entity | None, props: dict[str, set[str]]
 ) -> bool:
-    """浮物件与普通物件分处两层；词块是中性层，对两层都正常碰撞/推动。"""
-    if first is not None and first.is_word:
-        return True
-    if second is not None and second.is_word:
-        return True
+    """浮物件与普通物件分处两层；词块也按「词」属性进入对应层。"""
     return is_floating(first, props) == is_floating(second, props)
 
 
@@ -115,16 +111,26 @@ def apply_contacts(world: World, props: dict[str, set[str]]) -> None:
 
 
 def _cancel_victims(world: World, props: dict[str, set[str]]) -> list[tuple[int, int, Entity]]:
-    """同格只要有带 SINK 的物件，与它同格的所有物件/词块一起消失。
+    """沉只和同格的非浮物件/词块反应；沉物件自身是浮的则不触发。
 
-    沉的优先级高于浮层：浮物件和普通物件同样会被沉掉。
+    浮物件免疫沉；沉物件碰到浮物件时不会自毁。
     """
     victims: list[tuple[int, int, Entity]] = []
     for row, col in _cells(world):
         cell = world.entities_at(row, col)
-        if len(cell) < 2 or not any(has_prop(entity, props, "SINK") for entity in cell):
+        if len(cell) < 2:
             continue
-        victims.extend((row, col, entity) for entity in cell)
+        sinkers = [
+            entity
+            for entity in cell
+            if has_prop(entity, props, "SINK") and not is_floating(entity, props)
+        ]
+        if not sinkers:
+            continue
+        nonfloat = [entity for entity in cell if not is_floating(entity, props)]
+        if len(nonfloat) < 2 and not any(entity not in sinkers for entity in nonfloat):
+            continue
+        victims.extend((row, col, entity) for entity in nonfloat)
     return victims
 
 

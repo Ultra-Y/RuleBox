@@ -36,6 +36,7 @@ NOUN_TO_OBJECT: dict[str, str] = {
     "门": "door",
     "钥": "key",
     "传送": "portal",
+    "词": "word",
 }
 OBJECT_TO_NOUN = {value: key for key, value in NOUN_TO_OBJECT.items()}
 

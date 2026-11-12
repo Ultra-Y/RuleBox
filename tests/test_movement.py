@@ -261,7 +261,7 @@ def test_float_you_wins_on_float_win():
     assert result.won
 
 
-def test_float_you_pushes_word_block():
+def test_float_you_does_not_push_nonfloat_word():
     world = make_world(
         words=[
             (0, 0, "人"),
@@ -277,11 +277,53 @@ def test_float_you_pushes_word_block():
 
     result = try_move(world, 0, 1)
     assert result.moved and not result.lost
+    assert set(entity.id for entity in world.entities_at(4, 2)) == {"baba", "word:墙"}
+
+
+def test_word_float_is_pushable_by_ground_you():
+    world = make_world(
+        words=[
+            (0, 0, "人"),
+            (0, 1, "是"),
+            (0, 2, "你"),
+            (1, 0, "词"),
+            (1, 1, "是"),
+            (1, 2, "浮"),
+        ],
+        objects=[(4, 1, "baba")],
+    )
+    world.set(4, 2, make_word("墙"))
+
+    result = try_move(world, 0, 1)
+    assert result.moved and not result.lost
     assert world.get(4, 2).id == "baba"
     assert world.get(4, 3).text == "墙"
 
 
-def test_word_block_still_blocks_float_you():
+def test_word_float_is_pushable_by_float_you():
+    world = make_world(
+        words=[
+            (0, 0, "人"),
+            (0, 1, "是"),
+            (0, 2, "你"),
+            (1, 0, "人"),
+            (1, 1, "是"),
+            (1, 2, "浮"),
+            (2, 0, "词"),
+            (2, 1, "是"),
+            (2, 2, "浮"),
+        ],
+        objects=[(4, 1, "baba")],
+    )
+    world.set(4, 2, make_word("墙"))
+
+    result = try_move(world, 0, 1)
+    assert result.moved and not result.lost
+    assert world.get(4, 2).id == "baba"
+    assert world.get(4, 3).text == "墙"
+
+
+def test_nonfloat_word_does_not_block_float_you():
     world = make_world(
         words=[
             (0, 0, "人"),
@@ -299,9 +341,8 @@ def test_word_block_still_blocks_float_you():
     world.set(4, 2, make_word("墙"))
 
     result = try_move(world, 0, 1)
-    assert not result.moved
-    assert world.get(4, 1).id == "baba"
-    assert world.get(4, 2).text == "墙"
+    assert result.moved
+    assert set(entity.id for entity in world.entities_at(4, 2)) == {"baba", "word:墙"}
 
 
 def test_push_chain_blocked_by_wall():
