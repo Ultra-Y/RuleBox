@@ -176,7 +176,7 @@ def test_float_you_is_immune_to_sink():
     assert set(ids_at(world, 4, 2)) == {"water", "baba"}
 
 
-def test_sink_cancels_float_word():
+def test_float_word_is_immune_to_sink():
     words = rule(0, "人", "你") + rule(1, "词", "浮") + rule(2, "水", "沉")
     world = make_world(words=words, objects=[(4, 1, "baba")])
     world.set(4, 3, make_word("墙"))
@@ -185,7 +185,7 @@ def test_sink_cancels_float_word():
     result = try_move(world, 0, 1)
 
     assert result.moved and not result.lost
-    assert ids_at(world, 4, 3) == []
+    assert set(ids_at(world, 4, 3)) == {"word:墙", "water"}
 
 
 # ---------- 失败、撤销、重置 ----------
