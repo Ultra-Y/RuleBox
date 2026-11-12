@@ -105,11 +105,27 @@ def apply_teleports(
 
 
 def apply_contacts(world: World, props: dict[str, set[str]]) -> None:
-    """接触结算：先开/关，再热/融。毁灭结果由调用方在变形后统一判定。"""
+    """接触结算：先沉，再开/关，最后热/融。毁灭结果由调用方在变形后统一判定。"""
+    for row, col, entity in _cancel_victims(world, props):
+        world.remove(row, col, entity)
     for row, col, entity in _shut_victims(world, props):
         world.remove(row, col, entity)
     for row, col, entity in _melt_victims(world, props):
         world.remove(row, col, entity)
+
+
+def _cancel_victims(world: World, props: dict[str, set[str]]) -> list[tuple[int, int, Entity]]:
+    """同格只要有带 SINK 的物件，与它同格的所有物件/词块一起消失。
+
+    沉的优先级高于浮层：浮物件和普通物件同样会被沉掉。
+    """
+    victims: list[tuple[int, int, Entity]] = []
+    for row, col in _cells(world):
+        cell = world.entities_at(row, col)
+        if len(cell) < 2 or not any(has_prop(entity, props, "SINK") for entity in cell):
+            continue
+        victims.extend((row, col, entity) for entity in cell)
+    return victims
 
 
 def has_defeat_touch(world: World, props: dict[str, set[str]]) -> bool:

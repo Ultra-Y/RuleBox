@@ -52,6 +52,7 @@ PROP_TO_ID: dict[str, str] = {
     "关": "SHUT",
     "传": "TELE",
     "败": "DEFEAT",
+    "沉": "SINK",
 }
 ID_TO_PROP = {value: key for key, value in PROP_TO_ID.items()}
 

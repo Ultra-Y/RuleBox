@@ -130,6 +130,52 @@ def test_stop_still_blocks_water_cell():
     assert not world.can_undo
 
 
+# ---------- 沉 ----------
+
+
+def test_sink_object_cancels_you():
+    words = rule(0, "人", "你") + rule(1, "水", "沉")
+    world = make_world(words=words, objects=[(4, 1, "baba"), (4, 2, "water")])
+
+    result = try_move(world, 0, 1)
+
+    assert result.moved and result.lost
+    assert ids_at(world, 4, 2) == []
+
+
+def test_sink_object_cancels_word_block():
+    words = rule(0, "人", "你") + rule(1, "水", "沉")
+    world = make_world(words=words, objects=[(4, 1, "baba")])
+    world.set(4, 3, make_word("墙"))
+    world.add(4, 3, make_object("water"))
+
+    result = try_move(world, 0, 1)
+
+    assert result.moved and not result.lost
+    assert ids_at(world, 4, 3) == []
+    assert world.get(4, 2).id == "baba"
+
+
+def test_sink_object_alone_stays():
+    words = rule(0, "人", "你") + rule(1, "水", "沉")
+    world = make_world(words=words, objects=[(4, 1, "baba"), (4, 3, "water")])
+
+    result = try_move(world, 0, 1)
+
+    assert result.moved and not result.lost
+    assert ids_at(world, 4, 3) == ["water"]
+
+
+def test_sink_cancels_across_float_layer():
+    words = rule(0, "人", "你") + rule(1, "人", "浮") + rule(2, "水", "沉")
+    world = make_world(words=words, objects=[(4, 1, "baba"), (4, 2, "water")])
+
+    result = try_move(world, 0, 1)
+
+    assert result.moved and result.lost
+    assert ids_at(world, 4, 2) == []
+
+
 # ---------- 失败、撤销、重置 ----------
 
 
