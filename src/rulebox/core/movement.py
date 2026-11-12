@@ -104,11 +104,16 @@ def _move_one(
     if not world.in_bounds(target_row, target_col):
         return MoveResult(False)
 
+    mover_floating = is_floating(entity, props)
     targets = [
         target
         for target in world.entities_at(target_row, target_col)
         if same_layer(entity, target, props)
-        or (target.is_word and is_floating(target, props))
+        or (
+            target.is_word
+            and (mover_floating or is_floating(target, props))
+        )
+        or (mover_floating and has_prop(target, props, "STOP"))
     ]
     if not targets:
         _relocate(world, row, col, target_row, target_col, entity, trail)

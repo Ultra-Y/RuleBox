@@ -157,7 +157,7 @@ def test_you_with_win_wins_directly():
     assert world.get(4, 2).id == "wall"
 
 
-def test_float_you_passes_nonfloat_wall():
+def test_float_you_passes_nonstop_object():
     world = make_world(
         words=[
             (0, 0, "人"),
@@ -166,16 +166,13 @@ def test_float_you_passes_nonfloat_wall():
             (1, 0, "人"),
             (1, 1, "是"),
             (1, 2, "浮"),
-            (2, 0, "墙"),
-            (2, 1, "是"),
-            (2, 2, "停"),
         ],
-        objects=[(4, 1, "baba"), (4, 2, "wall")],
+        objects=[(4, 1, "baba"), (4, 2, "rock")],
     )
 
     result = try_move(world, 0, 1)
     assert result.moved and not result.lost
-    assert {entity.id for entity in world.entities_at(4, 2)} == {"baba", "wall"}
+    assert {entity.id for entity in world.entities_at(4, 2)} == {"baba", "rock"}
 
 
 def test_nonfloat_you_passes_float_wall():
@@ -261,7 +258,7 @@ def test_float_you_wins_on_float_win():
     assert result.won
 
 
-def test_float_you_does_not_push_nonfloat_word():
+def test_float_you_pushes_nonfloat_word():
     world = make_world(
         words=[
             (0, 0, "人"),
@@ -277,7 +274,8 @@ def test_float_you_does_not_push_nonfloat_word():
 
     result = try_move(world, 0, 1)
     assert result.moved and not result.lost
-    assert set(entity.id for entity in world.entities_at(4, 2)) == {"baba", "word:墙"}
+    assert world.get(4, 2).id == "baba"
+    assert world.get(4, 3).text == "墙"
 
 
 def test_word_float_is_pushable_by_ground_you():
@@ -323,7 +321,7 @@ def test_word_float_is_pushable_by_float_you():
     assert world.get(4, 3).text == "墙"
 
 
-def test_nonfloat_word_does_not_block_float_you():
+def test_float_you_push_word_into_stop_wall_blocks():
     world = make_world(
         words=[
             (0, 0, "人"),
@@ -341,8 +339,55 @@ def test_nonfloat_word_does_not_block_float_you():
     world.set(4, 2, make_word("墙"))
 
     result = try_move(world, 0, 1)
-    assert result.moved
-    assert set(entity.id for entity in world.entities_at(4, 2)) == {"baba", "word:墙"}
+    assert not result.moved
+    assert world.get(4, 1).id == "baba"
+    assert world.get(4, 2).text == "墙"
+
+
+def test_floating_object_pushes_word():
+    world = make_world(
+        words=[
+            (0, 0, "人"),
+            (0, 1, "是"),
+            (0, 2, "你"),
+            (0, 3, "和"),
+            (0, 4, "浮"),
+            (1, 0, "箱"),
+            (1, 1, "是"),
+            (1, 2, "推"),
+            (1, 3, "和"),
+            (1, 4, "浮"),
+        ],
+        objects=[(4, 1, "baba"), (4, 2, "box")],
+    )
+    world.set(4, 3, make_word("墙"))
+
+    result = try_move(world, 0, 1)
+    assert result.moved and not result.lost
+    assert world.get(4, 2).id == "baba"
+    assert world.get(4, 3).id == "box"
+    assert world.get(4, 4).text == "墙"
+
+
+def test_floating_you_cannot_pass_stop_object():
+    world = make_world(
+        words=[
+            (0, 0, "人"),
+            (0, 1, "是"),
+            (0, 2, "你"),
+            (0, 3, "和"),
+            (0, 4, "浮"),
+            (1, 0, "墙"),
+            (1, 1, "是"),
+            (1, 2, "停"),
+        ],
+        objects=[(4, 1, "baba"), (4, 2, "wall")],
+    )
+
+    result = try_move(world, 0, 1)
+    assert not result.moved
+    assert world.get(4, 1).id == "baba"
+    assert world.get(4, 2).id == "wall"
 
 
 def test_push_chain_blocked_by_wall():

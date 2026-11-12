@@ -111,26 +111,31 @@ def apply_contacts(world: World, props: dict[str, set[str]]) -> None:
 
 
 def _cancel_victims(world: World, props: dict[str, set[str]]) -> list[tuple[int, int, Entity]]:
-    """沉只和同格的非浮物件/词块反应；沉物件自身是浮的则不触发。
+    """沉与同格的非浮物件/所有词块反应；浮的非词物件免疫。
 
-    浮物件免疫沉；沉物件碰到浮物件时不会自毁。
+    词块是例外：即使带浮，也会和沉物件一起消失。
     """
     victims: list[tuple[int, int, Entity]] = []
     for row, col in _cells(world):
         cell = world.entities_at(row, col)
         if len(cell) < 2:
             continue
-        sinkers = [
-            entity
-            for entity in cell
-            if has_prop(entity, props, "SINK") and not is_floating(entity, props)
-        ]
+        sinkers = [entity for entity in cell if has_prop(entity, props, "SINK")]
         if not sinkers:
             continue
-        nonfloat = [entity for entity in cell if not is_floating(entity, props)]
-        if len(nonfloat) < 2 and not any(entity not in sinkers for entity in nonfloat):
+        sinker_ids = {id(entity) for entity in sinkers}
+        others = [
+            entity
+            for entity in cell
+            if id(entity) not in sinker_ids
+            and (entity.is_word or not is_floating(entity, props))
+        ]
+        if not others:
+            if len(sinkers) >= 2:
+                victims.extend((row, col, entity) for entity in sinkers)
             continue
-        victims.extend((row, col, entity) for entity in nonfloat)
+        victims.extend((row, col, entity) for entity in sinkers)
+        victims.extend((row, col, entity) for entity in others)
     return victims
 
 
