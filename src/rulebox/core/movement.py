@@ -17,6 +17,7 @@ from .resolve import (
     has_defeat_touch,
     has_prop,
     is_obstacle,
+    same_layer,
     you_positions,
 )
 from .rules import parse_rules, property_map, transform_map
@@ -102,7 +103,11 @@ def _move_one(
     if not world.in_bounds(target_row, target_col):
         return MoveResult(False)
 
-    targets = world.entities_at(target_row, target_col)
+    targets = [
+        target
+        for target in world.entities_at(target_row, target_col)
+        if same_layer(entity, target, props)
+    ]
     if not targets:
         _relocate(world, row, col, target_row, target_col, entity, trail)
         return MoveResult(True)

@@ -224,7 +224,7 @@ def test_three_teleport_sites_do_not_move_you():
 
 
 def test_teleport_into_water_drowns_you():
-    words = rule(0, "人", "你") + rule2(1, "传送", "传", "浮")
+    words = rule(0, "人", "你") + rule(1, "传送", "传")
     world = make_world(
         words=words,
         objects=[(4, 1, "baba"), (4, 2, "portal"), (4, 5, "portal")],
@@ -235,6 +235,21 @@ def test_teleport_into_water_drowns_you():
 
     assert result.moved and result.lost
     assert ids_at(world, 4, 2) == ["portal"]
+    assert ids_at(world, 4, 5) == ["water"]
+
+
+def test_float_portal_does_not_teleport_nonfloat_you():
+    words = rule(0, "人", "你") + rule2(1, "传送", "传", "浮")
+    world = make_world(
+        words=words,
+        objects=[(4, 1, "baba"), (4, 2, "portal"), (4, 5, "portal")],
+    )
+    world.add(4, 5, make_object("water"))
+
+    result = try_move(world, 0, 1)
+
+    assert result.moved and not result.lost
+    assert ids_at(world, 4, 2) == ["portal", "baba"]
     assert ids_at(world, 4, 5) == ["portal", "water"]
 
 

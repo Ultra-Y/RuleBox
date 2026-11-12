@@ -157,6 +157,110 @@ def test_you_with_win_wins_directly():
     assert world.get(4, 2).id == "wall"
 
 
+def test_float_you_passes_nonfloat_wall():
+    world = make_world(
+        words=[
+            (0, 0, "人"),
+            (0, 1, "是"),
+            (0, 2, "你"),
+            (1, 0, "人"),
+            (1, 1, "是"),
+            (1, 2, "浮"),
+            (2, 0, "墙"),
+            (2, 1, "是"),
+            (2, 2, "停"),
+        ],
+        objects=[(4, 1, "baba"), (4, 2, "wall")],
+    )
+
+    result = try_move(world, 0, 1)
+    assert result.moved and not result.lost
+    assert {entity.id for entity in world.entities_at(4, 2)} == {"baba", "wall"}
+
+
+def test_nonfloat_you_passes_float_wall():
+    world = make_world(
+        words=[
+            (0, 0, "人"),
+            (0, 1, "是"),
+            (0, 2, "你"),
+            (1, 0, "墙"),
+            (1, 1, "是"),
+            (1, 2, "停"),
+            (1, 3, "和"),
+            (1, 4, "浮"),
+        ],
+        objects=[(4, 1, "baba"), (4, 2, "wall")],
+    )
+
+    result = try_move(world, 0, 1)
+    assert result.moved and not result.lost
+    assert {entity.id for entity in world.entities_at(4, 2)} == {"baba", "wall"}
+
+
+def test_float_you_does_not_push_nonfloat_box():
+    world = make_world(
+        words=[
+            (0, 0, "人"),
+            (0, 1, "是"),
+            (0, 2, "你"),
+            (1, 0, "人"),
+            (1, 1, "是"),
+            (1, 2, "浮"),
+            (2, 0, "箱"),
+            (2, 1, "是"),
+            (2, 2, "推"),
+        ],
+        objects=[(4, 1, "baba"), (4, 2, "box")],
+    )
+
+    result = try_move(world, 0, 1)
+    assert result.moved and not result.lost
+    assert {entity.id for entity in world.entities_at(4, 2)} == {"baba", "box"}
+
+
+def test_float_you_ignores_nonfloat_win():
+    world = make_world(
+        words=[
+            (0, 0, "人"),
+            (0, 1, "是"),
+            (0, 2, "你"),
+            (1, 0, "人"),
+            (1, 1, "是"),
+            (1, 2, "浮"),
+            (2, 0, "旗"),
+            (2, 1, "是"),
+            (2, 2, "赢"),
+        ],
+        objects=[(4, 1, "baba"), (4, 2, "flag")],
+    )
+
+    result = try_move(world, 0, 1)
+    assert result.moved and not result.won and not result.lost
+
+
+def test_float_you_wins_on_float_win():
+    world = make_world(
+        words=[
+            (0, 0, "人"),
+            (0, 1, "是"),
+            (0, 2, "你"),
+            (1, 0, "人"),
+            (1, 1, "是"),
+            (1, 2, "浮"),
+            (2, 0, "旗"),
+            (2, 1, "是"),
+            (2, 2, "赢"),
+            (2, 3, "和"),
+            (2, 4, "浮"),
+        ],
+        objects=[(4, 1, "baba"), (4, 2, "flag")],
+    )
+
+    result = try_move(world, 0, 1)
+    assert result.won
+
+
 def test_push_chain_blocked_by_wall():
     world = make_world(
         words=[

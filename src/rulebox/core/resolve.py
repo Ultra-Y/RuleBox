@@ -20,6 +20,17 @@ def has_prop(entity: Entity | None, props: dict[str, set[str]], prop: str) -> bo
     )
 
 
+def is_floating(entity: Entity | None, props: dict[str, set[str]]) -> bool:
+    return has_prop(entity, props, "FLOAT")
+
+
+def same_layer(
+    first: Entity | None, second: Entity | None, props: dict[str, set[str]]
+) -> bool:
+    """浮物件与普通物件分处两层；只有同层才会碰撞和结算。"""
+    return is_floating(first, props) == is_floating(second, props)
+
+
 def you_positions(world: World, props: dict[str, set[str]]) -> list[tuple[int, int]]:
     found: list[tuple[int, int]] = []
     for row in range(world.height):
@@ -64,20 +75,23 @@ def is_obstacle(
 def apply_teleports(
     world: World, props: dict[str, set[str]], moved: list[Entity]
 ) -> None:
-    """恰好两个 TELE 格时，把这一步「走进」其中一个格子的物件换到另一个格子。
+    """同层恰好两个 TELE 格时，把这一步「走进」其中一个格子的物件换到另一个格子。
 
+    传送也遵守浮层：普通物件不会触发浮传送门，反之亦然。
     按移动后的实际位置判定，所以只结算一次：到目的地不再连锁；
     原地不动的住户、词块和 TELE 自身都不传。
     """
-    sites: list[tuple[int, int]] = []
-    for row, col, _entity in world.find(lambda entity: has_prop(entity, props, "TELE")):
-        if (row, col) not in sites:
-            sites.append((row, col))
-    if len(sites) != 2:
-        return
-
     for entity in moved:
         if entity.is_word or has_prop(entity, props, "TELE"):
+            continue
+        sites: list[tuple[int, int]] = []
+        for row, col, portal in world.find(
+            lambda candidate: has_prop(candidate, props, "TELE")
+            and same_layer(candidate, entity, props)
+        ):
+            if (row, col) not in sites:
+                sites.append((row, col))
+        if len(sites) != 2:
             continue
         for index, site in enumerate(sites):
             if not any(other is entity for other in world.entities_at(*site)):
@@ -99,64 +113,76 @@ def apply_contacts(world: World, props: dict[str, set[str]]) -> None:
 
 
 def has_defeat_touch(world: World, props: dict[str, set[str]]) -> bool:
-    """「你」与带 DEFEAT 的物件同格时判负。"""
+    """「你」与带 DEFEAT 的物件同格且同层时判负。"""
     for row, col in _cells(world):
         cell = world.entities_at(row, col)
-        if any(has_prop(entity, props, "YOU") for entity in cell) and any(
-            has_prop(entity, props, "DEFEAT") for entity in cell
-        ):
-            return True
+        for you in cell:
+            if not has_prop(you, props, "YOU"):
+                continue
+            if any(
+                has_prop(other, props, "DEFEAT") and same_layer(you, other, props)
+                for other in cell
+            ):
+                return True
     return False
 
 
 def _shut_victims(world: World, props: dict[str, set[str]]) -> list[tuple[int, int, Entity]]:
-    """同格的 OPEN 与 SHUT 物件互相抵消；单个物件同时带两种属性时不自我抵消。"""
+    """同层同格的 OPEN 与 SHUT 物件互相抵消；不同层互不影响。"""
     victims: list[tuple[int, int, Entity]] = []
     seen: set[int] = set()
     for row, col in _cells(world):
         cell = world.entities_at(row, col)
-        opens = [entity for entity in cell if has_prop(entity, props, "OPEN")]
-        shuts = [entity for entity in cell if has_prop(entity, props, "SHUT")]
-        if not opens or not shuts:
-            continue
-        involved = opens + shuts
-        for entity in involved:
-            if id(entity) in seen:
+        for floating in (False, True):
+            layer = [entity for entity in cell if is_floating(entity, props) == floating]
+            opens = [entity for entity in layer if has_prop(entity, props, "OPEN")]
+            shuts = [entity for entity in layer if has_prop(entity, props, "SHUT")]
+            if not opens or not shuts:
                 continue
-            if any(other is not entity for other in involved):
-                seen.add(id(entity))
-                victims.append((row, col, entity))
+            involved = opens + shuts
+            for entity in involved:
+                if id(entity) in seen:
+                    continue
+                if any(other is not entity for other in involved):
+                    seen.add(id(entity))
+                    victims.append((row, col, entity))
     return victims
 
 
 def _sink_victims(world: World, props: dict[str, set[str]]) -> list[tuple[int, int, Entity]]:
-    """水摧毁同格不带 FLOAT 的物件；词块和水自身不受影响。"""
+    """同层水摧毁不带 FLOAT 的物件；词块和水自身不受影响，浮物件可安全穿过。"""
     victims: list[tuple[int, int, Entity]] = []
     for row, col in _cells(world):
         cell = world.entities_at(row, col)
-        if not any(_is_water(entity) for entity in cell):
-            continue
-        victims += [
-            (row, col, entity)
-            for entity in cell
-            if not _is_water(entity) and not entity.is_word
-            and not has_prop(entity, props, "FLOAT")
-        ]
+        for water in cell:
+            if not _is_water(water):
+                continue
+            victims += [
+                (row, col, entity)
+                for entity in cell
+                if not _is_water(entity)
+                and not entity.is_word
+                and same_layer(water, entity, props)
+                and not has_prop(entity, props, "FLOAT")
+            ]
     return victims
 
 
 def _melt_victims(world: World, props: dict[str, set[str]]) -> list[tuple[int, int, Entity]]:
-    """有 HOT 物件的格子里，摧毁同时带 MELT 的物件；自身也是 HOT 的不自我摧毁。"""
+    """同层 HOT 与 MELT 接触时融化；不同层互不影响。"""
     victims: list[tuple[int, int, Entity]] = []
     for row, col in _cells(world):
         cell = world.entities_at(row, col)
-        if not any(has_prop(entity, props, "HOT") for entity in cell):
-            continue
-        victims += [
-            (row, col, entity)
-            for entity in cell
-            if has_prop(entity, props, "MELT") and not has_prop(entity, props, "HOT")
-        ]
+        for hot in cell:
+            if not has_prop(hot, props, "HOT"):
+                continue
+            victims += [
+                (row, col, entity)
+                for entity in cell
+                if same_layer(hot, entity, props)
+                and has_prop(entity, props, "MELT")
+                and not has_prop(entity, props, "HOT")
+            ]
     return victims
 
 
