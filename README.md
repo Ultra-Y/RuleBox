@@ -22,7 +22,7 @@
 - 先读 [`AGENTS.md`](AGENTS.md)（代理操作规范）和 [`docs/HANDOFF.md`](docs/HANDOFF.md)（状态快照、下一步、设计债）
 - 全部机制（结算顺序、规则语法、属性表、边界）见 [`docs/MECHANICS.md`](docs/MECHANICS.md)
 - 原计划见 [`docs/plan.md`](docs/plan.md)，行动清单见 [`docs/checklist.md`](docs/checklist.md)
-- 当前基线：142 条测试全过，教程 10 关 + 第一章 1-1 / 1-2 + 第二章 2-1 可玩，关卡编辑器可用
+- 当前基线：143 条测试全过，教程 10 关 + 第一章 1-1 / 1-2 + 第二章 2-1 可玩，关卡编辑器可用
 
 ## 环境
 
@@ -253,6 +253,7 @@ RuleBox/
 ├── run.py              # 启动器
 └── requirements.txt
 ```
+
 
 
 

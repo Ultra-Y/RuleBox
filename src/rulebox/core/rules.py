@@ -32,7 +32,11 @@ class Rule:
         """给规则面板显示用，例如「墙 是 停」。"""
         left = " 和 ".join(OBJECT_TO_NOUN[n] for n in sorted(self.nouns))
         if self.transform:
-            return f"{left} 是 {OBJECT_TO_NOUN[self.transform]}"
+            right = OBJECT_TO_NOUN[self.transform]
+            if self.props:
+                props = " 和 ".join(ID_TO_PROP[p] for p in sorted(self.props))
+                right = f"{right} 和 {props}"
+            return f"{left} 是 {right}"
         if self.negated:
             right = " 和 ".join(ID_TO_PROP[p] for p in sorted(self.negated))
             return f"{left} 是 不 {right}"
@@ -71,11 +75,30 @@ def parse_sentence(tokens: list[str]) -> Rule | None:
         if i >= len(tokens):
             return None
 
-    # 变形句：石 是 箱
+    # 变形句：石 是 箱；也允许混合句「水 是 水 和 热」。
     if not negated and tokens[i] in NOUN_WORDS:
-        if i != len(tokens) - 1:
+        target = NOUN_TO_OBJECT[tokens[i]]
+        i += 1
+        if i == len(tokens):
+            return Rule(frozenset(nouns), transform=target)
+        if tokens[i] != "和":
             return None
-        return Rule(frozenset(nouns), transform=NOUN_TO_OBJECT[tokens[i]])
+        i += 1
+        props: list[str] = []
+        while i < len(tokens):
+            if tokens[i] not in PROPERTY_WORDS:
+                return None
+            props.append(PROP_TO_ID[tokens[i]])
+            i += 1
+            if i < len(tokens) and tokens[i] == "和":
+                i += 1
+                if i >= len(tokens):
+                    return None
+                continue
+            break
+        if i != len(tokens) or not props:
+            return None
+        return Rule(frozenset(nouns), frozenset(props), transform=target)
 
     props: list[str] = []
     while i < len(tokens):
@@ -264,8 +287,6 @@ def property_map(rules: list[Rule]) -> dict[str, set[str]]:
     negative: dict[str, set[str]] = {}
 
     for rule in rules:
-        if rule.transform:
-            continue
         for noun in rule.nouns:
             if rule.props:
                 positive.setdefault(noun, set()).update(rule.props)

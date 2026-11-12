@@ -76,6 +76,19 @@ def test_transform():
     assert rules[0].transform == "box"
 
 
+def test_mixed_transform_and_property_sentence():
+    rule = parse_sentence(["水", "是", "水", "和", "热"])
+    assert rule is not None
+    assert rule.transform == "water"
+    assert rule.props == frozenset({"HOT"})
+    assert rule.display() == "水 是 水 和 热"
+
+    world = make_world(words=[(1, 1, "水"), (1, 2, "是"), (1, 3, "水"), (1, 4, "和"), (1, 5, "热")])
+    rules = parse_rules(world)
+    assert property_map(rules)["water"] == {"HOT"}
+    assert transform_map(rules) == {"water": "water"}
+
+
 def test_self_rule_locks_transform():
     world = make_world(
         width=12,
