@@ -261,6 +261,49 @@ def test_float_you_wins_on_float_win():
     assert result.won
 
 
+def test_float_you_pushes_word_block():
+    world = make_world(
+        words=[
+            (0, 0, "人"),
+            (0, 1, "是"),
+            (0, 2, "你"),
+            (1, 0, "人"),
+            (1, 1, "是"),
+            (1, 2, "浮"),
+        ],
+        objects=[(4, 1, "baba")],
+    )
+    world.set(4, 2, make_word("墙"))
+
+    result = try_move(world, 0, 1)
+    assert result.moved and not result.lost
+    assert world.get(4, 2).id == "baba"
+    assert world.get(4, 3).text == "墙"
+
+
+def test_word_block_still_blocks_float_you():
+    world = make_world(
+        words=[
+            (0, 0, "人"),
+            (0, 1, "是"),
+            (0, 2, "你"),
+            (1, 0, "人"),
+            (1, 1, "是"),
+            (1, 2, "浮"),
+            (2, 0, "墙"),
+            (2, 1, "是"),
+            (2, 2, "停"),
+        ],
+        objects=[(4, 1, "baba"), (4, 3, "wall")],
+    )
+    world.set(4, 2, make_word("墙"))
+
+    result = try_move(world, 0, 1)
+    assert not result.moved
+    assert world.get(4, 1).id == "baba"
+    assert world.get(4, 2).text == "墙"
+
+
 def test_push_chain_blocked_by_wall():
     world = make_world(
         words=[

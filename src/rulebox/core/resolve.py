@@ -25,7 +25,11 @@ def is_floating(entity: Entity | None, props: dict[str, set[str]]) -> bool:
 def same_layer(
     first: Entity | None, second: Entity | None, props: dict[str, set[str]]
 ) -> bool:
-    """浮物件与普通物件分处两层；只有同层才会碰撞和结算。"""
+    """浮物件与普通物件分处两层；词块是中性层，对两层都正常碰撞/推动。"""
+    if first is not None and first.is_word:
+        return True
+    if second is not None and second.is_word:
+        return True
     return is_floating(first, props) == is_floating(second, props)
 
 
