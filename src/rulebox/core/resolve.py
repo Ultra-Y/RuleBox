@@ -62,10 +62,14 @@ def is_obstacle(
 ) -> bool:
     """对正在进入该格的移动方来说，这个实体是否算「占用」。
 
-    水/热不占地；传送门本身不占地（进来的人由传送结算处理）；
-    SHUT 只对带 OPEN 的移动方让路。
+    热/沉/传送门不占地；水是普通物件；SHUT 只对带 OPEN 的移动方让路。
+    沉不占地是为了让被推的物件/词块能进入同格再触发抵消。
     """
-    if is_hazard(entity, props) or has_prop(entity, props, "TELE"):
+    if (
+        is_hazard(entity, props)
+        or has_prop(entity, props, "SINK")
+        or has_prop(entity, props, "TELE")
+    ):
         return False
     return not (opener and has_prop(entity, props, "SHUT"))
 

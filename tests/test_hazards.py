@@ -166,6 +166,33 @@ def test_sink_object_alone_stays():
     assert ids_at(world, 4, 3) == ["water"]
 
 
+def test_pushed_word_cancels_sink():
+    words = rule(0, "人", "你") + rule(1, "水", "沉")
+    world = make_world(words=words, objects=[(4, 1, "baba")])
+    world.set(4, 2, make_word("墙"))
+    world.add(4, 3, make_object("water"))
+
+    result = try_move(world, 0, 1)
+
+    assert result.moved and not result.lost
+    assert world.get(4, 2).id == "baba"
+    assert ids_at(world, 4, 3) == []
+
+
+def test_pushed_object_cancels_sink():
+    words = rule(0, "人", "你") + rule(1, "箱", "推") + rule(2, "水", "沉")
+    world = make_world(
+        words=words,
+        objects=[(4, 1, "baba"), (4, 2, "box"), (4, 3, "water")],
+    )
+
+    result = try_move(world, 0, 1)
+
+    assert result.moved and not result.lost
+    assert world.get(4, 2).id == "baba"
+    assert ids_at(world, 4, 3) == []
+
+
 def test_float_you_is_immune_to_sink():
     words = rule(0, "人", "你") + rule(1, "人", "浮") + rule(2, "水", "沉")
     world = make_world(words=words, objects=[(4, 1, "baba"), (4, 2, "water")])
