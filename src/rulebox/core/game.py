@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from .level import Level
-from .movement import MoveResult, try_move
+from .movement import MoveResult, try_move, try_wait
 from .world import World
 
 
@@ -26,6 +26,17 @@ class Game:
             self.moves += 1
         if result.won:
             self.won = True
+        if result.lost:
+            self.lost = True
+        return result
+
+    def wait(self) -> MoveResult:
+        """原地等待：不移动「你」，只推进「移」物件。"""
+        if self.won or self.lost:
+            return MoveResult(False)
+        result = try_wait(self.world)
+        if result.moved:
+            self.moves += 1
         if result.lost:
             self.lost = True
         return result

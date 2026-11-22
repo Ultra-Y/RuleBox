@@ -593,6 +593,9 @@ def _handle_key(game: Game, key: int, text: str, moves: dict[int, tuple[int, int
     if key == pygame.K_z or text == "z":
         game.undo()
         return True
+    if key == pygame.K_SPACE:
+        game.wait()
+        return True
     if key in moves and not game.won and not game.lost:
         dr, dc = moves[key]
         game.move(dr, dc)
@@ -818,7 +821,7 @@ def _draw_play(screen, app: _App, chrome) -> None:
         if len(rules) > 6:
             screen.blit(fonts["hint"].render("…", True, HINT), (ox, panel_y + 54))
 
-    hint = "方向键 / WASD 移动 · Z 撤销 · R 重开 · Esc 菜单"
+    hint = "方向键 / WASD 移动 · 空格等待 · Z 撤销 · R 重开 · Esc 菜单"
     screen.blit(fonts["hint"].render(hint, True, HINT), (MARGIN, HEIGHT - 34))
 
     if game.won or game.lost:

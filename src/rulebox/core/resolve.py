@@ -121,12 +121,13 @@ def apply_teleports(
 def apply_contacts(
     world: World, props: dict[str, set[str]]
 ) -> list[tuple[int, int, Entity]]:
-    """接触结算：先沉，再开/关，最后热/融；返回被消灭的实体。"""
+    """接触结算：先沉，再开/关，再热/融，最后弱。返回被消灭的实体。"""
     removed: list[tuple[int, int, Entity]] = []
     for victims in (
         _cancel_victims(world, props),
         _shut_victims(world, props),
         _melt_victims(world, props),
+        _weak_victims(world, props),
     ):
         for row, col, entity in victims:
             if any(current is entity for current in world.entities_at(row, col)):
@@ -220,6 +221,28 @@ def _melt_victims(world: World, props: dict[str, set[str]]) -> list[tuple[int, i
                 and has_prop(entity, props, "MELT")
                 and not has_prop(entity, props, "HOT")
             ]
+    return victims
+
+
+def _weak_victims(world: World, props: dict[str, set[str]]) -> list[tuple[int, int, Entity]]:
+    """WEAK 与同层的 STOP 或 YOU 同格时消失；自身不算接触。"""
+    victims: list[tuple[int, int, Entity]] = []
+    seen: set[int] = set()
+    for row, col in _cells(world):
+        cell = world.entities_at(row, col)
+        for weak in cell:
+            if not has_prop(weak, props, "WEAK"):
+                continue
+            if not any(
+                other is not weak
+                and same_layer(weak, other, props)
+                and (has_prop(other, props, "STOP") or has_prop(other, props, "YOU"))
+                for other in cell
+            ):
+                continue
+            if id(weak) not in seen:
+                seen.add(id(weak))
+                victims.append((row, col, weak))
     return victims
 
 

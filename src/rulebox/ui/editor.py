@@ -42,7 +42,6 @@ PALETTE_COLS = 13
 PALETTE_TILE = 38
 PALETTE_GAP = 4
 
-
 class Editor:
     def __init__(self, on_changed=None, on_back=None, on_playtest=None, on_open=None):
         self.width = 11
@@ -502,7 +501,7 @@ class Editor:
             True,
             HINT,
         )
-        screen.blit(hint, (40, 640))
+        screen.blit(hint, (40, 650))
 
 
 def _cell_symbols(cell: str) -> list[str]:

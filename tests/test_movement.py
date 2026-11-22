@@ -11,13 +11,17 @@ LEVEL1 = ROOT / "content" / "levels" / "01-first-step.txt"
 LEVEL2 = ROOT / "content" / "levels" / "02-move-aside.txt"
 
 
-def make_world(width=6, height=7, words=(), objects=()) -> World:
+def make_level(width=6, height=7, words=(), objects=()) -> Level:
     cells: list[list] = [[None] * width for _ in range(height)]
     for row, col, text in words:
         cells[row][col] = make_word(text)
     for row, col, object_id in objects:
         cells[row][col] = make_object(object_id)
-    return World(Level("test", width, height, cells))
+    return Level("test", width, height, cells)
+
+
+def make_world(width=6, height=7, words=(), objects=()) -> World:
+    return World(make_level(width, height, words, objects))
 
 
 def test_move_into_empty():
@@ -581,6 +585,93 @@ def test_non_you_cannot_enter_occupied_cell():
     assert world.get(4, 2).id == "box"
     assert world.get(4, 3).id == "wall"
     assert not world.can_undo
+
+
+def test_move_object_follows_previous_direction():
+    from rulebox.core.game import Game
+
+    rules = [
+        (0, 0, "人"),
+        (0, 1, "是"),
+        (0, 2, "你"),
+        (1, 0, "箱"),
+        (1, 1, "是"),
+        (1, 2, "推"),
+        (2, 0, "箱"),
+        (2, 1, "是"),
+        (2, 2, "移"),
+    ]
+    level = make_level(
+        words=rules,
+        objects=[(4, 1, "baba"), (4, 2, "box")],
+    )
+    game = Game(level)
+
+    game.move(0, 1)
+    assert game.world.get(4, 2).id == "baba"
+    assert game.world.get(4, 3).id == "box"
+
+    game.wait()
+    assert game.world.get(4, 4).id == "box"
+
+
+def test_move_object_does_not_trigger_win():
+    from rulebox.core.game import Game
+
+    rules = [
+        (0, 0, "人"),
+        (0, 1, "是"),
+        (0, 2, "你"),
+        (1, 0, "箱"),
+        (1, 1, "是"),
+        (1, 2, "推"),
+        (2, 0, "箱"),
+        (2, 1, "是"),
+        (2, 2, "移"),
+        (3, 0, "旗"),
+        (3, 1, "是"),
+        (3, 2, "赢"),
+    ]
+    level = make_level(
+        words=rules,
+        objects=[(4, 1, "baba"), (4, 2, "box"), (4, 5, "flag")],
+    )
+    game = Game(level)
+
+    game.move(0, 1)
+    game.wait()
+    game.wait()
+
+    assert {entity.id for entity in game.world.entities_at(4, 5)} == {"flag", "box"}
+    assert not game.won
+
+
+def test_wait_key_moves_auto_object():
+    import pygame
+
+    from rulebox.ui.app import _handle_key
+
+    rules = [
+        (0, 0, "人"),
+        (0, 1, "是"),
+        (0, 2, "你"),
+        (1, 0, "箱"),
+        (1, 1, "是"),
+        (1, 2, "推"),
+        (2, 0, "箱"),
+        (2, 1, "是"),
+        (2, 2, "移"),
+    ]
+    level = make_level(
+        words=rules,
+        objects=[(4, 1, "baba"), (4, 2, "box")],
+    )
+    game = Game(level)
+    game.move(0, 1)
+
+    _handle_key(game, pygame.K_SPACE, "", {})
+
+    assert game.world.get(4, 4).id == "box"
 
 
 def test_you_overlapping_object_moves_alone():

@@ -253,6 +253,46 @@ def test_sink_object_cancels_defeat_object():
     assert ids_at(world, 4, 3) == []
 
 
+def test_weak_object_disappears_when_touched_by_you():
+    words = rule(0, "人", "你") + rule(1, "石", "弱")
+    world = make_world(words=words, objects=[(4, 1, "baba"), (4, 2, "rock")])
+
+    result = try_move(world, 0, 1)
+
+    assert result.moved and not result.lost
+    assert ids_at(world, 4, 2) == ["baba"]
+
+
+def test_weak_you_disappears_against_stop():
+    words = [
+        (0, 0, "人"),
+        (0, 1, "是"),
+        (0, 2, "你"),
+        (0, 3, "和"),
+        (0, 4, "弱"),
+        (1, 0, "墙"),
+        (1, 1, "是"),
+        (1, 2, "停"),
+    ]
+    world = make_world(words=words, objects=[(4, 1, "baba"), (4, 2, "wall")])
+
+    result = try_move(world, 0, 1)
+
+    assert result.moved and result.lost
+    assert ids_at(world, 4, 2) == ["wall"]
+
+
+def test_weak_property_alone_does_not_die():
+    words = rule(0, "人", "你") + rule(1, "石", "弱")
+    world = make_world(words=words, objects=[(4, 1, "baba"), (4, 2, "rock")])
+
+    result = try_move(world, 0, -1)
+
+    assert result.moved and not result.lost
+    assert ids_at(world, 4, 0) == ["baba"]
+    assert ids_at(world, 4, 2) == ["rock"]
+
+
 def test_game_tracks_defeat_and_reset_clears_it():
     game = Game(make_level(words=DEFEAT_RULES, objects=[(4, 1, "baba"), (4, 2, "fire")]))
 

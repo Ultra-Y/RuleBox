@@ -9,7 +9,7 @@ RuleBox 操作说明
 操作
 ----
 菜单：↑↓ / W S 选择，Enter / Space 确认，Esc 退出
-游戏：方向键 / WASD 移动，Z 撤销，R 重开，Esc 返回菜单
+游戏：方向键 / WASD 移动，空格等待（只推进“移”物件），Z 撤销，R 重开，Esc 返回菜单
 过关：Enter / N 下一关
 编辑器：左键放置，右键擦除，Ctrl+S 保存，Ctrl+Z 撤销，Ctrl+Y 重做
 

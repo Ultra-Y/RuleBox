@@ -49,6 +49,9 @@ def try_move(world: World, dr: int, dc: int) -> MoveResult:
         world.undo()
         return MoveResult(False)
 
+    # 「移」物件只使用操作开始前记录的方向；本回合刚被推动不会立刻多走一步。
+    auto_actors = _capture_auto(world, props)
+
     # 这一步真正移动过的物件，传送结算只认它们。
     trail: list[Entity] = []
     moved_any = False
@@ -62,24 +65,103 @@ def try_move(world: World, dr: int, dc: int) -> MoveResult:
             break
         moved_any = moved_any or result.moved
 
-    if not moved_any and not won:
-        world.undo()
-        return MoveResult(False)
+    if won:
+        apply_transforms(world, transforms)
+        return MoveResult(True, won=True)
 
-    if not won:
-        # 传送和接触结算都用回合开始时解析出的属性，和水/热/门是否被推动无关。
-        apply_teleports(world, props, trail)
-        destroyed = apply_contacts(world, props)
-        spawn_destroyed(world, destroyed, spawns)
+    # 传送和接触结算都用回合开始时解析出的属性，和水/热/门是否被推动无关。
+    apply_teleports(world, props, trail)
+
+    auto_trail: list[Entity] = []
+    auto_moved = _move_auto(world, auto_actors, props, ruled, auto_trail)
+    apply_teleports(world, props, auto_trail)
+
+    destroyed = apply_contacts(world, props)
+    spawn_destroyed(world, destroyed, spawns)
 
     # 接触结算后统一变形；变形可能制造或消灭「你」，所以之后要重新解析再判负。
     apply_transforms(world, transforms)
-    lost = False
-    if not won:
-        lost = has_defeat_touch(world, props) or not you_positions(
-            world, property_map(parse_rules(world))
+    lost = has_defeat_touch(world, props) or not you_positions(
+        world, property_map(parse_rules(world))
+    )
+    if not moved_any and not auto_moved:
+        world.undo()
+        return MoveResult(False)
+    return MoveResult(True, lost=lost)
+
+
+def try_wait(world: World) -> MoveResult:
+    """不移动「你」，只让所有「移」物件沿上次方向走一格。"""
+    world.snapshot()
+
+    rules = parse_rules(world)
+    props = property_map(rules)
+    transforms = transform_map(rules)
+    spawns = spawn_map(rules)
+    ruled = ruled_nouns(rules)
+    auto_actors = _capture_auto(world, props)
+    if not auto_actors:
+        world.undo()
+        return MoveResult(False)
+
+    trail: list[Entity] = []
+    moved = _move_auto(world, auto_actors, props, ruled, trail)
+    if not moved:
+        world.undo()
+        return MoveResult(False)
+
+    apply_teleports(world, props, trail)
+    destroyed = apply_contacts(world, props)
+    spawn_destroyed(world, destroyed, spawns)
+    apply_transforms(world, transforms)
+    lost = has_defeat_touch(world, props) or not you_positions(
+        world, property_map(parse_rules(world))
+    )
+    return MoveResult(True, lost=lost)
+
+
+def _capture_auto(
+    world: World, props: dict[str, set[str]]
+) -> list[tuple[Entity, tuple[int, int]]]:
+    """记录开始时所有「移」物件及其上次方向。"""
+    actors: list[tuple[Entity, tuple[int, int]]] = []
+    for _row, _col, entity in world.find(lambda candidate: has_prop(candidate, props, "MOVE")):
+        direction = world.get_move_dir(entity)
+        if direction is not None:
+            actors.append((entity, direction))
+    return actors
+
+
+def _move_auto(
+    world: World,
+    actors: list[tuple[Entity, tuple[int, int]]],
+    props: dict[str, set[str]],
+    ruled: set[str],
+    trail: list[Entity],
+) -> bool:
+    """让「移」物件按记录方向走一步；不会触发胜利。"""
+    moved = False
+    for entity, (dr, dc) in actors:
+        locations = world.find(lambda candidate: candidate is entity)
+        if len(locations) != 1:
+            continue
+        row, col = locations[0][0], locations[0][1]
+        if world.get(row, col) is not entity:
+            continue
+        result = _move_one(
+            world,
+            row,
+            col,
+            dr,
+            dc,
+            props,
+            ruled,
+            trail,
+            can_win=False,
+            auto=True,
         )
-    return MoveResult(True, won=won, lost=lost)
+        moved = moved or result.moved
+    return moved
 
 
 def _is_pushable(entity: Entity, props: dict[str, set[str]]) -> bool:
@@ -97,6 +179,7 @@ def _move_one(
     trail: list[Entity],
     *,
     can_win: bool,
+    auto: bool = False,
 ) -> MoveResult:
     """移动一个实体；can_win 为 True 表示它是最外层的「你」。"""
     cell = world.entities_at(row, col)
@@ -114,6 +197,7 @@ def _move_one(
     if can_win and has_prop(entity, props, "WIN"):
         return MoveResult(True, won=True)
 
+    weak_mover = has_prop(entity, props, "WEAK")
     target_row, target_col = row + dr, col + dc
     if not world.in_bounds(target_row, target_col):
         return MoveResult(False)
@@ -142,7 +226,8 @@ def _move_one(
         if has_prop(target, props, "STOP") and not _is_pushable(target, props)
     ]
     if stop_blockers:
-        return MoveResult(False)
+        if not weak_mover:
+            return MoveResult(False)
 
     # 关 + 推 的门和其他可推物件一样可以被推；
     # 只有“关但不可推”的门才挡住没有 OPEN 的移动方。
@@ -158,7 +243,8 @@ def _move_one(
     if any(has_prop(target, props, "WIN") for target in targets):
         if can_win:
             return MoveResult(True, won=True)
-        return MoveResult(False)
+        if not auto:
+            return MoveResult(False)
 
     # 带 OPEN 的移动方碰到 SHUT 时应抵消门，而不是把可推的门推走。
     pushable = next(
@@ -190,9 +276,11 @@ def _move_one(
             target, props, opener=opener, ruled=ruled, mover=entity
         )
         for target in targets
+        if not (auto and has_prop(target, props, "WIN"))
     )
     if occupied and not can_win:
-        return MoveResult(False)
+        if not (weak_mover and any(has_prop(target, props, "STOP") for target in targets)):
+            return MoveResult(False)
 
     _relocate(world, row, col, target_row, target_col, entity, trail)
     if can_win:
@@ -229,6 +317,7 @@ def _pull_behind(
         return
     world.remove(behind_row, behind_col, target)
     world.add(row, col, target)
+    world.set_move_dir(target, dr, dc)
     trail.append(target)
 
 
@@ -244,4 +333,5 @@ def _relocate(
     """只移动指定实体，保留来源格和目标格里的其他实体。"""
     world.remove(row, col, entity)
     world.add(target_row, target_col, entity)
+    world.set_move_dir(entity, target_row - row, target_col - col)
     trail.append(entity)

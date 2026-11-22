@@ -38,7 +38,8 @@ class World:
         ]
         for (row, col), entities in level.stacks.items():
             self.cells[row][col].extend(entities)
-        self._history: list[Grid] = []
+        self.move_dirs: dict[int, tuple[int, int]] = {}
+        self._history: list[tuple[Grid, dict[int, tuple[int, int]]]] = []
 
     # ---------- 查询与修改 ----------
 
@@ -90,14 +91,26 @@ class World:
 
     # ---------- 快照与撤销 ----------
 
+    def set_move_dir(self, entity: Entity, dr: int, dc: int) -> None:
+        """记录物件最近一次实际移动的方向（「移」属性使用）。"""
+        self.move_dirs[id(entity)] = (dr, dc)
+
+    def get_move_dir(self, entity: Entity) -> tuple[int, int] | None:
+        return self.move_dirs.get(id(entity))
+
     def snapshot(self) -> None:
         """在一步操作之前调用，之后就能 undo 回来。"""
-        self._history.append([[cell[:] for cell in row] for row in self.cells])
+        self._history.append(
+            (
+                [[cell[:] for cell in row] for row in self.cells],
+                dict(self.move_dirs),
+            )
+        )
 
     def undo(self) -> bool:
         if not self._history:
             return False
-        self.cells = self._history.pop()
+        self.cells, self.move_dirs = self._history.pop()
         return True
 
     @property
