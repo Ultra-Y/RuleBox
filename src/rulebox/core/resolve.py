@@ -104,14 +104,33 @@ def apply_teleports(
             break
 
 
-def apply_contacts(world: World, props: dict[str, set[str]]) -> None:
-    """接触结算：先沉，再开/关，最后热/融。毁灭结果由调用方在变形后统一判定。"""
-    for row, col, entity in _cancel_victims(world, props):
-        world.remove(row, col, entity)
-    for row, col, entity in _shut_victims(world, props):
-        world.remove(row, col, entity)
-    for row, col, entity in _melt_victims(world, props):
-        world.remove(row, col, entity)
+def apply_contacts(
+    world: World, props: dict[str, set[str]]
+) -> list[tuple[int, int, Entity]]:
+    """接触结算：先沉，再开/关，最后热/融；返回被消灭的实体。"""
+    removed: list[tuple[int, int, Entity]] = []
+    for victims in (
+        _cancel_victims(world, props),
+        _shut_victims(world, props),
+        _melt_victims(world, props),
+    ):
+        for row, col, entity in victims:
+            if any(current is entity for current in world.entities_at(row, col)):
+                world.remove(row, col, entity)
+                removed.append((row, col, entity))
+    return removed
+
+
+def spawn_destroyed(
+    world: World,
+    destroyed: list[tuple[int, int, Entity]],
+    spawns: dict[str, str],
+) -> None:
+    """「A 有 B」：A 被接触消灭后，在死亡格生成 B。"""
+    for row, col, entity in destroyed:
+        target = spawns.get("word" if entity.is_word else entity.id)
+        if target:
+            world.add(row, col, make_object(target))
 
 
 def _cancel_victims(world: World, props: dict[str, set[str]]) -> list[tuple[int, int, Entity]]:

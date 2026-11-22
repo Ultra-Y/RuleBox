@@ -19,9 +19,10 @@ from .resolve import (
     is_floating,
     is_obstacle,
     same_layer,
+    spawn_destroyed,
     you_positions,
 )
-from .rules import parse_rules, property_map, transform_map
+from .rules import parse_rules, property_map, spawn_map, transform_map
 from .world import World
 
 MAX_PUSH_DEPTH = 10
@@ -41,6 +42,7 @@ def try_move(world: World, dr: int, dc: int) -> MoveResult:
     rules = parse_rules(world)
     props = property_map(rules)
     transforms = transform_map(rules)
+    spawns = spawn_map(rules)
     movers = you_positions(world, props)
     if not movers:
         world.undo()
@@ -64,7 +66,8 @@ def try_move(world: World, dr: int, dc: int) -> MoveResult:
     if not won:
         # 传送和接触结算都用回合开始时解析出的属性，和水/热/门是否被推动无关。
         apply_teleports(world, props, trail)
-        apply_contacts(world, props)
+        destroyed = apply_contacts(world, props)
+        spawn_destroyed(world, destroyed, spawns)
 
     # 接触结算后统一变形；变形可能制造或消灭「你」，所以之后要重新解析再判负。
     apply_transforms(world, transforms)
@@ -117,6 +120,8 @@ def _move_one(
     ]
     if not targets:
         _relocate(world, row, col, target_row, target_col, entity, trail)
+        if can_win:
+            _pull_behind(world, row, col, dr, dc, entity, props, trail)
         return MoveResult(True)
 
     # 停 + 推 的物件可以被推；只有“停但不可推”的物件才挡路。
@@ -161,6 +166,8 @@ def _move_one(
         if not pushed.moved:
             return MoveResult(False)
         _relocate(world, row, col, target_row, target_col, entity, trail)
+        if can_win:
+            _pull_behind(world, row, col, dr, dc, entity, props, trail)
         return MoveResult(True)
 
     # 推链里的非「你」物件不能进入占用格；「你」也不能与另一个「你」重叠。
@@ -172,7 +179,41 @@ def _move_one(
         return MoveResult(False)
 
     _relocate(world, row, col, target_row, target_col, entity, trail)
+    if can_win:
+        _pull_behind(world, row, col, dr, dc, entity, props, trail)
     return MoveResult(True)
+
+
+def _pull_behind(
+    world: World,
+    row: int,
+    col: int,
+    dr: int,
+    dc: int,
+    mover: Entity,
+    props: dict[str, set[str]],
+    trail: list[Entity],
+) -> None:
+    """「你」移动后，把正后方同层的 PULL 物件拉进刚空出的格子。"""
+    behind_row, behind_col = row - dr, col - dc
+    if not world.in_bounds(behind_row, behind_col):
+        return
+    if world.entities_at(row, col):
+        return
+    behind = world.entities_at(behind_row, behind_col)
+    target = next(
+        (
+            entity
+            for entity in reversed(behind)
+            if has_prop(entity, props, "PULL") and same_layer(mover, entity, props)
+        ),
+        None,
+    )
+    if target is None:
+        return
+    world.remove(behind_row, behind_col, target)
+    world.add(row, col, target)
+    trail.append(target)
 
 
 def _relocate(

@@ -9,6 +9,7 @@ from rulebox.core.rules import (
     parse_rules,
     parse_sentence,
     property_map,
+    spawn_map,
     transform_map,
 )
 from rulebox.core.world import World
@@ -74,6 +75,17 @@ def test_transform():
     rules = parse_rules(world)
     assert len(rules) == 1
     assert rules[0].transform == "box"
+
+
+def test_has_sentence_spawns():
+    rule = parse_sentence(["人", "有", "箱"])
+    assert rule is not None
+    assert rule.spawn == "box"
+    assert rule.display() == "人 有 箱"
+
+    world = make_world(words=[(1, 1, "人"), (1, 2, "有"), (1, 3, "箱")])
+    rules = parse_rules(world)
+    assert spawn_map(rules) == {"baba": "box"}
 
 
 def test_mixed_transform_and_property_sentence():

@@ -215,6 +215,20 @@ def test_float_word_is_immune_to_sink():
     assert set(ids_at(world, 4, 3)) == {"word:墙", "water"}
 
 
+def test_has_spawns_on_sink_death():
+    words = (
+        rule(0, "人", "你")
+        + [(1, 0, "人"), (1, 1, "有"), (1, 2, "箱")]
+        + rule(2, "水", "沉")
+    )
+    world = make_world(words=words, objects=[(4, 1, "baba"), (4, 2, "water")])
+
+    result = try_move(world, 0, 1)
+
+    assert result.moved and result.lost
+    assert ids_at(world, 4, 2) == ["box"]
+
+
 # ---------- 失败、撤销、重置 ----------
 
 

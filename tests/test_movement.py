@@ -390,6 +390,61 @@ def test_floating_you_cannot_pass_stop_object():
     assert world.get(4, 2).id == "wall"
 
 
+def test_pull_object():
+    world = make_world(
+        words=[
+            (0, 0, "人"),
+            (0, 1, "是"),
+            (0, 2, "你"),
+            (1, 0, "箱"),
+            (1, 1, "是"),
+            (1, 2, "拉"),
+        ],
+        objects=[(4, 1, "box"), (4, 2, "baba")],
+    )
+
+    result = try_move(world, 0, 1)
+    assert result.moved and not result.lost
+    assert world.get(4, 2).id == "box"
+    assert world.get(4, 3).id == "baba"
+
+
+def test_pull_word():
+    world = make_world(
+        words=[
+            (0, 0, "人"),
+            (0, 1, "是"),
+            (0, 2, "你"),
+            (1, 0, "词"),
+            (1, 1, "是"),
+            (1, 2, "拉"),
+        ],
+        objects=[(4, 2, "baba")],
+    )
+    world.set(4, 1, make_word("墙"))
+
+    result = try_move(world, 0, 1)
+    assert result.moved and not result.lost
+    assert world.get(4, 2).text == "墙"
+    assert world.get(4, 3).id == "baba"
+
+
+def test_non_pull_object_stays():
+    world = make_world(
+        words=[
+            (0, 0, "人"),
+            (0, 1, "是"),
+            (0, 2, "你"),
+        ],
+        objects=[(4, 1, "box"), (4, 2, "baba")],
+    )
+
+    result = try_move(world, 0, 1)
+    assert result.moved and not result.lost
+    assert world.get(4, 1).id == "box"
+    assert world.get(4, 3).id == "baba"
+
+
 def test_push_chain_blocked_by_wall():
     world = make_world(
         words=[

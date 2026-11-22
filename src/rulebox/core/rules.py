@@ -4,6 +4,7 @@
     名词 (和 名词)* 是 属性 (和 属性)*
     名词 (和 名词)* 是 不 属性 (和 属性)*
     名词 (和 名词)* 是 名词              # 变形，Day 3 才真正生效
+    名词 (和 名词)* 有 名词              # 死亡后原地生成
 """
 
 from __future__ import annotations
@@ -27,10 +28,13 @@ class Rule:
     props: frozenset[str] = frozenset()  # 属性 id，如 {"STOP"}
     transform: str | None = None  # 变形目标物件 id
     negated: frozenset[str] = frozenset()
+    spawn: str | None = None  # 「A 有 B」：A 被消灭时原地生成 B
 
     def display(self) -> str:
         """给规则面板显示用，例如「墙 是 停」。"""
         left = " 和 ".join(OBJECT_TO_NOUN[n] for n in sorted(self.nouns))
+        if self.spawn:
+            return f"{left} 有 {OBJECT_TO_NOUN[self.spawn]}"
         if self.transform:
             right = OBJECT_TO_NOUN[self.transform]
             if self.props:
@@ -62,11 +66,20 @@ def parse_sentence(tokens: list[str]) -> Rule | None:
         nouns.append(NOUN_TO_OBJECT[tokens[i]])
         i += 1
 
-    if i >= len(tokens) or tokens[i] != "是":
+    if i >= len(tokens) or tokens[i] not in ("是", "有"):
         return None
+    connector = tokens[i]
     i += 1
     if i >= len(tokens):
         return None
+
+    if connector == "有":
+        if i != len(tokens) - 1 or tokens[i] not in NOUN_WORDS:
+            return None
+        target = NOUN_TO_OBJECT[tokens[i]]
+        if target == "word":
+            return None
+        return Rule(frozenset(nouns), spawn=target)
 
     negated = False
     if i < len(tokens) and tokens[i] == "不":
@@ -308,6 +321,16 @@ def transform_map(rules: list[Rule]) -> dict[str, str]:
             continue
         for noun in rule.nouns:
             mapping[noun] = rule.transform
+    return mapping
+
+
+def spawn_map(rules: list[Rule]) -> dict[str, str]:
+    """「A 有 B」表：A 被消灭时原地生成 B。"""
+    mapping: dict[str, str] = {}
+    for rule in rules:
+        if rule.spawn:
+            for noun in rule.nouns:
+                mapping[noun] = rule.spawn
     return mapping
 
 

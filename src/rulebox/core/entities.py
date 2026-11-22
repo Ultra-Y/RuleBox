@@ -54,12 +54,13 @@ PROP_TO_ID: dict[str, str] = {
     "传": "TELE",
     "败": "DEFEAT",
     "沉": "SINK",
+    "拉": "PULL",
 }
 ID_TO_PROP = {value: key for key, value in PROP_TO_ID.items()}
 
 NOUN_WORDS = frozenset(NOUN_TO_OBJECT)
 PROPERTY_WORDS = frozenset(PROP_TO_ID)
-CONNECTOR_WORDS = frozenset({"是", "和", "不"})
+CONNECTOR_WORDS = frozenset({"是", "和", "不", "有"})
 ALL_WORDS = NOUN_WORDS | CONNECTOR_WORDS | PROPERTY_WORDS
 
 _WORD_COLORS: dict[str, Color] = {
