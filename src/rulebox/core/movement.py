@@ -99,7 +99,14 @@ def _move_one(
     can_win: bool,
 ) -> MoveResult:
     """移动一个实体；can_win 为 True 表示它是最外层的「你」。"""
-    entity = world.get(row, col)
+    cell = world.entities_at(row, col)
+    if can_win:
+        entity = next(
+            (candidate for candidate in reversed(cell) if has_prop(candidate, props, "YOU")),
+            None,
+        )
+    else:
+        entity = world.get(row, col)
     if entity is None:
         return MoveResult(False)
 

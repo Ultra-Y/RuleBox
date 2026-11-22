@@ -583,6 +583,23 @@ def test_non_you_cannot_enter_occupied_cell():
     assert not world.can_undo
 
 
+def test_you_overlapping_object_moves_alone():
+    world = make_world(
+        words=[
+            (0, 0, "人"),
+            (0, 1, "是"),
+            (0, 2, "你"),
+        ],
+        objects=[(4, 2, "baba")],
+    )
+    world.add(4, 2, make_object("rock"))
+
+    result = try_move(world, 0, 1)
+    assert result.moved and not result.lost
+    assert world.get(4, 2).id == "rock"
+    assert world.get(4, 3).id == "baba"
+
+
 def test_undo_restores_overlapped_entities():
     world = make_world(
         words=[(0, 0, "人"), (0, 1, "是"), (0, 2, "你")],
