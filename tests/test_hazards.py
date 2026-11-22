@@ -234,6 +234,25 @@ def test_has_spawns_on_sink_death():
 DEFEAT_RULES = rule(0, "人", "你") + rule(1, "火", "败")
 
 
+def test_sink_object_cancels_defeat_object():
+    words = (
+        rule(0, "人", "你")
+        + rule(1, "水", "沉")
+        + rule(2, "火", "败")
+        + rule(3, "水", "推")
+    )
+    world = make_world(
+        words=words,
+        objects=[(4, 1, "baba"), (4, 2, "water"), (4, 3, "fire")],
+    )
+
+    result = try_move(world, 0, 1)
+
+    assert result.moved and not result.lost
+    assert world.get(4, 2).id == "baba"
+    assert ids_at(world, 4, 3) == []
+
+
 def test_game_tracks_defeat_and_reset_clears_it():
     game = Game(make_level(words=DEFEAT_RULES, objects=[(4, 1, "baba"), (4, 2, "fire")]))
 

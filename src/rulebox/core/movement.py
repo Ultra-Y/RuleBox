@@ -186,7 +186,10 @@ def _move_one(
     if any(has_prop(target, props, "YOU") for target in targets):
         return MoveResult(False)
     occupied = any(
-        is_obstacle(target, props, opener=opener, ruled=ruled) for target in targets
+        is_obstacle(
+            target, props, opener=opener, ruled=ruled, mover=entity
+        )
+        for target in targets
     )
     if occupied and not can_win:
         return MoveResult(False)

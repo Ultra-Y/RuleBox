@@ -63,13 +63,21 @@ def is_obstacle(
     *,
     opener: bool = False,
     ruled: set[str] | None = None,
+    mover: Entity | None = None,
 ) -> bool:
     """对正在进入该格的移动方来说，这个实体是否算「占用」。
 
     沉/热/传送门不占地；没有规则限定的物件只是背景，不占位。
+    带 SINK 的移动方可以进入 DEFEAT 物件所在格，随后由接触结算互相抵消。
     SHUT 只对带 OPEN 的移动方让路。
     """
     if entity.kind == "object" and ruled is not None and entity.id not in ruled:
+        return False
+    if (
+        mover is not None
+        and has_prop(mover, props, "SINK")
+        and has_prop(entity, props, "DEFEAT")
+    ):
         return False
     if (
         is_hazard(entity, props)
