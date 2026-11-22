@@ -58,13 +58,19 @@ def is_hazard(entity: Entity, props: dict[str, set[str]]) -> bool:
 
 
 def is_obstacle(
-    entity: Entity, props: dict[str, set[str]], *, opener: bool = False
+    entity: Entity,
+    props: dict[str, set[str]],
+    *,
+    opener: bool = False,
+    ruled: set[str] | None = None,
 ) -> bool:
     """对正在进入该格的移动方来说，这个实体是否算「占用」。
 
-    热/沉/传送门不占地；水是普通物件；SHUT 只对带 OPEN 的移动方让路。
-    沉不占地是为了让被推的物件/词块能进入同格再触发抵消。
+    沉/热/传送门不占地；没有规则限定的物件只是背景，不占位。
+    SHUT 只对带 OPEN 的移动方让路。
     """
+    if entity.kind == "object" and ruled is not None and entity.id not in ruled:
+        return False
     if (
         is_hazard(entity, props)
         or has_prop(entity, props, "SINK")

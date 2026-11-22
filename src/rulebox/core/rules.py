@@ -334,6 +334,15 @@ def spawn_map(rules: list[Rule]) -> dict[str, str]:
     return mapping
 
 
+def ruled_nouns(rules: list[Rule]) -> set[str]:
+    """被任意有效规则“限定”的名词；没出现在这里的就是背景物件。"""
+    names: set[str] = set()
+    for rule in rules:
+        if rule.props or rule.negated or rule.transform or rule.spawn:
+            names.update(rule.nouns)
+    return names
+
+
 def _is_word(world: World, row: int, col: int) -> bool:
     return any(entity.is_word for entity in world.entities_at(row, col))
 

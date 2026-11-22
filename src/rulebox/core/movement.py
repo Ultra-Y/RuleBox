@@ -22,7 +22,7 @@ from .resolve import (
     spawn_destroyed,
     you_positions,
 )
-from .rules import parse_rules, property_map, spawn_map, transform_map
+from .rules import parse_rules, property_map, ruled_nouns, spawn_map, transform_map
 from .world import World
 
 MAX_PUSH_DEPTH = 10
@@ -43,6 +43,7 @@ def try_move(world: World, dr: int, dc: int) -> MoveResult:
     props = property_map(rules)
     transforms = transform_map(rules)
     spawns = spawn_map(rules)
+    ruled = ruled_nouns(rules)
     movers = you_positions(world, props)
     if not movers:
         world.undo()
@@ -53,7 +54,9 @@ def try_move(world: World, dr: int, dc: int) -> MoveResult:
     moved_any = False
     won = False
     for row, col in movers:
-        result = _move_one(world, row, col, dr, dc, props, trail, can_win=True)
+        result = _move_one(
+            world, row, col, dr, dc, props, ruled, trail, can_win=True
+        )
         if result.won:
             won = True
             break
@@ -90,6 +93,7 @@ def _move_one(
     dr: int,
     dc: int,
     props: dict[str, set[str]],
+    ruled: set[str],
     trail: list[Entity],
     *,
     can_win: bool,
@@ -161,7 +165,7 @@ def _move_one(
     )
     if pushable is not None:
         pushed = _move_one(
-            world, target_row, target_col, dr, dc, props, trail, can_win=False
+            world, target_row, target_col, dr, dc, props, ruled, trail, can_win=False
         )
         if not pushed.moved:
             return MoveResult(False)
@@ -174,7 +178,9 @@ def _move_one(
     # 格子里只有水/热/传送门，或者门对 OPEN 移动方让路时，不算占用。
     if any(has_prop(target, props, "YOU") for target in targets):
         return MoveResult(False)
-    occupied = any(is_obstacle(target, props, opener=opener) for target in targets)
+    occupied = any(
+        is_obstacle(target, props, opener=opener, ruled=ruled) for target in targets
+    )
     if occupied and not can_win:
         return MoveResult(False)
 

@@ -106,16 +106,15 @@ def test_water_can_be_melted_by_rule():
     assert set(ids_at(world, 4, 2)) == {"fire", "baba"}
 
 
-def test_word_pushed_into_water_is_blocked():
+def test_word_pushed_into_background_water_overlaps():
     words = rule(0, "人", "你") + [(4, 2, "墙")]
     world = make_world(words=words, objects=[(4, 1, "baba"), (4, 3, "water")])
 
     result = try_move(world, 0, 1)
 
-    assert not result.moved
-    assert world.get(4, 1).id == "baba"
-    assert ids_at(world, 4, 2) == ["word:墙"]
-    assert ids_at(world, 4, 3) == ["water"]
+    assert result.moved and not result.lost
+    assert world.get(4, 2).id == "baba"
+    assert set(ids_at(world, 4, 3)) == {"water", "word:墙"}
 
 
 def test_stop_still_blocks_water_cell():
@@ -312,17 +311,16 @@ def test_undo_restores_melted_box():
     assert world.get(4, 3).id == "fire"
 
 
-def test_non_hazard_and_water_still_block_push():
+def test_background_objects_do_not_block_push():
     words = rule(0, "人", "你") + rule(1, "箱", "推")
     world = make_world(words=words, objects=[(4, 1, "baba"), (4, 2, "box"), (4, 3, "rock")])
     world.add(4, 3, make_object("water"))
 
     result = try_move(world, 0, 1)
 
-    assert not result.moved
-    assert world.get(4, 2).id == "box"
-    assert ids_at(world, 4, 3) == ["rock", "water"]
-    assert not world.can_undo
+    assert result.moved
+    assert world.get(4, 2).id == "baba"
+    assert set(ids_at(world, 4, 3)) == {"box", "rock", "water"}
 
 
 def test_fire_melts_you():

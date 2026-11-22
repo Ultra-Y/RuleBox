@@ -568,15 +568,18 @@ def test_non_you_cannot_enter_occupied_cell():
             (1, 0, "箱"),
             (1, 1, "是"),
             (1, 2, "推"),
+            (2, 0, "墙"),
+            (2, 1, "是"),
+            (2, 2, "停"),
         ],
-        objects=[(4, 1, "baba"), (4, 2, "box"), (4, 3, "rock")],
+        objects=[(4, 1, "baba"), (4, 2, "box"), (4, 3, "wall")],
     )
 
     result = try_move(world, 0, 1)
     assert not result.moved
     assert world.get(4, 1).id == "baba"
     assert world.get(4, 2).id == "box"
-    assert world.get(4, 3).id == "rock"
+    assert world.get(4, 3).id == "wall"
     assert not world.can_undo
 
 
