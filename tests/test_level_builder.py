@@ -3,7 +3,7 @@ from pathlib import Path
 import pytest
 
 from rulebox.core.entities import NOUN_WORDS, PROPERTY_WORDS
-from rulebox.core.level import load_level
+from rulebox.core.level import load_level, parse_level
 from rulebox.core.level_builder import (
     PALETTE,
     blank_cells,
@@ -14,7 +14,8 @@ from rulebox.core.level_builder import (
     share_decode,
     share_encode,
 )
-from rulebox.ui.editor import Editor
+from rulebox.core.world import World
+from rulebox.ui.editor import Editor, _can_stack
 
 
 def test_palette_symbols_are_unique():
@@ -26,6 +27,39 @@ def test_palette_has_all_noun_words():
     words = {item.value for item in PALETTE if item.kind == "word"}
     assert NOUN_WORDS <= words
     assert PROPERTY_WORDS <= words
+
+
+def test_stack_roundtrip_and_world():
+    cells = blank_cells()
+    cells[2][3] = "@/4"
+
+    text = build_level_text("叠加关", cells)
+    assert "stack" in text
+    name, read_cells = cells_from_text(text)
+
+    assert name == "叠加关"
+    assert read_cells[2][3] == "@/4"
+    level = parse_level(text)
+    assert len(level.stacks[(2, 3)]) == 1
+    world = World(level)
+    assert {entity.id for entity in world.entities_at(2, 3)} == {"baba", "word:墙"}
+
+
+def test_editor_stack_rules():
+    assert _can_stack(["@"], "4")
+    assert not _can_stack(["@"], "F")
+    assert not _can_stack(["4"], "8")
+
+
+def test_editor_builds_stack_section():
+    editor = Editor()
+    editor.cells[2][3] = "@/4"
+
+    text = editor.build_text()
+
+    assert "stack" in text
+    assert "3 4 4" in text
+    parse_level(text)
 
 
 def test_build_level_roundtrip(tmp_path):

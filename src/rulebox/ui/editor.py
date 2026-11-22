@@ -54,7 +54,7 @@ class Editor:
         self.name_active = False
         self._undo_stack: list[tuple] = []
         self._redo_stack: list[tuple] = []
-        self.message = "左键放置 · 右键擦除 · Ctrl+S 保存"
+        self.message = "左键放置/叠放（物件+词块） · 右键移除顶层 · Ctrl+S 保存"
         self.on_changed = on_changed
         self.on_back = on_back
         self.on_playtest = on_playtest
@@ -295,10 +295,30 @@ class Editor:
         cell = self._grid_cell_at(pos)
         if cell is not None:
             row, col = cell
-            symbol = self.selected_symbol if button == 1 else "."
-            if self.cells[row][col] != symbol:
+            cell_text = self.cells[row][col]
+            symbols = _cell_symbols(cell_text)
+            if button == 1:
+                if self.selected_symbol == ".":
+                    new_text = "."
+                elif symbols == ["."]:
+                    new_text = self.selected_symbol
+                elif self.selected_symbol in symbols:
+                    return
+                elif len(symbols) < 2 and _can_stack(symbols, self.selected_symbol):
+                    new_text = "/".join([*symbols, self.selected_symbol])
+                else:
+                    self.message = "只能叠放一个物件和一个词块"
+                    return
+            elif button == 3:
+                if symbols == ["."]:
+                    return
+                remaining = symbols[:-1]
+                new_text = "/".join(remaining) if remaining else "."
+            else:
+                return
+            if new_text != cell_text:
                 self._push_undo()
-                self.cells[row][col] = symbol
+                self.cells[row][col] = new_text
 
     # ---------- 布局 ----------
 
@@ -348,18 +368,16 @@ class Editor:
         return GRID_X, GRID_Y, cell
 
     def _active_word_positions(self) -> set[tuple[int, int]]:
-        cells = [[_entity(symbol) for symbol in row] for row in self.cells]
         try:
-            return active_word_positions(World(Level("editor", self.width, self.height, cells)))
+            level = parse_level(build_level_text("editor", self.cells), source="<editor>")
+            return active_word_positions(World(level))
         except Exception:
             return set()
 
     def _blocked_word_positions(self) -> set[tuple[int, int]]:
-        cells = [[_entity(symbol) for symbol in row] for row in self.cells]
         try:
-            return blocked_transform_word_positions(
-                World(Level("editor", self.width, self.height, cells))
-            )
+            level = parse_level(build_level_text("editor", self.cells), source="<editor>")
+            return blocked_transform_word_positions(World(level))
         except Exception:
             return set()
 
@@ -428,23 +446,30 @@ class Editor:
                 floor = FLOOR_A if (row + col) % 2 == 0 else FLOOR_B
                 pygame.draw.rect(screen, floor, (x, y, cell, cell))
                 pygame.draw.rect(screen, GRID_LINE, (x, y, cell, cell), 1)
-                entity = _entity(self.cells[row][col])
-                if entity is not None:
+                symbols = _cell_symbols(self.cells[row][col])
+                for depth, symbol in enumerate(symbols):
+                    entity = _entity(symbol)
+                    if entity is None:
+                        continue
                     color = entity.color
                     if entity.is_word and (row, col) not in active_words:
                         color = _dim_color(color)
-                    _draw_entity(screen, entity, x, y, cell, chrome, color)
-                    if entity.is_word and (row, col) in blocked_words:
-                        inset = max(2, cell // 12)
-                        _draw_cross(
-                            screen,
-                            pygame.Rect(
-                                x + inset,
-                                y + inset,
-                                cell - inset * 2,
-                                cell - inset * 2,
-                            ),
-                        )
+                    pad = depth * max(2, cell // 10)
+                    sub_cell = max(6, cell - pad * 2)
+                    _draw_entity(
+                        screen, entity, x + pad, y + pad, sub_cell, chrome, color
+                    )
+                if (row, col) in blocked_words:
+                    inset = max(2, cell // 12)
+                    _draw_cross(
+                        screen,
+                        pygame.Rect(
+                            x + inset,
+                            y + inset,
+                            cell - inset * 2,
+                            cell - inset * 2,
+                        ),
+                    )
 
         for index, item in enumerate(PALETTE):
             rect = self._palette_rect(index)
@@ -473,11 +498,23 @@ class Editor:
             y += 20
 
         hint = chrome["hint"].render(
-            "左键放置 · 右键擦除 · Ctrl+S 保存 · Ctrl+Z 撤销 · Ctrl+Y 重做 · Esc 返回",
+            "左键放置/叠放 · 右键移除顶层 · Ctrl+S 保存 · Ctrl+Z 撤销 · Ctrl+Y 重做 · Esc 返回",
             True,
             HINT,
         )
         screen.blit(hint, (40, 640))
+
+
+def _cell_symbols(cell: str) -> list[str]:
+    symbols = [part for part in str(cell).split("/") if part and part != "."]
+    return symbols or ["."]
+
+
+def _can_stack(symbols: list[str], symbol: str) -> bool:
+    if len(symbols) != 1 or symbol == ".":
+        return False
+    kinds = {BY_SYMBOL.get(symbols[0]).kind, BY_SYMBOL.get(symbol).kind}
+    return len({*symbols, symbol}) == 2 and kinds == {"word", "object"}
 
 
 def _entity(symbol: str):

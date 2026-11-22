@@ -10,6 +10,7 @@ from datetime import datetime
 from pathlib import Path
 
 from .level import Level, parse_level
+from .entities import Entity
 
 
 @dataclass(frozen=True)
@@ -86,6 +87,12 @@ def blank_cells(width: int = 11, height: int = 8) -> list[list[str]]:
     return cells
 
 
+def _cell_symbols(cell: str) -> list[str]:
+    """编辑器格子字符串 → 符号列表；`.` 表示空。"""
+    symbols = [part for part in str(cell).split("/") if part and part != "."]
+    return symbols or ["."]
+
+
 def build_level_text(name: str, cells: list[list[str]]) -> str:
     name = (name or "自制关卡").replace("\n", " ").strip() or "自制关卡"
     height = len(cells)
@@ -102,11 +109,29 @@ def build_level_text(name: str, cells: list[list[str]]) -> str:
         else:
             lines.append(f"  {item.symbol} {item.value}")
 
-    lines.extend(["", "grid"])
-    for row in cells:
+    grid_rows: list[str] = []
+    stack_lines: list[str] = []
+    for row_index, row in enumerate(cells):
         if len(row) != width:
             raise ValueError("每行宽度必须一致")
-        lines.append(f"  {''.join(row)}")
+        base: list[str] = []
+        for col_index, cell in enumerate(row):
+            symbols = _cell_symbols(cell)
+            if symbols[0] == "." and len(symbols) > 1:
+                symbols = symbols[1:]
+            if symbols[0] not in BY_SYMBOL or BY_SYMBOL[symbols[0]].kind == "empty":
+                base.append(".")
+            else:
+                base.append(symbols[0])
+            for symbol in symbols[1:]:
+                if symbol == "." or symbol not in BY_SYMBOL or BY_SYMBOL[symbol].kind == "empty":
+                    raise ValueError(f"无效的叠加符号：{symbol!r}")
+                stack_lines.append(f"  {row_index + 1} {col_index + 1} {symbol}")
+        grid_rows.append(f"  {''.join(base)}")
+
+    lines.extend(["", "grid", *grid_rows])
+    if stack_lines:
+        lines.extend(["", "stack", *stack_lines])
     return "\n".join(lines) + "\n"
 
 
@@ -140,18 +165,26 @@ def save_level_text(text: str, directory: Path, prefix: str = "custom") -> Path:
     return path
 
 
+def _symbol_for_entity(entity: Entity) -> str:
+    if entity.is_word:
+        return WORD_SYMBOL.get(entity.text, ".")
+    return OBJECT_SYMBOL.get(entity.id, ".")
+
+
 def _cells_from_level(level: Level) -> list[list[str]]:
     cells: list[list[str]] = []
-    for row in level.cells:
-        symbols: list[str] = []
-        for entity in row:
-            if entity is None:
-                symbols.append(".")
-            elif entity.is_word:
-                symbols.append(WORD_SYMBOL.get(entity.text, "."))
-            else:
-                symbols.append(OBJECT_SYMBOL.get(entity.id, "."))
-        cells.append(symbols)
+    for row_index, row in enumerate(level.cells):
+        symbols_row: list[str] = []
+        for col_index, entity in enumerate(row):
+            symbols = [("." if entity is None else _symbol_for_entity(entity))]
+            for extra in level.stacks.get((row_index, col_index), ()):
+                extra_symbol = _symbol_for_entity(extra)
+                if extra_symbol != ".":
+                    symbols.append(extra_symbol)
+            if symbols[0] == "." and len(symbols) > 1:
+                symbols = symbols[1:]
+            symbols_row.append("/".join(symbols) if symbols else ".")
+        cells.append(symbols_row)
     return cells
 
 

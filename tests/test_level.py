@@ -73,3 +73,25 @@ def test_blocked_road_level_layout():
     assert level.entity_at(4, 5) is None
     assert level.entity_at(5, 5).id == "box"
     assert level.entity_at(6, 9).id == "flag"
+
+
+def test_stack_section_parses():
+    text = (
+        "name stacked\n"
+        "size 3 3\n"
+        "legend\n"
+        "  # wall\n"
+        "  . empty\n"
+        "  @ baba\n"
+        "  4 word 墙\n"
+        "grid\n"
+        "  ###\n"
+        "  #@#\n"
+        "  ###\n"
+        "stack\n"
+        "  2 2 4\n"
+    )
+    level = parse_level(text)
+
+    assert len(level.stacks[(1, 1)]) == 1
+    assert level.stacks[(1, 1)][0].text == "墙"

@@ -15,7 +15,7 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 
 from .entities import Entity, make_object, make_word
@@ -37,6 +37,8 @@ class Level:
     width: int
     height: int
     cells: list[list[Entity | None]]
+    # 叠加层：grid 放底层，stack 放额外实体（编辑器使用）。
+    stacks: dict[tuple[int, int], list[Entity]] = field(default_factory=dict)
 
     def entity_at(self, row: int, col: int) -> Entity | None:
         if not (0 <= row < self.height and 0 <= col < self.width):
@@ -56,6 +58,7 @@ def parse_level(text: str, source: str = "<string>") -> Level:
     height: int | None = None
     legend: dict[str, Entity | None] = {}
     grid_lines: list[tuple[int, str]] = []
+    stack_lines: list[tuple[int, str]] = []
     state = "header"
 
     for line_no, raw in enumerate(text.splitlines(), start=1):
@@ -63,8 +66,14 @@ def parse_level(text: str, source: str = "<string>") -> Level:
         if not line:
             continue
 
+        if state == "grid" and line == "stack":
+            state = "stack"
+            continue
         if state == "grid":
             grid_lines.append((line_no, line))
+            continue
+        if state == "stack":
+            stack_lines.append((line_no, line))
             continue
 
         if line.startswith("name "):
@@ -103,7 +112,34 @@ def parse_level(text: str, source: str = "<string>") -> Level:
             )
         cells.append([_cell_at(row[col], col, line_no, source, legend) for col in range(width)])
 
-    return Level(name=name or "未命名关卡", width=width, height=height, cells=cells)
+    stacks: dict[tuple[int, int], list[Entity]] = {}
+    for line_no, line in stack_lines:
+        parts = line.split()
+        if len(parts) < 3:
+            raise LevelFormatError(
+                "stack 行格式：`行 列 符号 [符号...]`（行列从 1 开始）", line_no, source
+            )
+        try:
+            row, col = int(parts[0]) - 1, int(parts[1]) - 1
+        except ValueError as exc:
+            raise LevelFormatError("stack 的行列必须是整数", line_no, source) from exc
+        if not (0 <= row < height and 0 <= col < width):
+            raise LevelFormatError(f"stack 坐标越界：({row + 1}, {col + 1})", line_no, source)
+        extra: list[Entity] = []
+        for symbol in parts[2:]:
+            entity = _cell_at(symbol, col, line_no, source, legend)
+            if entity is None:
+                raise LevelFormatError("stack 不能叠加 empty", line_no, source)
+            extra.append(entity)
+        stacks.setdefault((row, col), []).extend(extra)
+
+    return Level(
+        name=name or "未命名关卡",
+        width=width,
+        height=height,
+        cells=cells,
+        stacks=stacks,
+    )
 
 
 def _parse_legend_line(

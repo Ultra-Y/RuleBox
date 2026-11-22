@@ -36,6 +36,8 @@ class World:
             [[] if entity is None else [entity] for entity in row]
             for row in level.cells
         ]
+        for (row, col), entities in level.stacks.items():
+            self.cells[row][col].extend(entities)
         self._history: list[Grid] = []
 
     # ---------- 查询与修改 ----------
