@@ -153,6 +153,10 @@ class _App:
             self.select_entries = [
                 entry for entry in self.official if entry.chapter == 4
             ]
+        elif mode == "chapter5":
+            self.select_entries = [
+                entry for entry in self.official if entry.chapter == 5
+            ]
         elif mode == "custom":
             self.select_entries = list(self.custom)
         else:
@@ -233,6 +237,10 @@ class _App:
         elif self.select_mode == "chapter4":
             self.select_entries = [
                 entry for entry in self.official if entry.chapter == 4
+            ]
+        elif self.select_mode == "chapter5":
+            self.select_entries = [
+                entry for entry in self.official if entry.chapter == 5
             ]
         elif self.select_mode == "custom":
             self.select_entries = self.custom
@@ -498,7 +506,7 @@ def _handle_menu(app: _App, key: int) -> bool:
 def _handle_official(app: _App, key: int) -> bool:
     import pygame
 
-    options = ("tutorial", "chapter1", "chapter2", "chapter3", "chapter4")
+    options = ("tutorial", "chapter1", "chapter2", "chapter3", "chapter4", "chapter5")
     if key in (pygame.K_UP, pygame.K_w):
         app.official_index = (app.official_index - 1) % len(options)
     elif key in (pygame.K_DOWN, pygame.K_s):
@@ -518,7 +526,7 @@ def _handle_select(app: _App, key: int) -> bool:
         if key == pygame.K_ESCAPE:
             if app.select_for_edit:
                 app.open_editor()
-            elif app.select_mode in ("tutorial", "chapter1", "chapter2", "chapter3", "chapter4"):
+            elif app.select_mode in ("tutorial", "chapter1", "chapter2", "chapter3", "chapter4", "chapter5"):
                 app.screen = "official"
             else:
                 app.screen = "menu"
@@ -535,7 +543,7 @@ def _handle_select(app: _App, key: int) -> bool:
     elif key == pygame.K_ESCAPE:
         if app.select_for_edit:
             app.open_editor()
-        elif app.select_mode in ("tutorial", "chapter1", "chapter2", "chapter3", "chapter4"):
+        elif app.select_mode in ("tutorial", "chapter1", "chapter2", "chapter3", "chapter4", "chapter5"):
             app.screen = "official"
         else:
             app.screen = "menu"
@@ -670,12 +678,14 @@ def _draw_official(screen, app: _App, chrome) -> None:
     chapter2 = [entry for entry in app.official if entry.chapter == 2]
     chapter3 = [entry for entry in app.official if entry.chapter == 3]
     chapter4 = [entry for entry in app.official if entry.chapter == 4]
+    chapter5 = [entry for entry in app.official if entry.chapter == 5]
     options = [
         (f"教程（{len(tutorials)} 关）", "tutorial"),
         (f"第一章（{len(chapter1)} 关）", "chapter1"),
         (f"第二章（{len(chapter2)} 关）", "chapter2"),
         (f"第三章（{len(chapter3)} 关）", "chapter3"),
         (f"第四章（{len(chapter4)} 关）", "chapter4"),
+        (f"第五章（{len(chapter5)} 关）", "chapter5"),
     ]
     for index, (label, _mode) in enumerate(options):
         color = TITLE if index == app.official_index else HINT
@@ -705,6 +715,8 @@ def _draw_select(screen, app: _App, chrome) -> None:
         heading = "第三章"
     elif app.select_mode == "chapter4":
         heading = "第四章"
+    elif app.select_mode == "chapter5":
+        heading = "第五章"
     elif app.select_mode == "custom":
         heading = "自制关卡"
     else:
@@ -724,6 +736,8 @@ def _draw_select(screen, app: _App, chrome) -> None:
             message = "第三章还没有关卡"
         elif app.select_mode == "chapter4":
             message = "第四章还没有关卡"
+        elif app.select_mode == "chapter5":
+            message = "第五章还没有关卡"
         elif app.select_mode == "custom":
             message = "还没有自制关卡，去关卡编辑器做一个"
         else:
