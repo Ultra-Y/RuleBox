@@ -45,7 +45,7 @@ Windows 免安装包已构建并验证：`dist/RuleBox-Windows.zip`（约 13 MB�
 | 解法 | `solutions/*.txt` | `URDL` 回放串 |
 | 测试 | `tests/` | 207 条 |
 | 机制说明 | `docs/MECHANICS.md` | 结算顺序、规则语法、属性表、已知边界 |
-| 美术 | `assets/sprites/` | 16 个 16×16 像素精灵 + 14 张动画帧（DB16 配色 + 1px 描边）；人是简单圆团子、狗是柴犬；水/岩浆铺满整格；生成脚本 `tools/generate_sprites.py` |
+| 美术 | `assets/sprites/` | 16 个 16×16 像素精灵 + 14 张动画帧（DB16 配色 + 1px 描边）；人是简单小人、狗是柴犬；水/岩浆铺满整格；生成脚本 `tools/generate_sprites.py` |
 | 发布包 | `dist/RuleBox-Windows.zip` | 约 13 MB，免安装 Windows 包；`dist/` gitignore，不提交 |
 | 发布脚本 | `tools/build_release.py` | PyInstaller；玩家说明 `docs/HOW-TO-PLAY.txt` |
 | 发布说明 | `docs/DISTRIBUTION.md` | 分发、SmartScreen、存档位置、重新打包 |
@@ -358,6 +358,13 @@ py -3.10 -m venv .venv
 
 - 人物从 chibi 小人简化成圆团子：只保留身体、2×2 眼睛、微笑和两点腮红，去掉头发、呆毛、胳膊、腰带、裤子和鞋。
 - 保留眨眼动画（第 2 帧眼睛变两条短线）。
+- 验证：207 passed；`sprites.png`、`sprites_anim.gif`、22 张关卡预览、`editor.png`、`word_states.png`、`rule_lock.png` 全部重生成。
+
+### 5.3.34 人恢复成人形（已完成）
+
+- 上一版简化成圆团子后被指出“起码是个人”，按 16×16 RPG 小人的比例重画：棕色短发、脸（1×2 眼睛 + 白高光 + 小嘴）、蓝上衣、两只手臂、深蓝裤子、棕色布鞋。
+- 元素仍然很少：头发、脸、上衣、手臂、裤子、鞋，没有帽子/腰带/披风等装饰。
+- 保留眨眼动画（第 2 帧眼睛压成一条）。
 - 验证：207 passed；`sprites.png`、`sprites_anim.gif`、22 张关卡预览、`editor.png`、`word_states.png`、`rule_lock.png` 全部重生成。
 
 ### 5.4 关卡 4–8（已完成）
