@@ -23,7 +23,7 @@
 - 先读 [`AGENTS.md`](AGENTS.md)（代理操作规范）和 [`docs/HANDOFF.md`](docs/HANDOFF.md)（状态快照、下一步、设计债）
 - 全部机制（结算顺序、规则语法、属性表、边界）见 [`docs/MECHANICS.md`](docs/MECHANICS.md)
 - 原计划见 [`docs/plan.md`](docs/plan.md)，行动清单见 [`docs/checklist.md`](docs/checklist.md)
-- 当前基线：183 条测试全过，教程 10 关 + 第一章 1-1 / 1-2 + 第二章 2-1 / 2-2 / 2-3 / 2-4 + 第三章 3-1 / 3-2 / 3-3 + 第四章 4-1 / 4-2 / 4-3 可玩，关卡编辑器可用
+- 当前基线：192 条测试全过，教程 10 关 + 第一章 1-1 / 1-2 + 第二章 2-1 / 2-2 / 2-3 / 2-4 + 第三章 3-1 / 3-2 / 3-3 + 第四章 4-1 / 4-2 / 4-3 可玩，关卡编辑器可用
 
 ## 环境
 
@@ -101,12 +101,13 @@ python run.py content/levels/02-move-aside.txt # 直接进某一关
 
 物件使用 **16×16 像素精灵**，位于 `assets/sprites/`：
 
-- 人、墙、箱、旗、水、火、石、门、钥、传送门共 10 个；
+- 人、墙、箱、旗、水、火、石、门、钥、传送门，以及新增的狗、猫、花、树、鱼，共 15 个；
+- 统一配色取自 DawnBringer 16 色板（DB16），每个精灵带 1px 深色描边、左上受光；
 - Pygame 用最近邻缩放，保持像素边缘；
 - 编辑器调色板和棋盘共用同一套素材；
 - 缺图时自动回退到原来的色块 + 文字。
 
-素材由 [`tools/generate_sprites.py`](tools/generate_sprites.py) 生成（需要 Pillow；**运行时不需要**）。
+素材由 [`tools/generate_sprites.py`](tools/generate_sprites.py) 生成（需要 Pillow；**运行时不需要**，Pillow 已列在 `requirements-build.txt`）。
 
 ## 词块生效状态
 
@@ -282,6 +283,8 @@ pytest
 - [x] 拉动为链式，移物件自动移动时也会拉
 - [x] 被拉物件可以穿过无推无停的背景物件
 - [x] 移物件可推动词块和可推物件
+- [x] 美术重绘：DB16 配色 + 1px 描边，15 个 16×16 精灵
+- [x] 新增物件：狗 / 猫 / 花 / 树 / 鱼（含名词词块，调色板 51 项）
 - [ ] 主线 5-2 及后续章节
 
 ## 目录

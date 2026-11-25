@@ -29,6 +29,24 @@ def test_palette_has_all_noun_words():
     assert PROPERTY_WORDS <= words
 
 
+def test_palette_covers_new_objects():
+    objects = {item.value for item in PALETTE if item.kind == "object"}
+    words = {item.value for item in PALETTE if item.kind == "word"}
+    for noun, object_id in {
+        "狗": "dog",
+        "猫": "cat",
+        "花": "flower",
+        "树": "tree",
+        "鱼": "fish",
+    }.items():
+        assert object_id in objects
+        assert noun in words
+
+    # 11 个物件（含空）+ 5 个新物件，30 + 5 个词块。
+    assert len(PALETTE) == 51
+
+
+
 def test_stack_roundtrip_and_world():
     cells = blank_cells()
     cells[2][3] = "@/4"

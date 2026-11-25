@@ -1,7 +1,23 @@
 from pathlib import Path
 
 import rulebox.ui.editor as editor_module
-from rulebox.ui.editor import Editor
+from rulebox.core.level_builder import PALETTE
+from rulebox.ui.editor import (
+    PALETTE_COLS,
+    PALETTE_GAP,
+    PALETTE_TILE,
+    PALETTE_Y,
+    Editor,
+)
+
+
+def test_palette_fits_editor_canvas():
+    editor = Editor()
+    last = editor._palette_rect(len(PALETTE) - 1)
+
+    assert len(PALETTE) <= PALETTE_COLS * 4
+    assert last.bottom <= 650, "调色板压到操作提示行"
+    assert last.right < 590, "调色板压到右侧消息区"
 
 
 def test_editor_save_rename_delete(tmp_path, monkeypatch):

@@ -21,6 +21,11 @@ _ASCII = {
     "door": "D",
     "key": "k",
     "portal": "P",
+    "dog": "g",
+    "cat": "c",
+    "flower": "f",
+    "tree": "t",
+    "fish": "i",
 }
 
 

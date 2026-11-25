@@ -22,6 +22,11 @@ OBJECTS: dict[str, tuple[str, Color]] = {
     "door": ("门", (160, 105, 65)),
     "key": ("钥", (235, 200, 90)),
     "portal": ("传", (150, 100, 220)),
+    "dog": ("狗", (205, 150, 95)),
+    "cat": ("猫", (170, 170, 180)),
+    "flower": ("花", (225, 120, 160)),
+    "tree": ("树", (95, 165, 90)),
+    "fish": ("鱼", (100, 175, 225)),
 }
 
 # 名词词块 -> 物件 id
@@ -37,6 +42,11 @@ NOUN_TO_OBJECT: dict[str, str] = {
     "钥": "key",
     "传送": "portal",
     "词": "word",
+    "狗": "dog",
+    "猫": "cat",
+    "花": "flower",
+    "树": "tree",
+    "鱼": "fish",
 }
 OBJECT_TO_NOUN = {value: key for key, value in NOUN_TO_OBJECT.items()}
 
