@@ -711,6 +711,66 @@ def test_move_object_bounces_off_stop():
     assert game.world.get(4, 3).id == "wall"
 
 
+def test_move_object_bounces_when_push_chain_hits_edge():
+    rules = [
+        (0, 0, "人"),
+        (0, 1, "是"),
+        (0, 2, "你"),
+        (1, 0, "箱"),
+        (1, 1, "是"),
+        (1, 2, "移"),
+        (2, 0, "石"),
+        (2, 1, "是"),
+        (2, 2, "推"),
+    ]
+    game = Game(
+        make_level(
+            width=6,
+            words=rules,
+            objects=[(4, 3, "baba"), (4, 4, "box"), (4, 5, "rock")],
+        )
+    )
+
+    game.move(0, 1)
+
+    assert game.world.get(4, 3).id == "box"
+    assert game.world.get(4, 5).id == "rock"
+
+
+def test_move_object_bounces_when_push_chain_hits_stop():
+    rules = [
+        (0, 0, "人"),
+        (0, 1, "是"),
+        (0, 2, "你"),
+        (1, 0, "箱"),
+        (1, 1, "是"),
+        (1, 2, "移"),
+        (2, 0, "石"),
+        (2, 1, "是"),
+        (2, 2, "推"),
+        (3, 0, "墙"),
+        (3, 1, "是"),
+        (3, 2, "停"),
+    ]
+    game = Game(
+        make_level(
+            words=rules,
+            objects=[
+                (4, 1, "baba"),
+                (4, 2, "box"),
+                (4, 3, "rock"),
+                (4, 4, "wall"),
+            ],
+        )
+    )
+
+    game.move(0, 1)
+
+    assert game.world.get(4, 1).id == "box"
+    assert game.world.get(4, 3).id == "rock"
+    assert game.world.get(4, 4).id == "wall"
+
+
 def test_move_object_pushes_word():
     rules = [
         (0, 0, "人"),

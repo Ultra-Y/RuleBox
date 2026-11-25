@@ -206,24 +206,51 @@ def _auto_should_bounce(
     dc: int,
     props: dict[str, set[str]],
 ) -> bool:
-    """只有地图边缘和同层不可推的 STOP 会让「移」物件反向。"""
-    target_row, target_col = row + dr, col + dc
-    if not world.in_bounds(target_row, target_col):
-        return True
-    for target in world.entities_at(target_row, target_col):
-        related = (
-            same_layer(entity, target, props)
-            or (
-                target.is_word
-                and (is_floating(entity, props) or is_floating(target, props))
-            )
-            or (is_floating(entity, props) and has_prop(target, props, "STOP"))
-        )
-        if not related:
-            continue
-        if has_prop(target, props, "STOP") and not _is_pushable(target, props):
+    """地图边缘，或推链尽头是不可推的 STOP 时，让「移」物件反向。
+
+    只看同层/可推关系；普通占用物挡路时不反弹。
+    """
+    current_row, current_col = row, col
+    for _ in range(MAX_PUSH_DEPTH + 1):
+        target_row, target_col = current_row + dr, current_col + dc
+        if not world.in_bounds(target_row, target_col):
             return True
+        targets = _related_targets(
+            world, entity, target_row, target_col, props
+        )
+        if not targets:
+            return False
+        if any(
+            has_prop(target, props, "STOP") and not _is_pushable(target, props)
+            for target in targets
+        ):
+            return True
+        pushable = [
+            target for target in targets if _is_pushable(target, props)
+        ]
+        if not pushable:
+            return False
+        current_row, current_col = target_row, target_col
     return False
+
+
+def _related_targets(
+    world: World,
+    entity: Entity,
+    row: int,
+    col: int,
+    props: dict[str, set[str]],
+) -> list[Entity]:
+    return [
+        target
+        for target in world.entities_at(row, col)
+        if same_layer(entity, target, props)
+        or (
+            target.is_word
+            and (is_floating(entity, props) or is_floating(target, props))
+        )
+        or (is_floating(entity, props) and has_prop(target, props, "STOP"))
+    ]
 
 
 def _is_pushable(entity: Entity, props: dict[str, set[str]]) -> bool:
