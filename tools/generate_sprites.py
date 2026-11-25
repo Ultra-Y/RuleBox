@@ -70,35 +70,34 @@ def add_outline(image: Image.Image, color: tuple = C["ink"]) -> Image.Image:
 
 
 def draw_baba(frame: int = 0) -> Image.Image:
-    """简单小人：棕色短发、蓝上衣、深蓝裤子、布鞋；第 2 帧眨眼。"""
+    """侧面小人：棕色短发、蓝上衣、深蓝裤子、布鞋；第 2 帧眨眼。"""
     image = canvas()
     draw = ImageDraw.Draw(image)
     # 鞋
     draw.rounded_rectangle((4, 14, 6, 15), radius=1, fill=C["clay"])
-    draw.rounded_rectangle((9, 14, 11, 15), radius=1, fill=C["clay"])
-    # 裤子
+    draw.rounded_rectangle((8, 14, 10, 15), radius=1, fill=C["clay"])
+    # 腿
     draw.rectangle((5, 12, 6, 14), fill=C["midnight"])
-    draw.rectangle((9, 12, 10, 14), fill=C["midnight"])
+    draw.rectangle((8, 12, 9, 14), fill=C["midnight"])
+    # 身体
+    draw.rounded_rectangle((5, 8, 10, 11), radius=1, fill=C["cornflower"])
     # 手臂
-    draw.rectangle((4, 8, 4, 10), fill=C["beige"])
-    draw.rectangle((11, 8, 11, 10), fill=C["beige"])
-    # 上衣
-    draw.rounded_rectangle((5, 7, 10, 11), radius=1, fill=C["cornflower"])
-    # 头
-    draw.ellipse((5, 2, 10, 8), fill=C["beige"])
-    # 棕色短发
-    draw.ellipse((5, 1, 10, 4), fill=C["clay"])
+    draw.rectangle((9, 8, 9, 10), fill=C["beige"])
+    # 脸（朝右）
+    draw.rounded_rectangle((5, 3, 12, 8), radius=3, fill=C["beige"])
+    # 头发：后脑 + 头顶
+    draw.rounded_rectangle((3, 1, 10, 4), radius=2, fill=C["clay"])
+    draw.rectangle((3, 3, 4, 7), fill=C["clay"])
+    # 鼻子
+    draw.rectangle((12, 5, 12, 5), fill=C["beige"])
     # 眼睛（第 2 帧眨眼）
     if frame == 0:
-        draw.rectangle((6, 4, 6, 5), fill=C["ink"])
-        draw.rectangle((9, 4, 9, 5), fill=C["ink"])
-        draw.point((6, 4), fill=C["cream"])
-        draw.point((9, 4), fill=C["cream"])
+        draw.rectangle((9, 5, 9, 6), fill=C["ink"])
+        draw.point((9, 5), fill=C["cream"])
     else:
-        draw.rectangle((6, 5, 6, 5), fill=C["ink"])
-        draw.rectangle((9, 5, 9, 5), fill=C["ink"])
+        draw.rectangle((9, 6, 9, 6), fill=C["ink"])
     # 嘴
-    draw.rectangle((7, 7, 8, 7), fill=C["wine"])
+    draw.rectangle((9, 7, 10, 7), fill=C["wine"])
     return add_outline(image)
 
 
