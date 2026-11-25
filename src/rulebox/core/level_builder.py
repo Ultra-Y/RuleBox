@@ -38,6 +38,7 @@ _OBJECTS = [
     ("f", "flower", "花"),
     ("t", "tree", "树"),
     ("i", "fish", "鱼"),
+    ("l", "lava", "岩浆"),
 ]
 
 _WORDS = [
@@ -76,6 +77,7 @@ _WORDS = [
     ("Q", "花", "花"),
     ("J", "树", "树"),
     ("U", "鱼", "鱼"),
+    ("N", "岩浆", "岩浆"),
 ]
 
 PALETTE: list[PaletteItem] = [

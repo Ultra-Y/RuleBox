@@ -11,6 +11,7 @@
 
 from __future__ import annotations
 
+import math
 import sys
 from pathlib import Path
 
@@ -269,18 +270,52 @@ def draw_flag(frame: int = 0) -> Image.Image:
 
 
 def draw_water(frame: int = 0) -> Image.Image:
+    """铺满格子的水面：两道正弦波，4 帧向右流动 16px 后无缝循环。"""
     image = canvas()
     draw = ImageDraw.Draw(image)
-    shift = 1 if frame else 0
-    draw.rectangle((1, 5, 14, 13), fill=C["cornflower"])
-    draw.rectangle((1, 7, 14, 7), fill=C["aqua"])
-    draw.rectangle((1, 10, 14, 10), fill=C["aqua"])
-    draw.rectangle((1, 12, 14, 13), fill=C["midnight"])
-    for x in (2, 6, 10):
-        draw.rectangle((x + shift, 5, x + shift, 5), fill=C["cream"])
-    for x in (4, 8, 12):
-        draw.rectangle((x + shift, 8, x + shift, 8), fill=C["cream"])
-    return add_outline(image)
+    shift = frame * 4
+    draw.rectangle((0, 0, 15, 15), fill=C["cornflower"])
+    for wave_y, phase in ((4, 0.0), (12, math.pi)):
+        for x in range(16):
+            angle = (x + shift) * math.pi / 8 + phase
+            y = wave_y + round(2 * math.sin(angle))
+            draw.point((x, y % 16), fill=C["aqua"])
+            draw.point((x, (y + 1) % 16), fill=C["midnight"])
+            draw.point((x, (y + 2) % 16), fill=C["midnight"])
+    for index in range(4):
+        x = (shift + index * 5) % 16
+        y = (index * 4 + 1) % 16
+        draw.point((x, y), fill=C["cream"])
+    return image
+
+
+def draw_lava(frame: int = 0) -> Image.Image:
+    """铺满格子的岩浆：暗色结壳 + 发光裂缝，3 帧缓慢翻动。"""
+    image = canvas()
+    draw = ImageDraw.Draw(image)
+    shift = frame * 3
+    draw.rectangle((0, 0, 15, 15), fill=C["wine"])
+    for x in range(16):
+        y = (x * 3 + shift) % 16
+        draw.point((x, y), fill=C["crimson"])
+        draw.point((x, (y + 1) % 16), fill=C["crimson"])
+        draw.point((x, (y + 2) % 16), fill=C["amber"])
+        y2 = (x * 5 + 8 + shift) % 16
+        draw.point((x, y2), fill=C["amber"])
+        draw.point((x, (y2 + 1) % 16), fill=C["crimson"])
+    # 几处亮一点的熔池，打破线条的规律
+    for index, (bx, by) in enumerate(((3, 6), (10, 11), (7, 2))):
+        x0 = (bx + shift) % 16
+        y0 = (by + shift // 2) % 16
+        for dx in range(3):
+            for dy in range(2):
+                draw.point(((x0 + dx) % 16, (y0 + dy) % 16), fill=C["amber"])
+        draw.point(((x0 + 1) % 16, y0), fill=C["lemon"])
+    for index in range(4):
+        x = (index * 4 + shift) % 16
+        y = (index * 7 + 2) % 16
+        draw.point((x, y), fill=C["lemon"])
+    return image
 
 
 def draw_fire(frame: int = 0) -> Image.Image:
@@ -372,6 +407,7 @@ SPRITES = {
     "flower": draw_flower,
     "tree": draw_tree,
     "fish": draw_fish,
+    "lava": draw_lava,
 }
 
 

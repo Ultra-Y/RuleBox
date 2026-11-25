@@ -27,6 +27,7 @@ OBJECTS: dict[str, tuple[str, Color]] = {
     "flower": ("花", (225, 120, 160)),
     "tree": ("树", (95, 165, 90)),
     "fish": ("鱼", (100, 175, 225)),
+    "lava": ("浆", (240, 110, 50)),
 }
 
 # 名词词块 -> 物件 id
@@ -47,6 +48,7 @@ NOUN_TO_OBJECT: dict[str, str] = {
     "花": "flower",
     "树": "tree",
     "鱼": "fish",
+    "岩浆": "lava",
 }
 OBJECT_TO_NOUN = {value: key for key, value in NOUN_TO_OBJECT.items()}
 

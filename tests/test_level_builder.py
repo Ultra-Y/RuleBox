@@ -38,12 +38,13 @@ def test_palette_covers_new_objects():
         "花": "flower",
         "树": "tree",
         "鱼": "fish",
+        "岩浆": "lava",
     }.items():
         assert object_id in objects
         assert noun in words
 
-    # 11 个物件（含空）+ 5 个新物件，30 + 5 个词块。
-    assert len(PALETTE) == 51
+    # 11 个物件（含空）+ 6 个新物件，30 + 6 个词块。
+    assert len(PALETTE) == 53
 
 
 

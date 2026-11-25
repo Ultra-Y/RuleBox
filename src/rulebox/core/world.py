@@ -26,6 +26,7 @@ _ASCII = {
     "flower": "f",
     "tree": "t",
     "fish": "i",
+    "lava": "L",
 }
 
 

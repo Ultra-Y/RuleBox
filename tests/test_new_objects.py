@@ -86,3 +86,62 @@ def test_cat_with_stop_blocks_dog():
     assert game.move(0, 1).moved
     assert not game.move(0, 1).moved
     assert find(game, "dog") == [(3, 3)]
+
+
+LAVA = """\
+name 岩浆测试
+size 15 5
+legend
+  # wall
+  . empty
+  @ baba
+  ~ water
+  l lava
+  1 word 人
+  2 word 是
+  3 word 你
+  W word 水
+  ] word 融
+  L word 岩浆
+  [ word 热
+grid
+  ###############
+  #.123.W2].L2[.#
+  #.............#
+  #.@..l........#
+  ###############
+stack
+  4 6 ~
+"""
+
+
+def lava_game(*, hot: bool = True) -> Game:
+    text = LAVA if hot else LAVA.replace("L2[", "L2.")
+    return Game(parse_level(text))
+
+
+def test_lava_melts_water_with_hot_rule():
+    game = lava_game(hot=True)
+
+    # 水叠在岩浆上：一步移动后接触结算，水被融化，岩浆留下。
+    game.move(0, 1)
+    assert find(game, "water") == []
+    assert find(game, "lava") == [(3, 5)]
+
+
+def test_lava_without_hot_rule_keeps_water():
+    game = lava_game(hot=False)
+
+    game.move(0, 1)
+    assert find(game, "water") == [(3, 5)]
+    assert find(game, "lava") == [(3, 5)]
+
+
+def test_lava_noun_parses_as_object():
+    game = lava_game(hot=False)
+    rules = {rule.display() for rule in parse_rules(game.world)}
+
+    assert "水 是 融" in rules
+    assert "人 是 你" in rules
+    assert "岩浆 是 热" not in rules
+

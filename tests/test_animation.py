@@ -59,6 +59,19 @@ def test_animation_frames_exist_on_disk():
             assert path.exists(), f"{object_id} 缺第 {frame} 帧"
 
 
+def test_water_flows_through_four_frames():
+    _period, pattern = ANIMATIONS["water"]
+
+    assert set(pattern) == {0, 1, 2, 3}
+    assert len(pattern) >= 4
+
+
+def test_lava_has_multiple_frames():
+    _period, pattern = ANIMATIONS["lava"]
+
+    assert len(set(pattern)) >= 2
+
+
 def test_static_objects_never_animate():
     for object_id in OBJECTS:
         if object_id in ANIMATIONS:

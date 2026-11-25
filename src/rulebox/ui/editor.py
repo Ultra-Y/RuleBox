@@ -38,9 +38,9 @@ TEXT_LIGHT = (242, 242, 248)
 GRID_X, GRID_Y = 40, 110
 MAX_GRID_W, MAX_GRID_H = 520, 360
 PALETTE_X, PALETTE_Y = 40, 478
-PALETTE_COLS = 13
-PALETTE_TILE = 38
-PALETTE_GAP = 4
+PALETTE_COLS = 14
+PALETTE_TILE = 34
+PALETTE_GAP = 3
 
 class Editor:
     def __init__(self, on_changed=None, on_back=None, on_playtest=None, on_open=None):

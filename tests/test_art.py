@@ -1,5 +1,8 @@
+import os
 import struct
 from pathlib import Path
+
+os.environ.setdefault("SDL_VIDEODRIVER", "dummy")
 
 from rulebox.core.entities import NOUN_TO_OBJECT, OBJECTS
 
@@ -27,14 +30,28 @@ def test_new_nouns_are_playable_objects():
         "花": "flower",
         "树": "tree",
         "鱼": "fish",
+        "岩浆": "lava",
     }.items():
         assert NOUN_TO_OBJECT[noun] == object_id
         assert object_id in OBJECTS
-        assert OBJECTS[object_id][0] == noun
+        assert OBJECTS[object_id][0] in noun
 
 
 def test_sprite_sheet_covers_every_object():
     data = (ROOT / "docs" / "sprites.png").read_bytes()
     width, height = struct.unpack(">II", data[16:24])
-    # 5 列 × 3 行，每格 72px；15 个物件刚好放满。
-    assert (width, height) == (5 * 72, 3 * 72)
+    rows = (len(OBJECTS) + 4) // 5
+    # 5 列，每格 72px；精灵数量按行铺开。
+    assert (width, height) == (5 * 72, rows * 72)
+
+
+def test_liquid_tiles_cover_the_whole_cell():
+    import pygame
+
+    for object_id in ("water", "lava"):
+        image = pygame.image.load(str(SPRITE_DIR / f"{object_id}.png"))
+        assert image.get_size() == (16, 16), object_id
+        for x in range(16):
+            for y in range(16):
+                assert image.get_at((x, y)).a == 255, f"{object_id} 在 ({x},{y}) 是透明的"
+
