@@ -24,7 +24,7 @@
 - **发布**：`tools\build_release.py` 生成 `dist\RuleBox-Windows.zip`；发布包不提交 git。
 - **下一步**：补 5-2 及后续关卡；提示系统；`validate.py`；最佳步数。
 - **已知边界**：第 10 关和 1-1 … 5-1 暂无自动解法回放（04–09 有）；GitHub push 可能需重试。
-- **建议接手顺序**：本文件 → `AGENTS.md` → `docs/MECHANICS.md` → 对应关卡和测试。
+- **建议接手顺序**：本文件 → `AGENTS.md` → `docs/UPDATE-CHECKLIST.md` → `docs/MECHANICS.md` → 对应关卡和测试。
 
 > 快照：2026-11-25（教程 10 关 + 第一章 1-1/1-2 + 第二章 2-1/2-2/2-3/2-4 + 第三章 3-1/3-2/3-3 + 第四章 4-1/4-2/4-3 + 第五章 5-1 + Windows 免安装包）
 > 最新代码提交：以 `git log` 为准；功能基线 `c4575ad`

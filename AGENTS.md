@@ -1,6 +1,7 @@
 # AGENTS.md
 
 > 给接手本仓库的 AI 编程代理。先读本文件，再读 `docs/HANDOFF.md`，然后跑测试。
+> 每次更新后的固定流程见 `docs/UPDATE-CHECKLIST.md`（含可粘贴提示词）。
 
 ## 项目
 
