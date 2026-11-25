@@ -397,8 +397,6 @@ def _pull_behind(
     """把正后方同层的一串 PULL 物件依次拉进刚空出的格子。"""
     dest_row, dest_col = row, col
     for _ in range(MAX_PULL_CHAIN):
-        if world.entities_at(dest_row, dest_col):
-            return
         behind_row, behind_col = dest_row - dr, dest_col - dc
         if not world.in_bounds(behind_row, behind_col):
             return
@@ -414,11 +412,34 @@ def _pull_behind(
         )
         if target is None:
             return
+        if not _pull_destination_clear(world, dest_row, dest_col, target, props):
+            return
         world.remove(behind_row, behind_col, target)
         world.add(dest_row, dest_col, target)
         world.set_move_dir(target, dr, dc)
         trail.append(target)
         dest_row, dest_col = behind_row, behind_col
+
+
+def _pull_destination_clear(
+    world: World,
+    row: int,
+    col: int,
+    target: Entity,
+    props: dict[str, set[str]],
+) -> bool:
+    """被拉物件可以穿过背景/无推无停的东西，但不能穿过推/停/关或词块。"""
+    for occupant in world.entities_at(row, col):
+        if occupant is target or not same_layer(target, occupant, props):
+            continue
+        if (
+            _is_pushable(occupant, props)
+            or has_prop(occupant, props, "STOP")
+            or has_prop(occupant, props, "SHUT")
+            or has_prop(occupant, props, "YOU")
+        ):
+            return False
+    return True
 
 
 def _relocate(

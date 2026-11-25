@@ -646,6 +646,51 @@ def test_move_object_does_not_trigger_win():
     assert not game.won
 
 
+def test_pull_passes_background_wall():
+    world = make_world(
+        words=[
+            (0, 0, "人"),
+            (0, 1, "是"),
+            (0, 2, "你"),
+            (1, 0, "石"),
+            (1, 1, "是"),
+            (1, 2, "拉"),
+        ],
+        objects=[(4, 1, "rock"), (4, 2, "baba")],
+    )
+    world.add(4, 2, make_object("wall"))
+
+    result = try_move(world, 0, 1)
+
+    assert result.moved and not result.lost
+    assert world.get(4, 3).id == "baba"
+    assert {entity.id for entity in world.entities_at(4, 2)} == {"wall", "rock"}
+
+
+def test_pull_blocked_by_stop_wall():
+    world = make_world(
+        words=[
+            (0, 0, "人"),
+            (0, 1, "是"),
+            (0, 2, "你"),
+            (1, 0, "石"),
+            (1, 1, "是"),
+            (1, 2, "拉"),
+            (2, 0, "墙"),
+            (2, 1, "是"),
+            (2, 2, "停"),
+        ],
+        objects=[(4, 1, "rock"), (4, 2, "baba")],
+    )
+    world.add(4, 2, make_object("wall"))
+
+    result = try_move(world, 0, 1)
+
+    assert result.moved and not result.lost
+    assert world.get(4, 3).id == "baba"
+    assert world.get(4, 1).id == "rock"
+
+
 def test_pull_chain_follows_one_by_one():
     world = make_world(
         words=[
