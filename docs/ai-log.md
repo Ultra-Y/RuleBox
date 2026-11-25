@@ -385,6 +385,17 @@
 - 截图：22 张关卡预览、`editor.png`、`sprites.png`、`word_states.png`、`rule_lock.png` 全部按新素材重生成（后两张用等价演示关重拍）。
 - 验证：192 passed；未新增关卡、未改动任何关卡地图。
 
+## 2026-11-25 待机动画
+
+- 要求：继续优化美术。
+- 产出：`ui/sprites.py` 新增 `ANIMATIONS`（物件 → 每帧毫秒 + 帧序列）与 `animation_frame()`；`sprite_for` 支持帧参数，缺帧回退第 0 帧。
+- 动画：10 个物件新增第二帧——人眨眼、狗/猫摇尾、鱼摆尾、花/树轻摆、旗飘动、水波纹、火苗跳动、传送门粒子；墙、箱、石、门、钥保持静态。
+- 生成器：`tools/generate_sprites.py` 的绘制函数支持帧参数，额外输出 `<id>-1.png` 与 `docs/sprites_anim.gif`（10 帧演示）；`sprites.png` 仍展示第 0 帧。
+- 渲染：`ui/app.py` 按 `pygame.time.get_ticks()` 选帧；编辑器调色板与静态截图固定第 0 帧。
+- 测试：`tests/test_animation.py` 9 条（动画对象存在、两帧不同、静态物件无第二帧、帧序列/周期、缺帧回退、确定性、GIF 存在、帧图加载）。
+- 截图：22 张关卡预览与 `editor.png`、`sprites.png`、`word_states.png`、`rule_lock.png` 重生成（墙/箱/门有轻微纹理调整）。
+- 验证：201 passed。
+
 ## 待本人补充
 
 - 哪些 AI 建议被采纳、修改或否决，以及判断理由。

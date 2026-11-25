@@ -1,6 +1,6 @@
 # RuleBox 机制说明
 
-> 对应代码：`src/rulebox/core/` 与 `src/rulebox/ui/`。测试基线 192 条。
+> 对应代码：`src/rulebox/core/` 与 `src/rulebox/ui/`。测试基线 201 条。
 > 这份文档解释“玩家看到的规则”和“代码实际的结算顺序”。
 
 ## 1. 世界模型
@@ -288,6 +288,7 @@
 - 进度键：官方用文件 stem，自制用 `custom:<stem>`，互不干扰。
 - 选关只显示标题，不显示编号和符号；已完成关卡用淡色区分。
 - 生效规则中的词块保持原色；未进入任何有效句子的词块压暗（`active_word_positions`）。
+- 待机动画：10 个物件按 `ui/sprites.py` 的 `ANIMATIONS`（每帧毫秒 + 帧序列）在 2 帧间循环，缺帧回退第 0 帧；编辑器调色板和静态截图固定第 0 帧。
 - 通关记录写入 `progress.json`（gitignore）。
 - 编辑器试玩不写进度，`Esc` 回到编辑器。
 
@@ -341,6 +342,7 @@
 | 官方/自制关卡目录与进度 | `core/catalog.py` |
 | 编辑器 DSL/分享码 | `core/level_builder.py` |
 | 菜单/选关/游戏 UI | `ui/app.py` |
+| 精灵与待机动画 | `ui/sprites.py`、`assets/sprites/` |
 | 关卡编辑器 | `ui/editor.py` |
 | 像素精灵 | `assets/sprites/`、`tools/generate_sprites.py` |
 

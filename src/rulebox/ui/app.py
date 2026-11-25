@@ -21,7 +21,7 @@ from ..core.rules import (
     parse_rules,
 )
 from .editor import Editor
-from .sprites import draw_object
+from .sprites import animation_frame, draw_object
 
 WIDTH, HEIGHT = 980, 680
 MARGIN, TOP, BOTTOM = 40, 100, 170
@@ -773,6 +773,7 @@ def _draw_play(screen, app: _App, chrome) -> None:
     ox, oy, cell = app.layout
     fonts = {**chrome, **app.fonts}
     screen.fill(BG)
+    ticks = pygame.time.get_ticks()
     active_words = active_word_positions(world)
     blocked_words = blocked_transform_word_positions(world)
 
@@ -790,7 +791,7 @@ def _draw_play(screen, app: _App, chrome) -> None:
             for entity in world.entities_at(row, col):
                 inset = max(3, cell // 12)
                 rect = pygame.Rect(x + inset, y + inset, cell - inset * 2, cell - inset * 2)
-                if draw_object(screen, entity, rect):
+                if draw_object(screen, entity, rect, animation_frame(entity.id, ticks)):
                     continue
                 color = entity.color
                 if entity.is_word and (row, col) not in active_words:

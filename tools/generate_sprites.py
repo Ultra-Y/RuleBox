@@ -1,21 +1,29 @@
-"""生成 RuleBox 的 16×16 像素精灵。
+"""生成 RuleBox 的 16×16 像素精灵与待机动画帧。
 
 配色取自 DawnBringer 16 色板（DB16，像素画常用的公开调色板），形状全部自绘；
-统一 1px 深色描边，从左上受光。需要 Pillow；素材已提交到 assets/sprites/，
-运行时不需要 Pillow。
+统一 1px 深色描边，从左上受光。动画帧的周期/序列统一由
+`src/rulebox/ui/sprites.py` 的 ANIMATIONS 定义，这里只负责画。
+
+需要 Pillow；素材已提交到 assets/sprites/，运行时不需要 Pillow。
 
     python tools/generate_sprites.py
 """
 
 from __future__ import annotations
 
+import sys
 from pathlib import Path
 
 from PIL import Image, ImageDraw
 
 ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT / "src"))
+
+from rulebox.ui.sprites import ANIMATIONS  # noqa: E402
+
 SPRITE_DIR = ROOT / "assets" / "sprites"
 DOCS = ROOT / "docs"
+GIF_STEP_MS = 110
 
 # DawnBringer 16（DB16）
 C = {
@@ -61,7 +69,7 @@ def add_outline(image: Image.Image, color: tuple = C["ink"]) -> Image.Image:
     return image
 
 
-def draw_baba() -> Image.Image:
+def draw_baba(frame: int = 0) -> Image.Image:
     image = canvas()
     draw = ImageDraw.Draw(image)
     draw.rounded_rectangle((3, 13, 5, 15), radius=1, fill=C["amber"])
@@ -70,21 +78,26 @@ def draw_baba() -> Image.Image:
     draw.rectangle((14, 8, 14, 11), fill=C["beige"])
     draw.ellipse((2, 2, 13, 13), fill=C["beige"])
     draw.arc((3, 3, 12, 12), start=175, end=285, fill=C["cream"], width=1)
-    draw.rectangle((5, 6, 6, 7), fill=C["ink"])
-    draw.rectangle((9, 6, 10, 7), fill=C["ink"])
-    draw.point((5, 6), fill=C["cream"])
-    draw.point((9, 6), fill=C["cream"])
+    if frame == 0:
+        draw.rectangle((5, 6, 6, 7), fill=C["ink"])
+        draw.rectangle((9, 6, 10, 7), fill=C["ink"])
+        draw.point((5, 6), fill=C["cream"])
+        draw.point((9, 6), fill=C["cream"])
+    else:  # 眨眼
+        draw.rectangle((5, 7, 6, 7), fill=C["ink"])
+        draw.rectangle((9, 7, 10, 7), fill=C["ink"])
     draw.rectangle((7, 10, 8, 10), fill=C["wine"])
     draw.point((6, 9), fill=C["crimson"])
     draw.point((9, 9), fill=C["crimson"])
     return add_outline(image)
 
 
-def draw_dog() -> Image.Image:
+def draw_dog(frame: int = 0) -> Image.Image:
     image = canvas()
     draw = ImageDraw.Draw(image)
-    draw.rectangle((12, 3, 13, 6), fill=C["clay"])
-    draw.rectangle((13, 2, 14, 4), fill=C["clay"])
+    tail_y = 0 if frame == 0 else 1
+    draw.rectangle((12, 3 - tail_y, 13, 6 - tail_y), fill=C["clay"])
+    draw.rectangle((13, 2 - tail_y, 14, 4 - tail_y), fill=C["clay"])
     draw.rectangle((3, 11, 4, 15), fill=C["clay"])
     draw.rectangle((5, 11, 6, 15), fill=C["clay"])
     draw.rectangle((9, 11, 10, 15), fill=C["clay"])
@@ -102,11 +115,12 @@ def draw_dog() -> Image.Image:
     return add_outline(image)
 
 
-def draw_cat() -> Image.Image:
+def draw_cat(frame: int = 0) -> Image.Image:
     image = canvas()
     draw = ImageDraw.Draw(image)
-    draw.rectangle((12, 10, 14, 11), fill=C["charcoal"])
-    draw.rectangle((13, 7, 14, 10), fill=C["charcoal"])
+    tail_y = 0 if frame == 0 else 1
+    draw.rectangle((12, 10 - tail_y, 14, 11 - tail_y), fill=C["charcoal"])
+    draw.rectangle((13, 7 - tail_y, 14, 10 - tail_y), fill=C["charcoal"])
     draw.rounded_rectangle((4, 8, 12, 14), radius=3, fill=C["charcoal"])
     draw.rounded_rectangle((3, 4, 12, 10), radius=3, fill=C["charcoal"])
     draw.polygon([(3, 5), (5, 4), (3, 1)], fill=C["charcoal"])
@@ -126,37 +140,42 @@ def draw_cat() -> Image.Image:
     return add_outline(image)
 
 
-def draw_flower() -> Image.Image:
+def draw_flower(frame: int = 0) -> Image.Image:
     image = canvas()
     draw = ImageDraw.Draw(image)
+    dx = 1 if frame else 0
     draw.rectangle((7, 9, 8, 15), fill=C["moss"])
     draw.ellipse((3, 11, 6, 13), fill=C["leaf"])
     draw.ellipse((9, 10, 12, 12), fill=C["leaf"])
-    draw.ellipse((6, 1, 9, 4), fill=C["crimson"])
-    draw.ellipse((2, 4, 5, 7), fill=C["crimson"])
-    draw.ellipse((10, 4, 13, 7), fill=C["crimson"])
-    draw.ellipse((6, 8, 9, 11), fill=C["crimson"])
-    draw.ellipse((6, 4, 9, 7), fill=C["lemon"])
-    draw.point((7, 5), fill=C["cream"])
+    draw.ellipse((6 + dx, 1, 9 + dx, 4), fill=C["crimson"])
+    draw.ellipse((2 + dx, 4, 5 + dx, 7), fill=C["crimson"])
+    draw.ellipse((10 + dx, 4, 13 + dx, 7), fill=C["crimson"])
+    draw.ellipse((6 + dx, 8, 9 + dx, 11), fill=C["crimson"])
+    draw.ellipse((6 + dx, 4, 9 + dx, 7), fill=C["lemon"])
+    draw.point((7 + dx, 5), fill=C["cream"])
     return add_outline(image)
 
 
-def draw_tree() -> Image.Image:
+def draw_tree(frame: int = 0) -> Image.Image:
     image = canvas()
     draw = ImageDraw.Draw(image)
+    dx = 1 if frame else 0
     draw.rectangle((6, 9, 9, 15), fill=C["clay"])
     draw.rectangle((6, 9, 6, 15), fill=C["amber"])
-    draw.ellipse((2, 1, 13, 9), fill=C["moss"])
-    draw.ellipse((4, 2, 8, 5), fill=C["leaf"])
-    draw.ellipse((9, 4, 12, 6), fill=C["leaf"])
-    draw.ellipse((3, 6, 5, 8), fill=C["leaf"])
+    draw.ellipse((2 + dx, 1, 13 + dx, 9), fill=C["moss"])
+    draw.ellipse((4 + dx, 2, 8 + dx, 5), fill=C["leaf"])
+    draw.ellipse((9 + dx, 4, 12 + dx, 6), fill=C["leaf"])
+    draw.ellipse((3 + dx, 6, 5 + dx, 8), fill=C["leaf"])
     return add_outline(image)
 
 
-def draw_fish() -> Image.Image:
+def draw_fish(frame: int = 0) -> Image.Image:
     image = canvas()
     draw = ImageDraw.Draw(image)
-    draw.polygon([(11, 8), (15, 4), (15, 12)], fill=C["midnight"])
+    if frame == 0:
+        draw.polygon([(11, 8), (15, 4), (15, 12)], fill=C["midnight"])
+    else:
+        draw.polygon([(11, 8), (14, 5), (14, 11)], fill=C["midnight"])
     draw.polygon([(5, 5), (7, 2), (9, 5)], fill=C["midnight"])
     draw.ellipse((1, 5, 11, 11), fill=C["cornflower"])
     draw.ellipse((3, 8, 10, 11), fill=C["aqua"])
@@ -167,7 +186,7 @@ def draw_fish() -> Image.Image:
     return add_outline(image)
 
 
-def draw_wall() -> Image.Image:
+def draw_wall(frame: int = 0) -> Image.Image:
     image = canvas()
     draw = ImageDraw.Draw(image)
     draw.rectangle((0, 0, 15, 15), fill=C["ink"])
@@ -178,14 +197,16 @@ def draw_wall() -> Image.Image:
         (13, ((1, 3), (5, 10), (12, 14))),
     )
     for y, bricks in courses:
-        for x0, x1 in bricks:
+        for index, (x0, x1) in enumerate(bricks):
             draw.rectangle((x0, y, x1, y + 2), fill=C["stone"])
             draw.line((x0, y, x1, y), fill=C["steel"])
             draw.line((x0, y + 2, x1, y + 2), fill=C["charcoal"])
+            if (index + y) % 2 == 0:
+                draw.point((x0 + 1, y + 1), fill=C["charcoal"])
     return image
 
 
-def draw_box() -> Image.Image:
+def draw_box(frame: int = 0) -> Image.Image:
     image = canvas()
     draw = ImageDraw.Draw(image)
     draw.rounded_rectangle((2, 2, 13, 14), radius=2, fill=C["clay"])
@@ -193,6 +214,8 @@ def draw_box() -> Image.Image:
     draw.rectangle((4, 6, 11, 12), fill=C["amber"])
     draw.line((4, 6, 11, 12), fill=C["clay"], width=2)
     draw.line((11, 6, 4, 12), fill=C["clay"], width=2)
+    draw.point((6, 7), fill=C["clay"])
+    draw.point((9, 11), fill=C["clay"])
     draw.rectangle((3, 3, 3, 3), fill=C["cream"])
     draw.rectangle((12, 3, 12, 3), fill=C["cream"])
     draw.rectangle((3, 13, 3, 13), fill=C["cream"])
@@ -200,45 +223,59 @@ def draw_box() -> Image.Image:
     return add_outline(image)
 
 
-def draw_flag() -> Image.Image:
+def draw_flag(frame: int = 0) -> Image.Image:
     image = canvas()
     draw = ImageDraw.Draw(image)
     draw.rectangle((2, 14, 7, 15), fill=C["steel"])
     draw.rectangle((4, 1, 5, 14), fill=C["steel"])
     draw.line((4, 1, 4, 13), fill=C["cream"])
-    draw.polygon([(6, 2), (15, 4), (6, 7)], fill=C["leaf"])
-    draw.polygon([(6, 5), (12, 5), (6, 7)], fill=C["moss"])
+    if frame == 0:
+        draw.polygon([(6, 2), (15, 4), (6, 7)], fill=C["leaf"])
+        draw.polygon([(6, 5), (12, 5), (6, 7)], fill=C["moss"])
+    else:  # 飘动
+        draw.polygon([(6, 2), (13, 3), (15, 5), (12, 6), (6, 7)], fill=C["leaf"])
+        draw.polygon([(6, 5), (11, 5), (13, 6), (6, 7)], fill=C["moss"])
     return add_outline(image)
 
 
-def draw_water() -> Image.Image:
+def draw_water(frame: int = 0) -> Image.Image:
     image = canvas()
     draw = ImageDraw.Draw(image)
+    shift = 1 if frame else 0
     draw.rectangle((1, 5, 14, 13), fill=C["cornflower"])
     draw.rectangle((1, 7, 14, 7), fill=C["aqua"])
     draw.rectangle((1, 10, 14, 10), fill=C["aqua"])
     draw.rectangle((1, 12, 14, 13), fill=C["midnight"])
     for x in (2, 6, 10):
-        draw.rectangle((x, 5, x + 1, 5), fill=C["cream"])
+        draw.rectangle((x + shift, 5, x + shift, 5), fill=C["cream"])
     for x in (4, 8, 12):
-        draw.rectangle((x, 8, x, 8), fill=C["cream"])
+        draw.rectangle((x + shift, 8, x + shift, 8), fill=C["cream"])
     return add_outline(image)
 
 
-def draw_fire() -> Image.Image:
+def draw_fire(frame: int = 0) -> Image.Image:
     image = canvas()
     draw = ImageDraw.Draw(image)
-    draw.polygon(
-        [(8, 1), (10, 4), (12, 5), (13, 9), (11, 13), (8, 15), (5, 13), (3, 9), (4, 5), (6, 4)],
-        fill=C["crimson"],
-    )
-    draw.polygon([(8, 4), (10, 7), (11, 10), (8, 13), (5, 10), (6, 7)], fill=C["amber"])
-    draw.polygon([(8, 8), (9, 10), (8, 12), (7, 10)], fill=C["lemon"])
-    draw.point((8, 9), fill=C["cream"])
+    if frame == 0:
+        draw.polygon(
+            [(8, 1), (10, 4), (12, 5), (13, 9), (11, 13), (8, 15), (5, 13), (3, 9), (4, 5), (6, 4)],
+            fill=C["crimson"],
+        )
+        draw.polygon([(8, 4), (10, 7), (11, 10), (8, 13), (5, 10), (6, 7)], fill=C["amber"])
+        draw.polygon([(8, 8), (9, 10), (8, 12), (7, 10)], fill=C["lemon"])
+        draw.point((8, 9), fill=C["cream"])
+    else:  # 火苗偏移
+        draw.polygon(
+            [(8, 1), (11, 4), (13, 7), (12, 12), (8, 15), (4, 13), (3, 9), (5, 4)],
+            fill=C["crimson"],
+        )
+        draw.polygon([(8, 4), (10, 8), (11, 11), (8, 13), (6, 11), (6, 7)], fill=C["amber"])
+        draw.polygon([(8, 9), (9, 11), (8, 12), (7, 11)], fill=C["lemon"])
+        draw.point((8, 7), fill=C["cream"])
     return add_outline(image)
 
 
-def draw_rock() -> Image.Image:
+def draw_rock(frame: int = 0) -> Image.Image:
     image = canvas()
     draw = ImageDraw.Draw(image)
     draw.polygon(
@@ -251,19 +288,21 @@ def draw_rock() -> Image.Image:
     return add_outline(image)
 
 
-def draw_door() -> Image.Image:
+def draw_door(frame: int = 0) -> Image.Image:
     image = canvas()
     draw = ImageDraw.Draw(image)
     draw.rounded_rectangle((3, 1, 12, 15), radius=1, fill=C["clay"])
     draw.rectangle((5, 3, 10, 7), fill=C["amber"])
+    draw.line((5, 3, 10, 3), fill=C["beige"])
     draw.rectangle((5, 9, 10, 13), fill=C["amber"])
+    draw.line((5, 9, 10, 9), fill=C["beige"])
     draw.line((4, 2, 4, 14), fill=C["beige"])
     draw.rectangle((9, 8, 10, 9), fill=C["lemon"])
     draw.point((9, 8), fill=C["cream"])
     return add_outline(image)
 
 
-def draw_key() -> Image.Image:
+def draw_key(frame: int = 0) -> Image.Image:
     image = canvas()
     draw = ImageDraw.Draw(image)
     draw.ellipse((4, 1, 11, 8), outline=C["lemon"], width=2)
@@ -275,16 +314,15 @@ def draw_key() -> Image.Image:
     return add_outline(image)
 
 
-def draw_portal() -> Image.Image:
+def draw_portal(frame: int = 0) -> Image.Image:
     image = canvas()
     draw = ImageDraw.Draw(image)
     draw.ellipse((1, 1, 14, 14), fill=C["wine"])
     draw.ellipse((3, 3, 12, 12), fill=C["cornflower"])
     draw.ellipse((6, 6, 9, 9), fill=C["cream"])
-    draw.point((2, 7), fill=C["cream"])
-    draw.point((13, 8), fill=C["cream"])
-    draw.point((7, 1), fill=C["cream"])
-    draw.point((8, 14), fill=C["cream"])
+    sparks = ((2, 7), (13, 8), (7, 1), (8, 14)) if frame == 0 else ((3, 6), (12, 9), (6, 2), (9, 13))
+    for x, y in sparks:
+        draw.point((x, y), fill=C["cream"])
     return add_outline(image)
 
 
@@ -307,22 +345,60 @@ SPRITES = {
 }
 
 
+def frame_numbers(name: str) -> tuple[int, ...]:
+    if name not in ANIMATIONS:
+        return (0,)
+    return tuple(sorted(set(ANIMATIONS[name][1])))
+
+
+def render(name: str, frame: int) -> Image.Image:
+    return SPRITES[name](frame)
+
+
+def build_sheet(frame_index: int, cell: int = 72) -> Image.Image:
+    columns = 5
+    rows = (len(SPRITES) + columns - 1) // columns
+    sheet = Image.new("RGBA", (columns * cell, rows * cell), (24, 26, 34, 255))
+    for index, name in enumerate(SPRITES):
+        frame = frame_at(name, frame_index)
+        sprite = render(name, frame).resize((cell - 8, cell - 8), Image.NEAREST)
+        x = (index % columns) * cell + 4
+        y = (index // columns) * cell + 4
+        sheet.alpha_composite(sprite, (x, y))
+    return sheet
+
+
+def frame_at(name: str, step: int) -> int:
+    """素材表/GIF 里第 step 步该画哪一帧。"""
+    if name not in ANIMATIONS:
+        return 0
+    period, pattern = ANIMATIONS[name]
+    ticks = step * GIF_STEP_MS
+    return pattern[(ticks // period) % len(pattern)]
+
+
 def main() -> None:
     SPRITE_DIR.mkdir(parents=True, exist_ok=True)
     DOCS.mkdir(parents=True, exist_ok=True)
-    for name, painter in SPRITES.items():
-        painter().save(SPRITE_DIR / f"{name}.png")
 
-    columns = 5
-    rows = (len(SPRITES) + columns - 1) // columns
-    sheet = Image.new("RGBA", (columns * 72, rows * 72), (24, 26, 34, 255))
-    for index, name in enumerate(SPRITES):
-        sprite = Image.open(SPRITE_DIR / f"{name}.png").resize((64, 64), Image.NEAREST)
-        x = (index % columns) * 72 + 4
-        y = (index // columns) * 72 + 4
-        sheet.alpha_composite(sprite, (x, y))
-    sheet.save(DOCS / "sprites.png")
-    print("generated", len(SPRITES), "sprites")
+    for name in SPRITES:
+        for frame in frame_numbers(name):
+            suffix = "" if frame == 0 else f"-{frame}"
+            render(name, frame).save(SPRITE_DIR / f"{name}{suffix}.png")
+
+    build_sheet(0).save(DOCS / "sprites.png")
+
+    frames = [build_sheet(step) for step in range(12)]
+    frames = [frame.convert("P", palette=Image.Palette.ADAPTIVE, colors=64) for frame in frames]
+    frames[0].save(
+        DOCS / "sprites_anim.gif",
+        save_all=True,
+        append_images=frames[1:],
+        duration=110,
+        loop=0,
+        optimize=False,
+    )
+    print("generated", len(SPRITES), "sprites,", len(ANIMATIONS), "animated")
 
 
 if __name__ == "__main__":
