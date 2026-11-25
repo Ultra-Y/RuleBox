@@ -737,6 +737,35 @@ def test_move_object_bounces_when_push_chain_hits_edge():
     assert game.world.get(4, 5).id == "rock"
 
 
+def test_move_object_pulls_push_pull_object_on_bounce():
+    rules = [
+        (0, 0, "人"),
+        (0, 1, "是"),
+        (0, 2, "你"),
+        (1, 0, "箱"),
+        (1, 1, "是"),
+        (1, 2, "移"),
+        (2, 0, "石"),
+        (2, 1, "是"),
+        (2, 2, "推"),
+        (3, 0, "石"),
+        (3, 1, "是"),
+        (3, 2, "拉"),
+    ]
+    game = Game(
+        make_level(
+            width=5,
+            words=rules,
+            objects=[(5, 1, "baba"), (4, 3, "box"), (4, 4, "rock")],
+        )
+    )
+
+    game.move(0, 1)
+
+    assert game.world.get(4, 2).id == "box"
+    assert game.world.get(4, 3).id == "rock"
+
+
 def test_move_object_bounces_when_push_chain_hits_stop():
     rules = [
         (0, 0, "人"),
