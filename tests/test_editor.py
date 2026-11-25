@@ -45,14 +45,14 @@ def test_editor_playtest_calls_back(tmp_path, monkeypatch):
     assert "F" in seen[0]
 
 
-def test_editor_resize_keeps_border(tmp_path, monkeypatch):
+def test_editor_resize_starts_blank(tmp_path, monkeypatch):
     monkeypatch.setattr(editor_module, "CUSTOM_DIR", tmp_path)
     editor = Editor()
     editor.resize(6, 5)
 
     assert (editor.width, editor.height) == (6, 5)
-    assert editor.cells[0][0] == "#"
-    assert editor.cells[-1][-1] == "#"
+    assert editor.cells[0][0] == "."
+    assert editor.cells[-1][-1] == "."
     assert editor.cells[2][2] == "."
 
 

@@ -81,14 +81,8 @@ OBJECT_SYMBOL = {
 
 
 def blank_cells(width: int = 11, height: int = 8) -> list[list[str]]:
-    cells = [["." for _ in range(width)] for _ in range(height)]
-    for col in range(width):
-        cells[0][col] = "#"
-        cells[height - 1][col] = "#"
-    for row in range(height):
-        cells[row][0] = "#"
-        cells[row][width - 1] = "#"
-    return cells
+    """空白画布：不自动围墙，边界由作者自己决定。"""
+    return [["." for _ in range(width)] for _ in range(height)]
 
 
 def _cell_symbols(cell: str) -> list[str]:
