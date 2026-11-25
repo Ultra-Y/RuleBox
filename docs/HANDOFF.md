@@ -4,7 +4,7 @@
 
 这是给下一个 AI 会话的压缩交接；细节仍以仓库和 `docs/MECHANICS.md` 为准。
 
-- **当前基线**：`183 passed`；23 个官方关卡；最新提交 `c4575ad`（以 `git log` 为准）。
+- **当前基线**：`183 passed`；23 个官方关卡；最新提交以 `git log` 为准。
 - **先跑**：
   ```powershell
   .\.venv\Scripts\python.exe -m pytest -q
@@ -27,7 +27,7 @@
 - **建议接手顺序**：本文件 → `AGENTS.md` → `docs/MECHANICS.md` → 对应关卡和测试。
 
 > 快照：2026-11-25（教程 10 关 + 第一章 1-1/1-2 + 第二章 2-1/2-2/2-3/2-4 + 第三章 3-1/3-2/3-3 + 第四章 4-1/4-2/4-3 + 第五章 5-1 + Windows 免安装包）
-> 最新代码提交：`c4575ad`（以 `git log` 为准）
+> 最新代码提交：以 `git log` 为准；功能基线 `c4575ad`
 > 仓库：https://github.com/Ultra-Y/RuleBox （public）
 > 历史交接 tag：`handoff-2026-11-10`
 
