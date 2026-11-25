@@ -646,6 +646,118 @@ def test_move_object_does_not_trigger_win():
     assert not game.won
 
 
+def test_move_object_initial_direction_uses_key():
+    rules = [
+        (0, 0, "人"),
+        (0, 1, "是"),
+        (0, 2, "你"),
+        (1, 0, "箱"),
+        (1, 1, "是"),
+        (1, 2, "移"),
+    ]
+    game = Game(
+        make_level(words=rules, objects=[(4, 1, "baba"), (4, 2, "box")])
+    )
+
+    game.move(0, 1)
+
+    assert game.world.get(4, 3).id == "box"
+
+
+def test_move_object_bounces_at_edge():
+    rules = [
+        (0, 0, "人"),
+        (0, 1, "是"),
+        (0, 2, "你"),
+        (1, 0, "箱"),
+        (1, 1, "是"),
+        (1, 2, "移"),
+    ]
+    game = Game(
+        make_level(
+            width=8,
+            words=rules,
+            objects=[(4, 1, "baba"), (4, 7, "box")],
+        )
+    )
+
+    game.move(0, 1)
+
+    assert game.world.get(4, 6).id == "box"
+
+
+def test_move_object_bounces_off_stop():
+    rules = [
+        (0, 0, "人"),
+        (0, 1, "是"),
+        (0, 2, "你"),
+        (1, 0, "箱"),
+        (1, 1, "是"),
+        (1, 2, "移"),
+        (2, 0, "墙"),
+        (2, 1, "是"),
+        (2, 2, "停"),
+    ]
+    game = Game(
+        make_level(
+            words=rules,
+            objects=[(4, 1, "baba"), (4, 2, "box"), (4, 3, "wall")],
+        )
+    )
+
+    game.move(0, 1)
+
+    assert game.world.get(4, 1).id == "box"
+    assert game.world.get(4, 3).id == "wall"
+
+
+def test_move_object_pushes_word():
+    rules = [
+        (0, 0, "人"),
+        (0, 1, "是"),
+        (0, 2, "你"),
+        (1, 0, "箱"),
+        (1, 1, "是"),
+        (1, 2, "移"),
+    ]
+    game = Game(
+        make_level(
+            words=rules + [(4, 3, "墙")],
+            objects=[(4, 1, "baba"), (4, 2, "box")],
+        )
+    )
+
+    game.move(0, 1)
+
+    assert game.world.get(4, 3).id == "box"
+    assert game.world.get(4, 4).text == "墙"
+
+
+def test_move_object_pushes_pushable_object():
+    rules = [
+        (0, 0, "人"),
+        (0, 1, "是"),
+        (0, 2, "你"),
+        (1, 0, "箱"),
+        (1, 1, "是"),
+        (1, 2, "移"),
+        (2, 0, "石"),
+        (2, 1, "是"),
+        (2, 2, "推"),
+    ]
+    game = Game(
+        make_level(
+            words=rules,
+            objects=[(4, 1, "baba"), (4, 2, "box"), (4, 3, "rock")],
+        )
+    )
+
+    game.move(0, 1)
+
+    assert game.world.get(4, 3).id == "box"
+    assert game.world.get(4, 4).id == "rock"
+
+
 def test_wait_key_moves_auto_object():
     import pygame
 

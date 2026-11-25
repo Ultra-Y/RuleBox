@@ -50,7 +50,7 @@ def try_move(world: World, dr: int, dc: int) -> MoveResult:
         return MoveResult(False)
 
     # 「移」物件只使用操作开始前记录的方向；本回合刚被推动不会立刻多走一步。
-    auto_actors = _capture_auto(world, props)
+    auto_actors = _capture_auto(world, props, (dr, dc))
 
     # 这一步真正移动过的物件，传送结算只认它们。
     trail: list[Entity] = []
@@ -73,7 +73,9 @@ def try_move(world: World, dr: int, dc: int) -> MoveResult:
     apply_teleports(world, props, trail)
 
     auto_trail: list[Entity] = []
-    auto_moved = _move_auto(world, auto_actors, props, ruled, auto_trail)
+    auto_moved = _move_auto(
+        world, auto_actors, props, ruled, auto_trail, skip=trail
+    )
     apply_teleports(world, props, auto_trail)
 
     destroyed = apply_contacts(world, props)
@@ -121,12 +123,16 @@ def try_wait(world: World) -> MoveResult:
 
 
 def _capture_auto(
-    world: World, props: dict[str, set[str]]
+    world: World,
+    props: dict[str, set[str]],
+    default_dir: tuple[int, int] | None = None,
 ) -> list[tuple[Entity, tuple[int, int]]]:
-    """记录开始时所有「移」物件及其上次方向。"""
+    """记录开始时所有「移」物件及其方向；没有历史方向时用本次按键方向。"""
     actors: list[tuple[Entity, tuple[int, int]]] = []
     for _row, _col, entity in world.find(lambda candidate: has_prop(candidate, props, "MOVE")):
         direction = world.get_move_dir(entity)
+        if direction is None:
+            direction = default_dir
         if direction is not None:
             actors.append((entity, direction))
     return actors
@@ -138,15 +144,21 @@ def _move_auto(
     props: dict[str, set[str]],
     ruled: set[str],
     trail: list[Entity],
+    *,
+    skip: list[Entity] | None = None,
 ) -> bool:
-    """让「移」物件按记录方向走一步；不会触发胜利。"""
+    """让「移」物件按记录方向走一步；不会触发胜利，撞边/停时反向。"""
     moved = False
     for entity, (dr, dc) in actors:
+        if any(candidate is entity for candidate in trail):
+            continue
+        if skip and any(candidate is entity for candidate in skip):
+            continue
         locations = world.find(lambda candidate: candidate is entity)
         if len(locations) != 1:
             continue
         row, col = locations[0][0], locations[0][1]
-        if world.get(row, col) is not entity:
+        if not any(candidate is entity for candidate in world.entities_at(row, col)):
             continue
         result = _move_one(
             world,
@@ -159,9 +171,59 @@ def _move_auto(
             trail,
             can_win=False,
             auto=True,
+            specific=entity,
         )
-        moved = moved or result.moved
+        if result.moved:
+            moved = True
+            continue
+        if not _auto_should_bounce(world, entity, row, col, dr, dc, props):
+            continue
+        # 反方向也写入历史方向；即使反方向仍被挡住，下一次也朝反方向尝试。
+        world.set_move_dir(entity, -dr, -dc)
+        reverse = _move_one(
+            world,
+            row,
+            col,
+            -dr,
+            -dc,
+            props,
+            ruled,
+            trail,
+            can_win=False,
+            auto=True,
+            specific=entity,
+        )
+        moved = moved or reverse.moved
     return moved
+
+
+def _auto_should_bounce(
+    world: World,
+    entity: Entity,
+    row: int,
+    col: int,
+    dr: int,
+    dc: int,
+    props: dict[str, set[str]],
+) -> bool:
+    """只有地图边缘和同层不可推的 STOP 会让「移」物件反向。"""
+    target_row, target_col = row + dr, col + dc
+    if not world.in_bounds(target_row, target_col):
+        return True
+    for target in world.entities_at(target_row, target_col):
+        related = (
+            same_layer(entity, target, props)
+            or (
+                target.is_word
+                and (is_floating(entity, props) or is_floating(target, props))
+            )
+            or (is_floating(entity, props) and has_prop(target, props, "STOP"))
+        )
+        if not related:
+            continue
+        if has_prop(target, props, "STOP") and not _is_pushable(target, props):
+            return True
+    return False
 
 
 def _is_pushable(entity: Entity, props: dict[str, set[str]]) -> bool:
@@ -180,10 +242,13 @@ def _move_one(
     *,
     can_win: bool,
     auto: bool = False,
+    specific: Entity | None = None,
 ) -> MoveResult:
     """移动一个实体；can_win 为 True 表示它是最外层的「你」。"""
     cell = world.entities_at(row, col)
-    if can_win:
+    if specific is not None:
+        entity = specific
+    elif can_win:
         entity = next(
             (candidate for candidate in reversed(cell) if has_prop(candidate, props, "YOU")),
             None,
