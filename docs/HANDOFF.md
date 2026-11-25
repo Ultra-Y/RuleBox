@@ -45,7 +45,7 @@ Windows 免安装包已构建并验证：`dist/RuleBox-Windows.zip`（约 13 MB�
 | 解法 | `solutions/*.txt` | `URDL` 回放串 |
 | 测试 | `tests/` | 201 条 |
 | 机制说明 | `docs/MECHANICS.md` | 结算顺序、规则语法、属性表、已知边界 |
-| 美术 | `assets/sprites/` | 15 个 16×16 像素精灵 + 10 张第二帧（DB16 配色 + 1px 描边）；人是 chibi 小人、狗是侧视小狗；生成脚本 `tools/generate_sprites.py` |
+| 美术 | `assets/sprites/` | 15 个 16×16 像素精灵 + 10 张第二帧（DB16 配色 + 1px 描边）；人是 chibi 小人、狗是柴犬；生成脚本 `tools/generate_sprites.py` |
 | 发布包 | `dist/RuleBox-Windows.zip` | 约 13 MB，免安装 Windows 包；`dist/` gitignore，不提交 |
 | 发布脚本 | `tools/build_release.py` | PyInstaller；玩家说明 `docs/HOW-TO-PLAY.txt` |
 | 发布说明 | `docs/DISTRIBUTION.md` | 分发、SmartScreen、存档位置、重新打包 |
@@ -335,7 +335,7 @@ py -3.10 -m venv .venv
 ### 5.3.30 人与狗重绘（已完成）
 
 - 参考 16×16 角色设计惯例（chibi 头占 1/3–1/2、2×2 眼睛、四肢留负空间、剪影优先）重画人：深色短发 + 呆毛、2×2 眼睛带高光、蓝袍 + 琥珀腰带、深蓝裤子、布鞋；手臂贴着肩膀靠色块分开。
-- 重画狗为侧视小狗：大脑袋、垂耳（浅色内耳）、米色吻部和深色鼻子、项圈、四条带间隙的腿、浅色肚皮、翘起的尾巴；摇尾动画保留（frame 1 尾巴上移 1px）。
+- 重画狗为柴犬：橘色毛 + 白色里白（脸颊、吻部、胸腹、袜子）、立耳（浅色内耳）、白色眉点、盘在背上的卷尾；摇尾动画保留（frame 1 卷尾上移 1px）。
 - 验证：201 passed（精灵/动画测试仍全绿）；`sprites.png`、`sprites_anim.gif`、22 张关卡预览、`editor.png`、`word_states.png`、`rule_lock.png` 重新生成。
 
 ### 5.4 关卡 4–8（已完成）

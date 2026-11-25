@@ -104,31 +104,44 @@ def draw_baba(frame: int = 0) -> Image.Image:
 
 
 def draw_dog(frame: int = 0) -> Image.Image:
+    """柴犬：橘色毛、白色里白（脸/胸/肚/袜子）、立耳、卷尾。"""
     image = canvas()
     draw = ImageDraw.Draw(image)
-    tail_y = 0 if frame == 0 else 1
-    # 尾巴：从屁股后面翘起来，尾尖浅色
-    draw.rectangle((13, 4 - tail_y, 14, 8 - tail_y), fill=C["clay"])
-    draw.rectangle((13, 3 - tail_y, 14, 4 - tail_y), fill=C["amber"])
-    # 四条腿（1px 间隙），脚掌浅色
+    tan, dark, white = C["amber"], C["clay"], C["cream"]
+    lift = 0 if frame == 0 else 1
+
+    # 卷尾：从屁股绕上来，盘在背上
+    draw.ellipse((10, 3 - lift, 14, 7 - lift), fill=tan)
+    draw.ellipse((11, 4 - lift, 13, 6 - lift), fill=(0, 0, 0, 0))
+    draw.rectangle((12, 5 - lift, 14, 8 - lift), fill=tan)
+
+    # 四条腿：橘色腿 + 白袜子
     for x in (4, 7, 10, 13):
-        draw.rectangle((x, 10, x + 1, 13), fill=C["clay"])
-        draw.rectangle((x, 13, x + 1, 13), fill=C["beige"])
-    # 身体和肚子
-    draw.rounded_rectangle((4, 6, 13, 10), radius=2, fill=C["clay"])
-    draw.rectangle((6, 9, 12, 10), fill=C["beige"])
-    # 头、吻部、鼻子
-    draw.rounded_rectangle((1, 2, 7, 9), radius=2, fill=C["clay"])
-    draw.rectangle((1, 5, 4, 8), fill=C["beige"])
-    draw.rectangle((1, 6, 2, 6), fill=C["ink"])
-    # 耳朵：垂在脑后（浅色内耳）
-    draw.polygon([(5, 2), (7, 2), (7, 7), (6, 6), (5, 4)], fill=C["amber"])
-    draw.point((6, 4), fill=C["beige"])
-    # 眼睛
-    draw.rectangle((3, 4, 4, 5), fill=C["ink"])
-    draw.point((3, 4), fill=C["cream"])
-    # 项圈：脖子后面一圈
-    draw.rectangle((8, 6, 10, 6), fill=C["crimson"])
+        draw.rectangle((x, 10, x + 1, 12), fill=tan)
+        draw.rectangle((x, 13, x + 1, 13), fill=white)
+
+    # 身体 + 白色胸腹
+    draw.rounded_rectangle((4, 6, 13, 10), radius=2, fill=tan)
+    draw.rectangle((4, 8, 6, 10), fill=white)
+    draw.rectangle((7, 9, 12, 10), fill=white)
+
+    # 头
+    draw.rounded_rectangle((1, 2, 7, 9), radius=2, fill=tan)
+    # 白色脸颊和吻部，深色鼻子
+    draw.rectangle((1, 5, 4, 8), fill=white)
+    draw.rectangle((1, 5, 2, 5), fill=C["ink"])
+
+    # 立耳（内耳浅色）
+    draw.polygon([(2, 2), (4, 2), (3, 0)], fill=tan)
+    draw.polygon([(5, 2), (7, 2), (6, 0)], fill=tan)
+    draw.point((3, 1), fill=white)
+    draw.point((6, 1), fill=white)
+
+    # 眼睛 + 柴犬的白色眉点
+    draw.rectangle((3, 4, 4, 4), fill=C["ink"])
+    draw.point((3, 4), fill=white)
+    draw.point((3, 3), fill=white)
+    draw.point((5, 3), fill=white)
     return add_outline(image)
 
 

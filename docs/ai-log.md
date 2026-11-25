@@ -406,6 +406,15 @@
 - 截图：`sprites.png`、`sprites_anim.gif`、22 张关卡预览、`editor.png`、`word_states.png`、`rule_lock.png` 全部重生成。
 - 验证：201 passed。
 
+## 2026-11-25 狗改成柴犬
+
+- 要求：狗改成柴犬的样子。
+- 特征：橘色毛 + 白色里白（脸颊、吻部、胸腹、白袜子）、立耳（浅色内耳）、白色眉点、盘在背上的卷尾；深色鼻子和眼睛。
+- 做法：`draw_dog()` 重写，卷尾用椭圆环（中间挖空）压在背上，四条腿保持 1px 间隙；摇尾动画保留（frame 1 卷尾上移 1px）。
+- 测试：纯美术改动，无新增测试；沿用 `test_art`/`test_animation` 的 16×16 与两帧约束。
+- 截图：`sprites.png`、`sprites_anim.gif`、22 张关卡预览、`editor.png`、`word_states.png`、`rule_lock.png` 全部重生成。
+- 验证：201 passed。
+
 ## 待本人补充
 
 - 哪些 AI 建议被采纳、修改或否决，以及判断理由。
