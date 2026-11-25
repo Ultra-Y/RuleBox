@@ -69,36 +69,56 @@ def add_outline(image: Image.Image, color: tuple = C["ink"]) -> Image.Image:
     return image
 
 
-def draw_baba(frame: int = 0) -> Image.Image:
-    """侧面小人：棕色短发、蓝上衣、深蓝裤子、布鞋；第 2 帧眨眼。"""
+BABA_PALETTE = {
+    "h": C["cream"],      # 白头发
+    "s": C["beige"],      # 皮肤
+    "e": C["ink"],        # 黑眼睛
+    "m": C["wine"],       # 嘴
+    "r": C["crimson"],    # 红围巾
+    "j": C["midnight"],   # 外套
+    "p": C["charcoal"],   # 裤子
+    "b": C["clay"],       # 鞋
+    "a": C["beige"],      # 手臂
+}
+
+# 白发黑眼少年：白围巾在脖子一圈，右边垂一条
+BABA_GRID = [
+    "................",
+    "....hhhhhhhh....",
+    "...hhhhhhhhhh...",
+    "...hhhhhhhhhh...",
+    "...hhsssssshh...",
+    "...hhsesseshh...",
+    "...hhsesseshh...",
+    "...hhsssssshh...",
+    "...hhssmmsshh...",
+    "...hhhsssshhh...",
+    "...rrrrrrrrrr...",
+    "..a.jjjjjjjjra..",
+    "..a.jjjjjjjjra..",
+    "....pppp..pppp..",
+    "....pppp..pppp..",
+    "...bbbbbb.bbbbb.",
+]
+BABA_BLINK = list(BABA_GRID)
+BABA_BLINK[5] = BABA_GRID[5].replace("e", "s")
+
+
+def paint_grid(rows: list[str], palette: dict[str, tuple]) -> Image.Image:
+    """按字符网格逐像素上色；`.` 表示透明。"""
     image = canvas()
-    draw = ImageDraw.Draw(image)
-    # 鞋
-    draw.rounded_rectangle((4, 14, 6, 15), radius=1, fill=C["clay"])
-    draw.rounded_rectangle((8, 14, 10, 15), radius=1, fill=C["clay"])
-    # 腿
-    draw.rectangle((5, 12, 6, 14), fill=C["midnight"])
-    draw.rectangle((8, 12, 9, 14), fill=C["midnight"])
-    # 身体
-    draw.rounded_rectangle((5, 8, 10, 11), radius=1, fill=C["cornflower"])
-    # 手臂
-    draw.rectangle((9, 8, 9, 10), fill=C["beige"])
-    # 脸（朝右）
-    draw.rounded_rectangle((5, 3, 12, 8), radius=3, fill=C["beige"])
-    # 头发：后脑 + 头顶
-    draw.rounded_rectangle((3, 1, 10, 4), radius=2, fill=C["clay"])
-    draw.rectangle((3, 3, 4, 7), fill=C["clay"])
-    # 鼻子
-    draw.rectangle((12, 5, 12, 5), fill=C["beige"])
-    # 眼睛（第 2 帧眨眼）
-    if frame == 0:
-        draw.rectangle((9, 5, 9, 6), fill=C["ink"])
-        draw.point((9, 5), fill=C["cream"])
-    else:
-        draw.rectangle((9, 6, 9, 6), fill=C["ink"])
-    # 嘴
-    draw.rectangle((9, 7, 10, 7), fill=C["wine"])
-    return add_outline(image)
+    pixels = image.load()
+    for y, row in enumerate(rows):
+        for x, char in enumerate(row):
+            if char != ".":
+                pixels[x, y] = palette[char]
+    return image
+
+
+def draw_baba(frame: int = 0) -> Image.Image:
+    """白发黑眼少年，红围巾；第 2 帧眨眼。"""
+    rows = BABA_BLINK if frame else BABA_GRID
+    return add_outline(paint_grid(rows, BABA_PALETTE))
 
 
 def draw_dog(frame: int = 0) -> Image.Image:
