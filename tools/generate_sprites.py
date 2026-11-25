@@ -70,31 +70,21 @@ def add_outline(image: Image.Image, color: tuple = C["ink"]) -> Image.Image:
 
 
 def draw_baba(frame: int = 0) -> Image.Image:
-    """chibi 小人：深色短发、蓝袍腰带、裤子布鞋；第 2 帧眨眼。"""
+    """简单圆团子：眼睛 + 微笑 + 腮红；第 2 帧眨眼。"""
     image = canvas()
     draw = ImageDraw.Draw(image)
-    draw.rectangle((5, 12, 6, 13), fill=C["midnight"])
-    draw.rectangle((9, 12, 10, 13), fill=C["midnight"])
-    draw.rectangle((4, 14, 6, 14), fill=C["clay"])
-    draw.rectangle((9, 14, 11, 14), fill=C["clay"])
-    draw.rectangle((2, 8, 3, 10), fill=C["beige"])
-    draw.rectangle((12, 8, 13, 10), fill=C["beige"])
-    draw.rounded_rectangle((4, 8, 11, 11), radius=1, fill=C["cornflower"])
-    draw.rectangle((4, 11, 11, 11), fill=C["amber"])
-    draw.ellipse((4, 2, 11, 8), fill=C["beige"])
-    draw.ellipse((4, 1, 11, 4), fill=C["wine"])
-    draw.point((8, 0), fill=C["wine"])
-    draw.point((4, 5), fill=C["wine"])
-    draw.point((11, 5), fill=C["wine"])
+    draw.ellipse((2, 2, 13, 14), fill=C["beige"])
     if frame == 0:
-        draw.rectangle((5, 5, 6, 6), fill=C["ink"])
-        draw.rectangle((9, 5, 10, 6), fill=C["ink"])
-        draw.point((5, 5), fill=C["cream"])
-        draw.point((9, 5), fill=C["cream"])
-    else:
-        draw.rectangle((5, 6, 6, 6), fill=C["ink"])
-        draw.rectangle((9, 6, 10, 6), fill=C["ink"])
-    draw.rectangle((7, 7, 8, 7), fill=C["wine"])
+        draw.rectangle((5, 6, 6, 7), fill=C["ink"])
+        draw.rectangle((9, 6, 10, 7), fill=C["ink"])
+    else:  # 眨眼
+        draw.rectangle((5, 7, 6, 7), fill=C["ink"])
+        draw.rectangle((9, 7, 10, 7), fill=C["ink"])
+    draw.point((6, 9), fill=C["wine"])
+    draw.rectangle((7, 10, 8, 10), fill=C["wine"])
+    draw.point((9, 9), fill=C["wine"])
+    draw.point((4, 9), fill=C["crimson"])
+    draw.point((11, 9), fill=C["crimson"])
     return add_outline(image)
 
 

@@ -434,6 +434,13 @@
 - 生成器：清掉上一轮脚本替换留下的重复函数定义，16 个精灵各一份。
 - 验证：207 passed；`sprites.png`、`sprites_anim.gif`、22 张关卡预览、`editor.png`、`word_states.png`、`rule_lock.png` 全部重生成；重建发布包。
 
+## 2026-11-25 人物简化
+
+- 要求：人物有点丑，可以简化，不要那么多元素。
+- 改动：人从 chibi 小人改成圆团子——只保留米色身体、2×2 眼睛、微笑、两点腮红；去掉头发、呆毛、胳膊、腰带、裤子和鞋。
+- 动画：保留眨眼（第 2 帧眼睛变两条短线）。
+- 验证：207 passed；`sprites.png`、`sprites_anim.gif`、22 张关卡预览、`editor.png`、`word_states.png`、`rule_lock.png` 全部重生成；重建发布包。
+
 ## 待本人补充
 
 - 哪些 AI 建议被采纳、修改或否决，以及判断理由。
