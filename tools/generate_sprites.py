@@ -72,23 +72,34 @@ def add_outline(image: Image.Image, color: tuple = C["ink"]) -> Image.Image:
 def draw_baba(frame: int = 0) -> Image.Image:
     image = canvas()
     draw = ImageDraw.Draw(image)
-    draw.rounded_rectangle((3, 13, 5, 15), radius=1, fill=C["amber"])
-    draw.rounded_rectangle((10, 13, 12, 15), radius=1, fill=C["amber"])
-    draw.rectangle((1, 8, 1, 11), fill=C["beige"])
-    draw.rectangle((14, 8, 14, 11), fill=C["beige"])
-    draw.ellipse((2, 2, 13, 13), fill=C["beige"])
-    draw.arc((3, 3, 12, 12), start=175, end=285, fill=C["cream"], width=1)
+    # 腿和鞋
+    draw.rectangle((5, 12, 6, 13), fill=C["midnight"])
+    draw.rectangle((9, 12, 10, 13), fill=C["midnight"])
+    draw.rectangle((4, 14, 6, 14), fill=C["clay"])
+    draw.rectangle((9, 14, 11, 14), fill=C["clay"])
+    # 手臂：贴着肩膀，靠颜色和后面的描边分开
+    draw.rectangle((2, 8, 3, 10), fill=C["beige"])
+    draw.rectangle((12, 8, 13, 10), fill=C["beige"])
+    # 身体（蓝袍 + 腰带）
+    draw.rounded_rectangle((4, 8, 11, 11), radius=1, fill=C["cornflower"])
+    draw.rectangle((4, 11, 11, 11), fill=C["amber"])
+    # 头
+    draw.ellipse((4, 2, 11, 8), fill=C["beige"])
+    # 头发：平顶 + 两侧鬓角 + 一撮呆毛
+    draw.ellipse((4, 1, 11, 4), fill=C["wine"])
+    draw.point((8, 0), fill=C["wine"])
+    draw.point((4, 5), fill=C["wine"])
+    draw.point((11, 5), fill=C["wine"])
+    # 脸
     if frame == 0:
-        draw.rectangle((5, 6, 6, 7), fill=C["ink"])
-        draw.rectangle((9, 6, 10, 7), fill=C["ink"])
-        draw.point((5, 6), fill=C["cream"])
-        draw.point((9, 6), fill=C["cream"])
+        draw.rectangle((5, 5, 6, 6), fill=C["ink"])
+        draw.rectangle((9, 5, 10, 6), fill=C["ink"])
+        draw.point((5, 5), fill=C["cream"])
+        draw.point((9, 5), fill=C["cream"])
     else:  # 眨眼
-        draw.rectangle((5, 7, 6, 7), fill=C["ink"])
-        draw.rectangle((9, 7, 10, 7), fill=C["ink"])
-    draw.rectangle((7, 10, 8, 10), fill=C["wine"])
-    draw.point((6, 9), fill=C["crimson"])
-    draw.point((9, 9), fill=C["crimson"])
+        draw.rectangle((5, 6, 6, 6), fill=C["ink"])
+        draw.rectangle((9, 6, 10, 6), fill=C["ink"])
+    draw.rectangle((7, 7, 8, 7), fill=C["wine"])
     return add_outline(image)
 
 
@@ -96,22 +107,28 @@ def draw_dog(frame: int = 0) -> Image.Image:
     image = canvas()
     draw = ImageDraw.Draw(image)
     tail_y = 0 if frame == 0 else 1
-    draw.rectangle((12, 3 - tail_y, 13, 6 - tail_y), fill=C["clay"])
-    draw.rectangle((13, 2 - tail_y, 14, 4 - tail_y), fill=C["clay"])
-    draw.rectangle((3, 11, 4, 15), fill=C["clay"])
-    draw.rectangle((5, 11, 6, 15), fill=C["clay"])
-    draw.rectangle((9, 11, 10, 15), fill=C["clay"])
-    draw.rectangle((11, 11, 12, 15), fill=C["clay"])
-    draw.rounded_rectangle((3, 6, 12, 12), radius=2, fill=C["clay"])
-    draw.rectangle((4, 9, 11, 10), fill=C["beige"])
-    draw.rounded_rectangle((1, 2, 6, 9), radius=2, fill=C["clay"])
+    # 尾巴：从屁股后面翘起来，尾尖浅色
+    draw.rectangle((13, 4 - tail_y, 14, 8 - tail_y), fill=C["clay"])
+    draw.rectangle((13, 3 - tail_y, 14, 4 - tail_y), fill=C["amber"])
+    # 四条腿（1px 间隙），脚掌浅色
+    for x in (4, 7, 10, 13):
+        draw.rectangle((x, 10, x + 1, 13), fill=C["clay"])
+        draw.rectangle((x, 13, x + 1, 13), fill=C["beige"])
+    # 身体和肚子
+    draw.rounded_rectangle((4, 6, 13, 10), radius=2, fill=C["clay"])
+    draw.rectangle((6, 9, 12, 10), fill=C["beige"])
+    # 头、吻部、鼻子
+    draw.rounded_rectangle((1, 2, 7, 9), radius=2, fill=C["clay"])
     draw.rectangle((1, 5, 4, 8), fill=C["beige"])
-    draw.polygon([(2, 1), (5, 1), (4, 4)], fill=C["amber"])
-    draw.rectangle((4, 4, 5, 5), fill=C["ink"])
-    draw.point((4, 4), fill=C["cream"])
-    draw.point((1, 5), fill=C["ink"])
-    draw.point((2, 8), fill=C["crimson"])
-    draw.rectangle((5, 8, 6, 9), fill=C["crimson"])
+    draw.rectangle((1, 6, 2, 6), fill=C["ink"])
+    # 耳朵：垂在脑后（浅色内耳）
+    draw.polygon([(5, 2), (7, 2), (7, 7), (6, 6), (5, 4)], fill=C["amber"])
+    draw.point((6, 4), fill=C["beige"])
+    # 眼睛
+    draw.rectangle((3, 4, 4, 5), fill=C["ink"])
+    draw.point((3, 4), fill=C["cream"])
+    # 项圈：脖子后面一圈
+    draw.rectangle((8, 6, 10, 6), fill=C["crimson"])
     return add_outline(image)
 
 
