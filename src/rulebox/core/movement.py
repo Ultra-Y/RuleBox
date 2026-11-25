@@ -26,6 +26,7 @@ from .rules import parse_rules, property_map, ruled_nouns, spawn_map, transform_
 from .world import World
 
 MAX_PUSH_DEPTH = 10
+MAX_PULL_CHAIN = 20
 
 
 @dataclass
@@ -174,12 +175,11 @@ def _move_auto(
             specific=entity,
         )
         if result.moved:
+            _pull_behind(world, row, col, dr, dc, entity, props, trail)
             moved = True
             continue
         if not _auto_should_bounce(world, entity, row, col, dr, dc, props):
             continue
-        # 反弹时，正前方同时可推+可拉的物件会被拉回自己刚空出的格子。
-        pull_target = _pull_on_bounce(world, entity, row, col, dr, dc, props)
         # 反方向也写入历史方向；即使反方向仍被挡住，下一次也朝反方向尝试。
         world.set_move_dir(entity, -dr, -dc)
         reverse = _move_one(
@@ -195,57 +195,10 @@ def _move_auto(
             auto=True,
             specific=entity,
         )
-        if reverse.moved and pull_target is not None:
-            _pull_after_bounce(
-                world, pull_target, row, col, -dr, -dc, trail
-            )
+        if reverse.moved:
+            _pull_behind(world, row, col, -dr, -dc, entity, props, trail)
         moved = moved or reverse.moved
     return moved
-
-
-def _pull_on_bounce(
-    world: World,
-    entity: Entity,
-    row: int,
-    col: int,
-    dr: int,
-    dc: int,
-    props: dict[str, set[str]],
-) -> Entity | None:
-    """反弹前位于正前方、同时可推和可拉的物件。"""
-    target_row, target_col = row + dr, col + dc
-    if not world.in_bounds(target_row, target_col):
-        return None
-    targets = [
-        target
-        for target in _related_targets(world, entity, target_row, target_col, props)
-        if _is_pushable(target, props) and has_prop(target, props, "PULL")
-    ]
-    return targets[-1] if targets else None
-
-
-def _pull_after_bounce(
-    world: World,
-    target: Entity,
-    old_row: int,
-    old_col: int,
-    dr: int,
-    dc: int,
-    trail: list[Entity],
-) -> None:
-    """把反弹前贴着的 PULL 物件拉进移物件空出的格子。"""
-    locations = world.find(lambda candidate: candidate is target)
-    if len(locations) != 1:
-        return
-    target_row, target_col = locations[0][0], locations[0][1]
-    if world.entities_at(old_row, old_col):
-        return
-    if not (abs(target_row - old_row) + abs(target_col - old_col) == 1):
-        return
-    world.remove(target_row, target_col, target)
-    world.add(old_row, old_col, target)
-    world.set_move_dir(target, dr, dc)
-    trail.append(target)
 
 
 def _auto_should_bounce(
@@ -441,27 +394,31 @@ def _pull_behind(
     props: dict[str, set[str]],
     trail: list[Entity],
 ) -> None:
-    """「你」移动后，把正后方同层的 PULL 物件拉进刚空出的格子。"""
-    behind_row, behind_col = row - dr, col - dc
-    if not world.in_bounds(behind_row, behind_col):
-        return
-    if world.entities_at(row, col):
-        return
-    behind = world.entities_at(behind_row, behind_col)
-    target = next(
-        (
-            entity
-            for entity in reversed(behind)
-            if has_prop(entity, props, "PULL") and same_layer(mover, entity, props)
-        ),
-        None,
-    )
-    if target is None:
-        return
-    world.remove(behind_row, behind_col, target)
-    world.add(row, col, target)
-    world.set_move_dir(target, dr, dc)
-    trail.append(target)
+    """把正后方同层的一串 PULL 物件依次拉进刚空出的格子。"""
+    dest_row, dest_col = row, col
+    for _ in range(MAX_PULL_CHAIN):
+        if world.entities_at(dest_row, dest_col):
+            return
+        behind_row, behind_col = dest_row - dr, dest_col - dc
+        if not world.in_bounds(behind_row, behind_col):
+            return
+        behind = world.entities_at(behind_row, behind_col)
+        target = next(
+            (
+                entity
+                for entity in reversed(behind)
+                if has_prop(entity, props, "PULL")
+                and same_layer(mover, entity, props)
+            ),
+            None,
+        )
+        if target is None:
+            return
+        world.remove(behind_row, behind_col, target)
+        world.add(dest_row, dest_col, target)
+        world.set_move_dir(target, dr, dc)
+        trail.append(target)
+        dest_row, dest_col = behind_row, behind_col
 
 
 def _relocate(

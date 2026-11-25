@@ -646,6 +646,62 @@ def test_move_object_does_not_trigger_win():
     assert not game.won
 
 
+def test_pull_chain_follows_one_by_one():
+    world = make_world(
+        words=[
+            (0, 0, "人"),
+            (0, 1, "是"),
+            (0, 2, "你"),
+            (1, 0, "石"),
+            (1, 1, "是"),
+            (1, 2, "拉"),
+        ],
+        objects=[
+            (4, 1, "rock"),
+            (4, 2, "rock"),
+            (4, 3, "baba"),
+        ],
+    )
+
+    result = try_move(world, 0, 1)
+
+    assert result.moved and not result.lost
+    assert [world.get(4, col).id for col in (2, 3, 4)] == ["rock", "rock", "baba"]
+
+
+def test_move_object_pulls_chain():
+    rules = [
+        (0, 0, "人"),
+        (0, 1, "是"),
+        (0, 2, "你"),
+        (1, 0, "箱"),
+        (1, 1, "是"),
+        (1, 2, "移"),
+        (2, 0, "石"),
+        (2, 1, "是"),
+        (2, 2, "拉"),
+    ]
+    game = Game(
+        make_level(
+            words=rules,
+            objects=[
+                (5, 1, "baba"),
+                (4, 1, "rock"),
+                (4, 2, "rock"),
+                (4, 3, "box"),
+            ],
+        )
+    )
+
+    game.move(0, 1)
+
+    assert [game.world.get(4, col).id for col in (2, 3, 4)] == [
+        "rock",
+        "rock",
+        "box",
+    ]
+
+
 def test_move_object_initial_direction_uses_key():
     rules = [
         (0, 0, "人"),
