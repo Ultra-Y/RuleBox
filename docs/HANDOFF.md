@@ -4,7 +4,7 @@
 
 这是给下一个 AI 会话的压缩交接；细节仍以仓库和 `docs/MECHANICS.md` 为准。
 
-- **当前基线**：`207 passed`；23 个官方关卡；16 种物件、11 个带动画（水 4 帧/岩浆 3 帧）、调色板 53 项；最新提交以 `git log` 为准。
+- **当前基线**：`208 passed`；23 个官方关卡；16 种物件、11 个带动画（水 4 帧/岩浆 3 帧）、调色板 53 项、主角 32×32；最新提交以 `git log` 为准。
 - **先跑**：
   ```powershell
   .\.venv\Scripts\python.exe -m pytest -q
@@ -43,9 +43,9 @@ Windows 免安装包已构建并验证：`dist/RuleBox-Windows.zip`（约 13 MB�
 | 源码 | `src/rulebox/` | core 纯逻辑，ui 用 Pygame |
 | 关卡 | ... + `main-3-1.txt`、`main-3-2.txt`、`main-3-3.txt`、`main-4-1.txt`、`main-4-2.txt`、`main-4-3.txt`、`main-5-1.txt` | 教程 01–10，第一章 1-1/1-2，第二章 2-1/2-2/2-3/2-4，第三章 3-1/3-2/3-3，第四章 4-1/4-2/4-3，第五章 5-1 |
 | 解法 | `solutions/*.txt` | `URDL` 回放串 |
-| 测试 | `tests/` | 207 条 |
+| 测试 | `tests/` | 208 条 |
 | 机制说明 | `docs/MECHANICS.md` | 结算顺序、规则语法、属性表、已知边界 |
-| 美术 | `assets/sprites/` | 16 个 16×16 像素精灵 + 14 张动画帧（DB16 配色 + 1px 描边）；人是白发黑眼少年（纯白豆豆头 + 红围巾）、狗是柴犬；水/岩浆铺满整格；生成脚本 `tools/generate_sprites.py` |
+| 美术 | `assets/sprites/` | 15 个 16×16 + 主角 32×32 像素精灵 + 14 张动画帧（DB16 配色 + 1px 描边）；人是白发黑眼少年（纯白豆豆头 + 红围巾）、狗是柴犬；水/岩浆铺满整格；生成脚本 `tools/generate_sprites.py` |
 | 发布包 | `dist/RuleBox-Windows.zip` | 约 13 MB，免安装 Windows 包；`dist/` gitignore，不提交 |
 | 发布脚本 | `tools/build_release.py` | PyInstaller；玩家说明 `docs/HOW-TO-PLAY.txt` |
 | 发布说明 | `docs/DISTRIBUTION.md` | 分发、SmartScreen、存档位置、重新打包 |
@@ -389,6 +389,14 @@ py -3.10 -m venv .venv
 - 其余保持：豆豆头、深蓝外套、两只手臂、深灰裤子、棕色鞋；不再加零散高光，避免小尺寸下变成噪点。
 - 验证：207 passed；`sprites.png`、`sprites_anim.gif`、22 张关卡预览、`editor.png`、`word_states.png`、`rule_lock.png` 全部重生成。
 
+### 5.3.38 主角改 32×32（已完成）
+
+- 用户反馈“大饼脸 + 二等身”，改为 **32×32** 精灵：头约 1/3 身高、窄脸收下巴、肩窄、腿长，整体更修长。
+- 细节：纯白头发 + 三缕刘海 + 侧发 + 呆毛；2×3 黑眼睛（带 1px 高光）；红围巾（打结 + 左侧细飘带）；深蓝外套 + 领口 + 拉链；深灰裤 + 棕鞋 + 鞋口亮边。
+- 其他物件仍保持 16×16；`sprite_for` 本来就按目标尺寸缩放，无需改渲染代码。
+- 测试：`test_art`/`test_animation`/`test_sprites` 允许主角 32×32，并新增 `test_baba_uses_higher_resolution`。
+- 验证：208 passed；`sprites.png`、`sprites_anim.gif`、22 张关卡预览、`editor.png`、`word_states.png`、`rule_lock.png` 全部重生成。
+
 ### 5.4 关卡 4–8（已完成）
 
 - **04 拆掉规则**：把「停」从「墙 是 停」中推出，规则失效后穿过整排墙；解法 `UDDDD`。
@@ -498,7 +506,7 @@ git clone RuleBox-handoff-2026-11-10.bundle RuleBox
 
 第一步：
 1. 读 AGENTS.md、docs/HANDOFF.md、docs/plan.md。
-2. 运行 .\.venv\Scripts\python.exe -m pytest -q，确认 207 passed。
+2. 运行 .\.venv\Scripts\python.exe -m pytest -q，确认 208 passed。
 3. 运行 .\.venv\Scripts\python.exe run.py，确认开始菜单能启动。
 
 约束：
@@ -514,7 +522,7 @@ git clone RuleBox-handoff-2026-11-10.bundle RuleBox
 ## 10. 交接检查清单
 
 - [x] 代码已推送，远程 = 本地
-- [x] 测试 207 passed
+- [x] 测试 208 passed
 - [x] 计划 / 清单 / AI 记录进仓库
 - [x] 交接 tag
 - [x] 新 agent 跑通测试

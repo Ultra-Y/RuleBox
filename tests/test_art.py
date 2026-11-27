@@ -16,11 +16,18 @@ def png_size(path: Path) -> tuple[int, int]:
     return struct.unpack(">II", data[16:24])
 
 
-def test_every_object_has_a_16x16_sprite():
+def test_every_object_has_a_sprite():
     for object_id in OBJECTS:
+        expected = (32, 32) if object_id == "baba" else (16, 16)
         path = SPRITE_DIR / f"{object_id}.png"
         assert path.exists(), f"缺少精灵：{object_id}"
-        assert png_size(path) == (16, 16), object_id
+        assert png_size(path) == expected, object_id
+
+
+def test_baba_uses_higher_resolution():
+    # 主角单独用 32×32，其他物件保持 16×16。
+    assert png_size(SPRITE_DIR / "baba.png") == (32, 32)
+    assert png_size(SPRITE_DIR / "baba-1.png") == (32, 32)
 
 
 def test_new_nouns_are_playable_objects():

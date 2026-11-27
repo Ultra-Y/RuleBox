@@ -70,57 +70,61 @@ def add_outline(image: Image.Image, color: tuple = C["ink"]) -> Image.Image:
     return image
 
 
-BABA_PALETTE = {
-    "h": C["snow"],       # 白头发
-    "s": C["beige"],      # 皮肤
-    "e": C["ink"],        # 黑眼睛
-    "m": C["wine"],       # 嘴
-    "r": C["crimson"],    # 红围巾
-    "w": C["wine"],       # 围巾结/暗部
-    "j": C["midnight"],   # 外套
-    "p": C["charcoal"],   # 裤子
-    "b": C["clay"],       # 鞋
-    "a": C["beige"],      # 手臂
-}
-
-# 白发黑眼少年：纯白豆豆头 + 呆毛，2×2 黑眼睛，红围巾（右侧垂一条）
-BABA_GRID = [
-    "........h.......",
-    "....hhhhhhhh....",
-    "...hhhhhhhhhh...",
-    "..hhhhhhhhhhhh..",
-    "..hhsssssssshh..",
-    "..hhseesseeshh..",
-    "..hhseesseeshh..",
-    "..hhsssssssshh..",
-    "..hhsssmmssshh..",
-    "..hhhsssssshhh..",
-    "...rrrrrrrrwr...",
-    "..a.jjjjjjjjra..",
-    "..a.jjjjjjjjwa..",
-    "....pppp..pppp..",
-    "....pppp..pppp..",
-    "...bbbbb.bbbbb..",
-]
-BABA_BLINK = list(BABA_GRID)
-BABA_BLINK[5] = BABA_GRID[5].replace("e", "s")
-
-
-def paint_grid(rows: list[str], palette: dict[str, tuple]) -> Image.Image:
-    """按字符网格逐像素上色；`.` 表示透明。"""
-    image = canvas()
-    pixels = image.load()
-    for y, row in enumerate(rows):
-        for x, char in enumerate(row):
-            if char != ".":
-                pixels[x, y] = palette[char]
-    return image
-
-
 def draw_baba(frame: int = 0) -> Image.Image:
-    """白发黑眼少年，红围巾；第 2 帧眨眼。"""
-    rows = BABA_BLINK if frame else BABA_GRID
-    return add_outline(paint_grid(rows, BABA_PALETTE))
+    """白发黑眼少年（32×32）：纯白豆豆头 + 三缕刘海，红围巾 + 飘带，深蓝外套。"""
+    image = Image.new("RGBA", (32, 32), (0, 0, 0, 0))
+    draw = ImageDraw.Draw(image)
+    # 鞋
+    draw.rounded_rectangle((11, 29, 15, 31), radius=1, fill=C["clay"])
+    draw.rounded_rectangle((16, 29, 20, 31), radius=1, fill=C["clay"])
+    draw.rectangle((11, 29, 15, 29), fill=C["amber"])
+    draw.rectangle((16, 29, 20, 29), fill=C["amber"])
+    # 腿
+    draw.rectangle((12, 23, 14, 29), fill=C["charcoal"])
+    draw.rectangle((17, 23, 19, 29), fill=C["charcoal"])
+    # 外套
+    draw.rounded_rectangle((11, 15, 20, 23), radius=2, fill=C["midnight"])
+    # 手臂 + 手
+    draw.rectangle((8, 16, 9, 22), fill=C["midnight"])
+    draw.rectangle((21, 16, 22, 22), fill=C["midnight"])
+    draw.rectangle((8, 22, 9, 23), fill=C["beige"])
+    draw.rectangle((21, 22, 22, 23), fill=C["beige"])
+    # 衣领 + 拉链
+    draw.rectangle((13, 15, 18, 15), fill=C["cornflower"])
+    draw.rectangle((15, 17, 15, 22), fill=C["wine"])
+    # 脖子
+    draw.rectangle((14, 12, 17, 15), fill=C["beige"])
+    # 头
+    draw.ellipse((12, 2, 20, 12), fill=C["beige"])
+    draw.polygon([(12, 9), (13, 10), (13, 12), (19, 12), (19, 10), (20, 9)], fill=C["beige"])
+    # 白头发 + 三缕刘海 + 侧发
+    draw.rectangle((11, 1, 21, 4), fill=C["snow"])
+    draw.polygon([(11, 4), (14, 4), (12, 5)], fill=C["snow"])
+    draw.polygon([(15, 4), (18, 4), (16, 5)], fill=C["snow"])
+    draw.polygon([(18, 4), (21, 4), (20, 5)], fill=C["snow"])
+    draw.rectangle((11, 4, 11, 8), fill=C["snow"])
+    draw.rectangle((21, 4, 21, 8), fill=C["snow"])
+    draw.rectangle((21, 7, 21, 8), fill=C["steel"])
+    draw.point((16, 0), fill=C["snow"])
+    # 眼睛（第 2 帧眨眼）
+    if frame == 0:
+        draw.rectangle((13, 7, 14, 9), fill=C["ink"])
+        draw.rectangle((17, 7, 18, 9), fill=C["ink"])
+        draw.point((13, 7), fill=C["snow"])
+        draw.point((17, 7), fill=C["snow"])
+    else:
+        draw.rectangle((13, 8, 14, 8), fill=C["ink"])
+        draw.rectangle((17, 8, 18, 8), fill=C["ink"])
+    # 鼻子、嘴
+    draw.point((15, 10), fill=C["clay"])
+    draw.rectangle((15, 11, 16, 11), fill=C["wine"])
+    # 红围巾 + 飘带
+    draw.rectangle((10, 13, 21, 14), fill=C["crimson"])
+    draw.rectangle((10, 14, 11, 14), fill=C["wine"])
+    for x, y in ((9, 15), (9, 16), (8, 17), (8, 18), (7, 19), (7, 20)):
+        draw.point((x, y), fill=C["crimson"])
+    draw.rectangle((5, 21, 6, 21), fill=C["wine"])
+    return add_outline(image)
 
 
 def draw_dog(frame: int = 0) -> Image.Image:
