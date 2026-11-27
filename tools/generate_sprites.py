@@ -14,7 +14,7 @@ from __future__ import annotations
 import sys
 from pathlib import Path
 
-from PIL import Image, ImageDraw
+from PIL import Image, ImageDraw, ImageEnhance
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
@@ -69,137 +69,31 @@ def add_outline(image: Image.Image, color: tuple = C["ink"]) -> Image.Image:
     return image
 
 
-def _baba_sword(draw, x: int, frame: int) -> None:
-    """竖持的大剑：钢刃 + 金护手 + 酒红剑柄。"""
-    draw.polygon([(x+4,2),(x+7,9),(x+7,38),(x+1,38),(x+1,9)], fill=C["steel"])
-    draw.rectangle((x+5,4,x+5,37), fill=C["cream"])
-    draw.rectangle((x+2,10,x+3,37), fill=C["beige"])
-    draw.rectangle((x-1,38,x+9,42), fill=C["amber"])
-    draw.rectangle((x-1,38,x+9,39), fill=C["cream"])
-    draw.rectangle((x+3,42,x+5,48), fill=C["wine"])
-    draw.rectangle((x+2,48,x+6,49), fill=C["lemon"])
-    if frame == 1:
-        draw.point((x+6, 10), fill=C["cream"])
+BABA_SOURCE = ROOT / "tools" / "source"
 
 
-def _baba_body(draw, facing: str) -> None:
-    """三视角共用：金靴、红裤腿、金护胫、黑内衬、金胸甲、腰带、护肩、手臂。"""
-    # 金靴
-    draw.rounded_rectangle((18, 56, 30, 62), radius=2, fill=C["amber"])
-    draw.rounded_rectangle((34, 56, 46, 62), radius=2, fill=C["amber"])
-    draw.rectangle((18, 61, 30, 62), fill=C["clay"])
-    draw.rectangle((34, 61, 46, 62), fill=C["clay"])
-    draw.rectangle((18, 56, 30, 57), fill=C["cream"])
-    draw.rectangle((34, 56, 46, 57), fill=C["cream"])
-    # 红裤腿 + 金护胫
-    draw.rectangle((22, 44, 29, 56), fill=C["wine"])
-    draw.rectangle((35, 44, 42, 56), fill=C["wine"])
-    draw.rectangle((22, 50, 29, 56), fill=C["amber"])
-    draw.rectangle((35, 50, 42, 56), fill=C["amber"])
-    draw.rectangle((23, 51, 24, 55), fill=C["cream"])
-    draw.rectangle((36, 51, 37, 55), fill=C["cream"])
-    # 黑色内衬
-    draw.rounded_rectangle((21, 24, 43, 44), radius=3, fill=C["charcoal"])
-    # 金色胸甲
-    draw.rounded_rectangle((24, 26, 40, 38), radius=3, fill=C["amber"])
-    draw.rectangle((25, 27, 26, 37), fill=C["cream"])
-    draw.rectangle((38, 27, 39, 37), fill=C["clay"])
-    draw.rectangle((24, 35, 40, 36), fill=C["clay"])
-    # 腰带
-    draw.rectangle((21, 39, 43, 43), fill=C["clay"])
-    draw.rectangle((30, 39, 34, 43), fill=C["beige"])
-    # 护肩
-    draw.rounded_rectangle((11, 21, 23, 33), radius=4, fill=C["amber"])
-    draw.rounded_rectangle((41, 21, 53, 33), radius=4, fill=C["amber"])
-    draw.rectangle((12, 29, 22, 32), fill=C["clay"])
-    draw.rectangle((42, 29, 52, 32), fill=C["clay"])
-    draw.rectangle((13, 22, 21, 23), fill=C["cream"])
-    draw.rectangle((43, 22, 51, 23), fill=C["cream"])
-    # 手臂 + 金护腕
-    if facing == "side":
-        draw.rectangle((38, 32, 46, 42), fill=C["charcoal"])
-        draw.rectangle((38, 37, 46, 44), fill=C["amber"])
-        draw.rectangle((38, 44, 46, 47), fill=C["charcoal"])
-    else:
-        draw.rectangle((12, 32, 20, 42), fill=C["charcoal"])
-        draw.rectangle((44, 32, 52, 42), fill=C["charcoal"])
-        draw.rectangle((12, 37, 20, 44), fill=C["amber"])
-        draw.rectangle((44, 37, 52, 44), fill=C["amber"])
-        draw.rectangle((12, 44, 20, 47), fill=C["charcoal"])
-        draw.rectangle((44, 44, 52, 47), fill=C["charcoal"])
-    # 脖子
-    draw.rectangle((28, 20, 36, 25), fill=C["charcoal"])
-
-
-def _baba_head_front(draw, frame: int) -> None:
-    glow = C["lemon"] if frame == 0 else C["amber"]
-    # 金色头盔 + 盔顶冠脊
-    draw.rounded_rectangle((23, 5, 41, 22), radius=6, fill=C["amber"])
-    draw.rectangle((25, 6, 39, 9), fill=C["cream"])
-    draw.polygon([(29, 0), (35, 0), (38, 6), (26, 6)], fill=C["amber"])
-    draw.polygon([(30, 1), (34, 1), (36, 5), (28, 5)], fill=C["cream"])
-    # 面甲 + 发光眼
-    draw.rounded_rectangle((26, 11, 38, 21), radius=3, fill=C["charcoal"])
-    draw.polygon([(27, 13), (31, 12), (31, 15), (27, 17)], fill=glow)
-    draw.polygon([(37, 13), (33, 12), (33, 15), (37, 17)], fill=glow)
-    draw.rectangle((28, 13, 29, 15), fill=C["amber"])
-    draw.rectangle((35, 13, 36, 15), fill=C["amber"])
-    # 白发 + 颈甲
-    draw.rectangle((21, 13, 22, 24), fill=C["cream"])
-    draw.rectangle((42, 13, 43, 24), fill=C["cream"])
-    draw.point((20, 17), fill=C["cream"])
-    draw.point((44, 17), fill=C["cream"])
-    draw.rectangle((26, 21, 38, 23), fill=C["clay"])
-
-
-def _baba_head_back(draw, frame: int) -> None:
-    draw.rounded_rectangle((23, 5, 41, 22), radius=6, fill=C["amber"])
-    draw.polygon([(29, 0), (35, 0), (38, 6), (26, 6)], fill=C["amber"])
-    draw.polygon([(30, 1), (34, 1), (36, 5), (28, 5)], fill=C["cream"])
-    draw.rounded_rectangle((23, 8, 41, 23), radius=3, fill=C["cream"])
-    shift = 0 if frame == 0 else 1
-    draw.rectangle((27 + shift, 9, 28 + shift, 23), fill=C["steel"])
-    draw.rectangle((36 + shift, 9, 37 + shift, 23), fill=C["steel"])
-    draw.rectangle((24, 21, 40, 23), fill=C["beige"])
-
-
-def _baba_head_side(draw, frame: int) -> None:
-    glow = C["lemon"] if frame == 0 else C["amber"]
-    draw.rounded_rectangle((23, 5, 41, 22), radius=6, fill=C["amber"])
-    draw.polygon([(29, 0), (35, 0), (38, 6), (26, 6)], fill=C["amber"])
-    draw.polygon([(30, 1), (34, 1), (36, 5), (28, 5)], fill=C["cream"])
-    # 侧面面甲 + 发光眼
-    draw.rounded_rectangle((30, 11, 41, 21), radius=3, fill=C["charcoal"])
-    draw.polygon([(38, 12), (41, 13), (41, 16), (38, 17)], fill=glow)
-    draw.rectangle((39, 13, 40, 15), fill=C["amber"])
-    # 白发在后
-    draw.rectangle((21, 12, 23, 24), fill=C["cream"])
-    draw.point((20, 16), fill=C["cream"])
-
-
-def _baba_view(facing: str, frame: int) -> Image.Image:
-    image = Image.new("RGBA", (64, 64), (0, 0, 0, 0))
-    draw = ImageDraw.Draw(image)
-    _baba_sword(draw, 46 if facing == "side" else 4, frame)
-    _baba_body(draw, facing)
-    heads = {"down": _baba_head_front, "up": _baba_head_back, "side": _baba_head_side}
-    heads[facing](draw, frame)
-    return add_outline(image)
+def _baba_image(view: str, frame: int) -> Image.Image:
+    """读取作者提供的 64×64 主角原图；第 2 帧做一个很轻的发光呼吸。"""
+    image = Image.open(BABA_SOURCE / f"baba-{view}.png").convert("RGBA")
+    if frame:
+        rgb = ImageEnhance.Brightness(image.convert("RGB")).enhance(1.08)
+        image = Image.merge("RGBA", (*rgb.split(), image.getchannel("A")))
+    return image
 
 
 def draw_baba(frame: int = 0) -> Image.Image:
     """主角正面（朝下）。"""
-    return _baba_view("down", frame)
+    return _baba_image("front", frame)
 
 
 def draw_baba_up(frame: int = 0) -> Image.Image:
     """主角背面（朝上）。"""
-    return _baba_view("up", frame)
+    return _baba_image("back", frame)
 
 
 def draw_baba_side(frame: int = 0) -> Image.Image:
     """主角侧面（朝右）；朝左时由渲染层水平翻转。"""
-    return _baba_view("side", frame)
+    return _baba_image("side", frame)
 
 
 def draw_dog(frame: int = 0) -> Image.Image:

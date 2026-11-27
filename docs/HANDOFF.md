@@ -4,7 +4,7 @@
 
 这是给下一个 AI 会话的压缩交接；细节仍以仓库和 `docs/MECHANICS.md` 为准。
 
-- **当前基线**：`213 passed`；23 个官方关卡；16 种物件、11 个带动画（水 4 帧/岩浆 3 帧）、调色板 53 项、主角 64×64（三视角金甲骑士）；最新提交以 `git log` 为准。
+- **当前基线**：`213 passed`；23 个官方关卡；16 种物件、11 个带动画（水 4 帧/岩浆 3 帧）、调色板 53 项、主角 64×64（作者提供的铁甲战士三视角）；最新提交以 `git log` 为准。
 - **先跑**：
   ```powershell
   .\.venv\Scripts\python.exe -m pytest -q
@@ -440,6 +440,14 @@ py -3.10 -m venv .venv
 - 按用户提供的《杀戮尖塔 2》战士参考图重画：金色头盔（盔顶冠脊、面甲、两侧白发、发光橙眼）、金色胸甲/护肩/护腕、黑色内衬、暗红裤腿、金护胫、金靴、竖持的大剑（钢刃 + 金护手 + 酒红剑柄）。
 - 三视角 × 两帧：正面（发光眼 + 剑刃反光）、背面（白发 + 钢色发丝 + 双肩甲）、侧面（面甲朝右、白发在后、剑在身前）；侧面朝左仍由渲染层翻转。
 - 尺寸保持 64×64；旧的恶魔战士造型移除。
+- 验证：213 passed；`sprites.png`、`sprites_views.png`、`sprites_anim.gif`、22 张关卡预览、`editor.png`、`word_states.png`、`rule_lock.png` 全部重生成。
+
+### 5.3.45 主角改用作者提供的像素图（已完成）
+
+- 用户提供了 64×64 的正面 / 侧面 / 背面三张铁甲战士像素图（参考《杀戮尖塔》的 Ironclad），要求直接使用。
+- 原图存到 `tools/source/baba-{front,side,back}.png`；生成脚本只做“原图 → assets/”的复制，第 2 帧用 8% 亮度呼吸，不再程序化重绘主角。
+- `sprites_views.png` 展示三视角 × 两帧；`sprites.png` 里主角使用正面图。
+- 说明：主角美术素材由作者提供，非本仓库程序绘制。
 - 验证：213 passed；`sprites.png`、`sprites_views.png`、`sprites_anim.gif`、22 张关卡预览、`editor.png`、`word_states.png`、`rule_lock.png` 全部重生成。
 
 ### 5.4 关卡 4–8（已完成）
