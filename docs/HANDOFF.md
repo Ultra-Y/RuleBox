@@ -521,6 +521,13 @@ py -3.10 -m venv .venv
 - 新增 `liquid_open_sides(world,row,col,liquid)` 和 `_draw_liquid`；`tests/test_grid_view.py` 增加邻居判定测试。
 - 验证：218 passed；`sprites.png`、`sprites_views.png`、`sprites_anim.gif`、22 张关卡预览、`editor.png`、`word_states.png`、`rule_lock.png`、`grid_off.png`、`grid_on.png` 全部重生成。
 
+### 5.3.55 水/岩浆改成纯色底 + 点状流动（已完成）
+
+- 水：`(48,105,210)` 纯蓝底，5 个白点，每帧整体右下挪 1px，4 帧循环，周期 900ms。
+- 岩浆：`(210,85,35)` 橙红底，5 个黑点，同样每帧挪 1px，3 帧循环，周期 1100ms。
+- 贴图仍是 16×16 铺满；同种相邻连成一片，异种/墙边保留空隙 + 深色边框（渲染层逻辑不变）。
+- 验证：218 passed；`sprites.png`、`sprites_views.png`、`sprites_anim.gif`、22 张关卡预览、`editor.png`、`word_states.png`、`rule_lock.png`、`grid_off.png`、`grid_on.png` 全部重生成。
+
 ### 5.4 关卡 4–8（已完成）
 
 - **04 拆掉规则**：把「停」从「墙 是 停」中推出，规则失效后穿过整排墙；解法 `UDDDD`。
