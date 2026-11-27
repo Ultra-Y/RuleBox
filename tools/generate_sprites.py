@@ -69,120 +69,118 @@ def add_outline(image: Image.Image, color: tuple = C["ink"]) -> Image.Image:
     return image
 
 
+def _baba_sword(draw, x: int, frame: int) -> None:
+    """竖持的大剑：钢刃 + 金护手 + 酒红剑柄。"""
+    draw.polygon([(x+4,2),(x+7,9),(x+7,38),(x+1,38),(x+1,9)], fill=C["steel"])
+    draw.rectangle((x+5,4,x+5,37), fill=C["cream"])
+    draw.rectangle((x+2,10,x+3,37), fill=C["beige"])
+    draw.rectangle((x-1,38,x+9,42), fill=C["amber"])
+    draw.rectangle((x-1,38,x+9,39), fill=C["cream"])
+    draw.rectangle((x+3,42,x+5,48), fill=C["wine"])
+    draw.rectangle((x+2,48,x+6,49), fill=C["lemon"])
+    if frame == 1:
+        draw.point((x+6, 10), fill=C["cream"])
+
+
 def _baba_body(draw, facing: str) -> None:
-    """三视角共用：靴子、腿、钢甲、腰带、护肩、红皮肤手臂、脖子。"""
-    if facing == "side":
-        draw.rounded_rectangle((18, 56, 30, 63), radius=2, fill=C["clay"])
-        draw.rounded_rectangle((34, 56, 46, 63), radius=2, fill=C["clay"])
-        draw.rectangle((18, 61, 30, 63), fill=C["wine"])
-        draw.rectangle((34, 61, 46, 63), fill=C["wine"])
-        draw.rectangle((18, 56, 30, 57), fill=C["steel"])
-        draw.rectangle((34, 56, 46, 57), fill=C["steel"])
-        draw.rectangle((22, 44, 29, 57), fill=C["charcoal"])
-        draw.rectangle((35, 44, 42, 57), fill=C["charcoal"])
-        draw.rectangle((22, 44, 29, 47), fill=C["steel"])
-        draw.rectangle((35, 44, 42, 47), fill=C["steel"])
-    else:
-        draw.rounded_rectangle((18, 56, 30, 63), radius=2, fill=C["clay"])
-        draw.rounded_rectangle((34, 56, 46, 63), radius=2, fill=C["clay"])
-        draw.rectangle((18, 61, 30, 63), fill=C["wine"])
-        draw.rectangle((34, 61, 46, 63), fill=C["wine"])
-        draw.rectangle((18, 56, 30, 57), fill=C["steel"])
-        draw.rectangle((34, 56, 46, 57), fill=C["steel"])
-        draw.rectangle((22, 44, 29, 57), fill=C["charcoal"])
-        draw.rectangle((35, 44, 42, 57), fill=C["charcoal"])
-        draw.rectangle((22, 44, 29, 47), fill=C["steel"])
-        draw.rectangle((35, 44, 42, 47), fill=C["steel"])
-    # 钢制胸甲：V 领 + 上下包边
-    draw.rounded_rectangle((19, 24, 45, 42), radius=4, fill=C["steel"])
-    draw.polygon([(25, 24), (32, 32), (39, 24)], fill=C["wine"])
-    draw.rectangle((19, 24, 45, 26), fill=C["charcoal"])
-    draw.rectangle((19, 40, 45, 42), fill=C["charcoal"])
-    draw.rectangle((21, 27, 22, 39), fill=C["cream"])
-    draw.rectangle((43, 27, 44, 39), fill=C["charcoal"])
-    # 腰带 + 扣
-    draw.rectangle((19, 40, 45, 44), fill=C["clay"])
-    draw.rectangle((30, 40, 34, 44), fill=C["lemon"])
-    draw.rectangle((31, 41, 33, 43), fill=C["amber"])
+    """三视角共用：金靴、红裤腿、金护胫、黑内衬、金胸甲、腰带、护肩、手臂。"""
+    # 金靴
+    draw.rounded_rectangle((18, 56, 30, 62), radius=2, fill=C["amber"])
+    draw.rounded_rectangle((34, 56, 46, 62), radius=2, fill=C["amber"])
+    draw.rectangle((18, 61, 30, 62), fill=C["clay"])
+    draw.rectangle((34, 61, 46, 62), fill=C["clay"])
+    draw.rectangle((18, 56, 30, 57), fill=C["cream"])
+    draw.rectangle((34, 56, 46, 57), fill=C["cream"])
+    # 红裤腿 + 金护胫
+    draw.rectangle((22, 44, 29, 56), fill=C["wine"])
+    draw.rectangle((35, 44, 42, 56), fill=C["wine"])
+    draw.rectangle((22, 50, 29, 56), fill=C["amber"])
+    draw.rectangle((35, 50, 42, 56), fill=C["amber"])
+    draw.rectangle((23, 51, 24, 55), fill=C["cream"])
+    draw.rectangle((36, 51, 37, 55), fill=C["cream"])
+    # 黑色内衬
+    draw.rounded_rectangle((21, 24, 43, 44), radius=3, fill=C["charcoal"])
+    # 金色胸甲
+    draw.rounded_rectangle((24, 26, 40, 38), radius=3, fill=C["amber"])
+    draw.rectangle((25, 27, 26, 37), fill=C["cream"])
+    draw.rectangle((38, 27, 39, 37), fill=C["clay"])
+    draw.rectangle((24, 35, 40, 36), fill=C["clay"])
+    # 腰带
+    draw.rectangle((21, 39, 43, 43), fill=C["clay"])
+    draw.rectangle((30, 39, 34, 43), fill=C["beige"])
     # 护肩
-    draw.rounded_rectangle((12, 21, 23, 33), radius=4, fill=C["steel"])
-    draw.rounded_rectangle((41, 21, 52, 33), radius=4, fill=C["steel"])
-    draw.rectangle((13, 29, 22, 32), fill=C["charcoal"])
-    draw.rectangle((42, 29, 51, 32), fill=C["charcoal"])
-    draw.point((14, 23), fill=C["cream"])
-    draw.point((49, 23), fill=C["cream"])
-    # 手臂 + 护腕 + 拳头
+    draw.rounded_rectangle((11, 21, 23, 33), radius=4, fill=C["amber"])
+    draw.rounded_rectangle((41, 21, 53, 33), radius=4, fill=C["amber"])
+    draw.rectangle((12, 29, 22, 32), fill=C["clay"])
+    draw.rectangle((42, 29, 52, 32), fill=C["clay"])
+    draw.rectangle((13, 22, 21, 23), fill=C["cream"])
+    draw.rectangle((43, 22, 51, 23), fill=C["cream"])
+    # 手臂 + 金护腕
     if facing == "side":
-        draw.rectangle((38, 32, 46, 42), fill=C["crimson"])
-        draw.rectangle((38, 37, 46, 40), fill=C["steel"])
-        draw.rectangle((38, 42, 46, 47), fill=C["crimson"])
-        draw.rectangle((38, 46, 46, 47), fill=C["wine"])
+        draw.rectangle((38, 32, 46, 42), fill=C["charcoal"])
+        draw.rectangle((38, 37, 46, 44), fill=C["amber"])
+        draw.rectangle((38, 44, 46, 47), fill=C["charcoal"])
     else:
-        draw.rectangle((12, 32, 20, 44), fill=C["crimson"])
-        draw.rectangle((44, 32, 52, 44), fill=C["crimson"])
-        draw.rectangle((12, 36, 20, 40), fill=C["steel"])
-        draw.rectangle((44, 36, 52, 40), fill=C["steel"])
-        draw.rectangle((12, 44, 20, 49), fill=C["crimson"])
-        draw.rectangle((44, 44, 52, 49), fill=C["crimson"])
-        draw.rectangle((12, 48, 20, 49), fill=C["wine"])
-        draw.rectangle((44, 48, 52, 49), fill=C["wine"])
+        draw.rectangle((12, 32, 20, 42), fill=C["charcoal"])
+        draw.rectangle((44, 32, 52, 42), fill=C["charcoal"])
+        draw.rectangle((12, 37, 20, 44), fill=C["amber"])
+        draw.rectangle((44, 37, 52, 44), fill=C["amber"])
+        draw.rectangle((12, 44, 20, 47), fill=C["charcoal"])
+        draw.rectangle((44, 44, 52, 47), fill=C["charcoal"])
     # 脖子
-    draw.rectangle((28, 19, 36, 25), fill=C["crimson"])
+    draw.rectangle((28, 20, 36, 25), fill=C["charcoal"])
 
 
 def _baba_head_front(draw, frame: int) -> None:
-    # 黑色鬃毛 + 大角
-    draw.rounded_rectangle((20, 8, 44, 23), radius=4, fill=C["charcoal"])
-    draw.polygon([(24, 9), (20, 2), (25, 6), (28, 10)], fill=C["cream"])
-    draw.polygon([(40, 9), (44, 2), (39, 6), (36, 10)], fill=C["cream"])
-    # 红皮肤的脸
-    draw.rounded_rectangle((24, 7, 40, 22), radius=5, fill=C["crimson"])
-    draw.polygon([(24, 18), (26, 20), (26, 22), (38, 22), (38, 20), (40, 18)], fill=C["crimson"])
-    # 黄眼 + 黑瞳 + 怒眉
-    if frame == 0:
-        draw.rectangle((27, 12, 29, 14), fill=C["lemon"])
-        draw.rectangle((35, 12, 37, 14), fill=C["lemon"])
-        draw.rectangle((28, 12, 28, 14), fill=C["ink"])
-        draw.rectangle((36, 12, 36, 14), fill=C["ink"])
-    else:
-        draw.rectangle((27, 13, 29, 13), fill=C["lemon"])
-        draw.rectangle((35, 13, 37, 13), fill=C["lemon"])
-        draw.rectangle((28, 13, 28, 13), fill=C["ink"])
-        draw.rectangle((36, 13, 36, 13), fill=C["ink"])
-    draw.line((26, 11, 30, 12), fill=C["wine"], width=1)
-    draw.line((38, 11, 34, 12), fill=C["wine"], width=1)
-    # 鼻、嘴、獠牙
-    draw.rectangle((31, 16, 32, 17), fill=C["wine"])
-    draw.rectangle((29, 19, 35, 19), fill=C["wine"])
-    draw.point((29, 20), fill=C["cream"])
-    draw.point((35, 20), fill=C["cream"])
+    glow = C["lemon"] if frame == 0 else C["amber"]
+    # 金色头盔 + 盔顶冠脊
+    draw.rounded_rectangle((23, 5, 41, 22), radius=6, fill=C["amber"])
+    draw.rectangle((25, 6, 39, 9), fill=C["cream"])
+    draw.polygon([(29, 0), (35, 0), (38, 6), (26, 6)], fill=C["amber"])
+    draw.polygon([(30, 1), (34, 1), (36, 5), (28, 5)], fill=C["cream"])
+    # 面甲 + 发光眼
+    draw.rounded_rectangle((26, 11, 38, 21), radius=3, fill=C["charcoal"])
+    draw.polygon([(27, 13), (31, 12), (31, 15), (27, 17)], fill=glow)
+    draw.polygon([(37, 13), (33, 12), (33, 15), (37, 17)], fill=glow)
+    draw.rectangle((28, 13, 29, 15), fill=C["amber"])
+    draw.rectangle((35, 13, 36, 15), fill=C["amber"])
+    # 白发 + 颈甲
+    draw.rectangle((21, 13, 22, 24), fill=C["cream"])
+    draw.rectangle((42, 13, 43, 24), fill=C["cream"])
+    draw.point((20, 17), fill=C["cream"])
+    draw.point((44, 17), fill=C["cream"])
+    draw.rectangle((26, 21, 38, 23), fill=C["clay"])
 
 
 def _baba_head_back(draw, frame: int) -> None:
-    draw.rounded_rectangle((25, 6, 39, 22), radius=6, fill=C["crimson"])
-    draw.polygon([(24, 9), (20, 2), (25, 6), (28, 10)], fill=C["cream"])
-    draw.polygon([(40, 9), (44, 2), (39, 6), (36, 10)], fill=C["cream"])
-    draw.rounded_rectangle((20, 4, 44, 23), radius=5, fill=C["charcoal"])
+    draw.rounded_rectangle((23, 5, 41, 22), radius=6, fill=C["amber"])
+    draw.polygon([(29, 0), (35, 0), (38, 6), (26, 6)], fill=C["amber"])
+    draw.polygon([(30, 1), (34, 1), (36, 5), (28, 5)], fill=C["cream"])
+    draw.rounded_rectangle((23, 8, 41, 23), radius=3, fill=C["cream"])
     shift = 0 if frame == 0 else 1
-    draw.rectangle((30 + shift, 8, 33 + shift, 22), fill=C["wine"])
+    draw.rectangle((27 + shift, 9, 28 + shift, 23), fill=C["steel"])
+    draw.rectangle((36 + shift, 9, 37 + shift, 23), fill=C["steel"])
+    draw.rectangle((24, 21, 40, 23), fill=C["beige"])
 
 
 def _baba_head_side(draw, frame: int) -> None:
-    # 侧面：红皮肤、角、鬃毛；眼睛贴脸边
-    draw.rounded_rectangle((20, 8, 38, 23), radius=4, fill=C["charcoal"])
-    draw.polygon([(24, 9), (19, 2), (25, 6), (28, 10)], fill=C["cream"])
-    draw.rounded_rectangle((24, 7, 40, 22), radius=5, fill=C["crimson"])
-    if frame == 0:
-        draw.rectangle((38, 12, 38, 14), fill=C["lemon"])
-        draw.rectangle((38, 12, 38, 13), fill=C["ink"])
-    else:
-        draw.rectangle((38, 13, 38, 13), fill=C["lemon"])
-    draw.rectangle((30, 19, 38, 19), fill=C["wine"])
+    glow = C["lemon"] if frame == 0 else C["amber"]
+    draw.rounded_rectangle((23, 5, 41, 22), radius=6, fill=C["amber"])
+    draw.polygon([(29, 0), (35, 0), (38, 6), (26, 6)], fill=C["amber"])
+    draw.polygon([(30, 1), (34, 1), (36, 5), (28, 5)], fill=C["cream"])
+    # 侧面面甲 + 发光眼
+    draw.rounded_rectangle((30, 11, 41, 21), radius=3, fill=C["charcoal"])
+    draw.polygon([(38, 12), (41, 13), (41, 16), (38, 17)], fill=glow)
+    draw.rectangle((39, 13, 40, 15), fill=C["amber"])
+    # 白发在后
+    draw.rectangle((21, 12, 23, 24), fill=C["cream"])
+    draw.point((20, 16), fill=C["cream"])
 
 
 def _baba_view(facing: str, frame: int) -> Image.Image:
     image = Image.new("RGBA", (64, 64), (0, 0, 0, 0))
     draw = ImageDraw.Draw(image)
+    _baba_sword(draw, 46 if facing == "side" else 4, frame)
     _baba_body(draw, facing)
     heads = {"down": _baba_head_front, "up": _baba_head_back, "side": _baba_head_side}
     heads[facing](draw, frame)
