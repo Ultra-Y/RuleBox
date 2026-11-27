@@ -135,28 +135,20 @@ def _baba_head_back(draw, frame: int) -> None:
 
 
 def _baba_head_side(draw, frame: int) -> None:
-    # 侧脸朝右：脸、鼻尖、下巴
-    draw.rounded_rectangle((13, 3, 27, 14), radius=5, fill=C["beige"])
-    draw.polygon([(13, 11), (15, 12), (15, 14), (24, 14), (25, 12), (27, 11)], fill=C["beige"])
-    draw.rectangle((27, 10, 28, 12), fill=C["beige"])
-    # 深棕短发（后脑 + 头顶 + 刘海）
-    draw.rounded_rectangle((11, 2, 25, 7), radius=3, fill=C["clay"])
-    draw.polygon([(12, 7), (16, 7), (14, 9)], fill=C["clay"])
-    draw.polygon([(17, 7), (21, 7), (19, 8)], fill=C["clay"])
+    # 侧脸：头是光滑的圆角方块，没有鼻子/耳朵等突出物；眼睛贴着脸的外层
+    draw.rounded_rectangle((13, 3, 27, 14), radius=3, fill=C["beige"])
+    draw.rounded_rectangle((11, 2, 25, 7), radius=2, fill=C["clay"])
     draw.rectangle((11, 6, 13, 13), fill=C["clay"])
-    draw.rectangle((24, 7, 26, 9), fill=C["clay"])
-    # 耳朵
-    draw.rectangle((17, 9, 18, 11), fill=C["beige"])
-    draw.point((17, 10), fill=C["clay"])
-    # 眉毛 + 眼睛（第 2 帧眨眼）
-    draw.rectangle((23, 9, 26, 9), fill=C["clay"])
+    draw.rectangle((24, 7, 26, 8), fill=C["clay"])
+    draw.rectangle((24, 9, 26, 9), fill=C["clay"])
+    # 眼睛（第 2 帧眨眼）
     if frame == 0:
-        draw.rectangle((23, 10, 23, 12), fill=C["ink"])
-        draw.point((23, 10), fill=C["cream"])
+        draw.rectangle((25, 10, 25, 12), fill=C["ink"])
+        draw.point((25, 10), fill=C["cream"])
     else:
-        draw.rectangle((23, 11, 23, 11), fill=C["ink"])
+        draw.rectangle((25, 11, 25, 11), fill=C["ink"])
     # 嘴
-    draw.rectangle((24, 14, 25, 14), fill=C["wine"])
+    draw.rectangle((25, 13, 26, 13), fill=C["wine"])
 
 
 def _baba_view(facing: str, frame: int) -> Image.Image:
