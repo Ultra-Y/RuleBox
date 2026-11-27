@@ -4,7 +4,7 @@
 
 这是给下一个 AI 会话的压缩交接；细节仍以仓库和 `docs/MECHANICS.md` 为准。
 
-- **当前基线**：`218 passed`；23 个官方关卡；16 种物件、11 个带动画（水 4 帧/岩浆 3 帧）、调色板 53 项、主角 64×64（作者提供的铁甲战士三视角）；最新提交以 `git log` 为准。
+- **当前基线**：`219 passed`；23 个官方关卡；16 种物件、11 个带动画（水 4 帧/岩浆 3 帧）、调色板 53 项、主角 64×64（作者提供的铁甲战士三视角）；最新提交以 `git log` 为准。
 - **先跑**：
   ```powershell
   .\.venv\Scripts\python.exe -m pytest -q
@@ -43,7 +43,7 @@ Windows 免安装包已构建并验证：`dist/RuleBox-Windows.zip`（约 13 MB�
 | 源码 | `src/rulebox/` | core 纯逻辑，ui 用 Pygame |
 | 关卡 | ... + `main-3-1.txt`、`main-3-2.txt`、`main-3-3.txt`、`main-4-1.txt`、`main-4-2.txt`、`main-4-3.txt`、`main-5-1.txt` | 教程 01–10，第一章 1-1/1-2，第二章 2-1/2-2/2-3/2-4，第三章 3-1/3-2/3-3，第四章 4-1/4-2/4-3，第五章 5-1 |
 | 解法 | `solutions/*.txt` | `URDL` 回放串 |
-| 测试 | `tests/` | 218 条 |
+| 测试 | `tests/` | 219 条 |
 | 机制说明 | `docs/MECHANICS.md` | 结算顺序、规则语法、属性表、已知边界 |
 | 美术 | `assets/sprites/` | 15 个 16×16 + 主角 64×64（三视角）+ 16 张动画帧（DB16 配色 + 1px 描边）；人是正常人类少年（深棕短发 + 蓝 T 恤 + 牛仔裤，侧面无鼻子/耳朵突出）、狗是柴犬；水/岩浆铺满整格；生成脚本 `tools/generate_sprites.py` |
 | 发布包 | `dist/RuleBox-Windows.zip` | 约 13 MB，免安装 Windows 包；`dist/` gitignore，不提交 |
@@ -534,6 +534,14 @@ py -3.10 -m venv .venv
 - 动画从“一直向右下漂”改成左右晃：水 4 帧偏移 0/+1/0/-1，岩浆 3 帧偏移 0/+1/-1；周期保持 900ms / 1100ms。
 - 验证：218 passed；`sprites.png`、`sprites_views.png`、`sprites_anim.gif`、22 张关卡预览、`editor.png`、`word_states.png`、`rule_lock.png`、`grid_off.png`、`grid_on.png` 全部重生成。
 
+### 5.3.57 水/岩浆的点改成不规则光反射（已完成）
+
+- 每格 3 个点，位置由 `(row, col)` 哈希决定，不再整齐排列；相邻格位置不同。
+- 每格只有 1 个点会“闪”：在它的右上角画一个同样的点，原位置的点同时变暗（混入底色），下一帧亮点消失、原点恢复；另外 2 个点始终不动。
+- 点由渲染层直接画（底色用纯色填充），不再依赖贴图里的点；水 4 帧/岩浆 3 帧的帧号控制闪烁相位。
+- 测试：新增 `liquid_dots` 的位置/固定性/单闪点断言；共 219 passed。
+- 验证：`sprites.png`、`sprites_views.png`、`sprites_anim.gif`、22 张关卡预览、`editor.png`、`word_states.png`、`rule_lock.png`、`grid_off.png`、`grid_on.png` 全部重生成。
+
 ### 5.4 关卡 4–8（已完成）
 
 - **04 拆掉规则**：把「停」从「墙 是 停」中推出，规则失效后穿过整排墙；解法 `UDDDD`。
@@ -643,7 +651,7 @@ git clone RuleBox-handoff-2026-11-10.bundle RuleBox
 
 第一步：
 1. 读 AGENTS.md、docs/HANDOFF.md、docs/plan.md。
-2. 运行 .\.venv\Scripts\python.exe -m pytest -q，确认 218 passed。
+2. 运行 .\.venv\Scripts\python.exe -m pytest -q，确认 219 passed。
 3. 运行 .\.venv\Scripts\python.exe run.py，确认开始菜单能启动。
 
 约束：
@@ -659,7 +667,7 @@ git clone RuleBox-handoff-2026-11-10.bundle RuleBox
 ## 10. 交接检查清单
 
 - [x] 代码已推送，远程 = 本地
-- [x] 测试 218 passed
+- [x] 测试 219 passed
 - [x] 计划 / 清单 / AI 记录进仓库
 - [x] 交接 tag
 - [x] 新 agent 跑通测试

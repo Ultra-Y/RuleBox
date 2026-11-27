@@ -13,6 +13,7 @@ from rulebox.ui.app import (
     _move_map,
     entity_rect,
     floor_color,
+    liquid_dots,
     liquid_open_sides,
 )
 
@@ -87,3 +88,17 @@ def test_liquid_open_sides_follow_neighbors():
     assert liquid_open_sides(world, 1, 1, "water") == (True, False, True, True)
     # (1,2)：左边是水，右边是火
     assert liquid_open_sides(world, 1, 2, "water") == (True, True, True, False)
+
+
+def test_liquid_dots_are_irregular_and_some_twinkle():
+    dots = liquid_dots(2, 3, 40)
+    assert len(dots) == 3
+    # 三个点位置互不相同、每格结果固定
+    assert len({(dx, dy) for dx, dy, _ in dots}) == 3
+    assert dots == liquid_dots(2, 3, 40)
+    # 每格只有 1 个点会闪，另外 2 个不动
+    assert sum(1 for _, _, twinkle in dots if twinkle) == 1
+    # 相邻格子的点位置不同，避免整齐排列
+    assert {(dx, dy) for dx, dy, _ in dots} != {
+        (dx, dy) for dx, dy, _ in liquid_dots(2, 4, 40)
+    }

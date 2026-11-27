@@ -21,7 +21,7 @@ from ..core.rules import (
     parse_rules,
 )
 from .editor import Editor
-from .sprites import animation_frame, draw_object, sprite_for
+from .sprites import animation_frame, draw_object
 
 WIDTH, HEIGHT = 980, 680
 MARGIN, TOP, BOTTOM = 40, 100, 170
@@ -32,6 +32,35 @@ FLOOR_B = (56, 60, 74)
 GRID_LINE = (34, 36, 46)
 LIQUIDS = {"water", "lava"}
 LIQUID_BORDER = (30, 24, 30)
+LIQUID_STYLE = {
+    "water": ((48, 105, 210), (250, 250, 245)),
+    "lava": ((210, 85, 35), (25, 18, 22)),
+}
+
+
+def _mix(row: int, col: int, salt: int) -> int:
+    n = (row * 374761393 + col * 668265263 + salt * 2246822519) & 0xFFFFFFFF
+    n = ((n ^ (n >> 13)) * 1274126177) & 0xFFFFFFFF
+    return (n ^ (n >> 16)) & 0xFFFFFFFF
+
+
+def liquid_dots(row: int, col: int, cell: int):
+    """每格 3 个位置不规则的点；其中 1 个会闪，另外 2 个不动。"""
+    margin = max(3, cell // 14)
+    span = max(1, cell - margin * 2)
+    twinkle_index = _mix(row, col, 9) % 3
+    dots = []
+    for index in range(3):
+        h = _mix(row, col, index)
+        dx = margin + h % span
+        dy = margin + (h >> 8) % span
+        dots.append((dx, dy, index == twinkle_index))
+    return tuple(dots)
+
+
+def _blend(a, b, t: float):
+    return tuple(round(x + (y - x) * t) for x, y in zip(a, b))
+
 
 
 def liquid_open_sides(world, row: int, col: int, liquid: str):
@@ -836,16 +865,40 @@ def _draw_select(screen, app: _App, chrome) -> None:
 
 
 def _draw_liquid(screen, world, entity, x: int, y: int, cell: int, row: int, col: int, floor, frame: int) -> bool:
-    """水/岩浆铺满整格；只在“露在外面”的边画空隙和描边。"""
+    """水/岩浆铺满整格：纯色底 + 不规则的点；部分点闪一下，模拟光反射。"""
     import pygame
 
-    sprite = sprite_for(entity.id, cell, frame)
-    if sprite is None:
-        return False
-    screen.blit(sprite, (x, y))
+    base, dot_color = LIQUID_STYLE[entity.id]
+    pygame.draw.rect(screen, base, (x, y, cell, cell))
+
     top, right, bottom, left = liquid_open_sides(world, row, col, entity.id)
     gap = max(2, cell // 16)
     border = max(1, cell // 24)
+    inset_left = gap + border if left else 0
+    inset_right = gap + border if right else 0
+    inset_top = gap + border if top else 0
+    inset_bottom = gap + border if bottom else 0
+    inner = pygame.Rect(
+        x + inset_left,
+        y + inset_top,
+        cell - inset_left - inset_right,
+        cell - inset_top - inset_bottom,
+    )
+
+    size = max(2, cell // 12)
+    shift = max(2, cell // 14)
+    dim = _blend(dot_color, base, 0.55)
+    if inner.width >= size and inner.height >= size:
+        for dx, dy, twinkle in liquid_dots(row, col, cell):
+            px = min(max(x + dx, inner.left), inner.right - size)
+            py = min(max(y + dy, inner.top), inner.bottom - size)
+            if twinkle and frame % 2 == 1:
+                # 右上角冒出一个同样的点，原点变暗；下一帧消失、原点恢复。
+                pygame.draw.rect(screen, dot_color, (px + shift, py - shift, size, size))
+                pygame.draw.rect(screen, dim, (px, py, size, size))
+            else:
+                pygame.draw.rect(screen, dot_color, (px, py, size, size))
+
     if top:
         pygame.draw.rect(screen, floor, (x, y, cell, gap))
         pygame.draw.rect(screen, LIQUID_BORDER, (x, y + gap, cell, border))
