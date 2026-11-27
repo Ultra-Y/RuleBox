@@ -8,8 +8,17 @@ from ..core.catalog import BUNDLE_ROOT
 
 SPRITE_DIR = BUNDLE_ROOT / "assets" / "sprites"
 _CACHE: dict[tuple[str, int, int], object | None] = {}
+_FLIPPED: dict[tuple[str, int, int], object] = {}
 
 # 待机动画：物件 -> (每帧毫秒, 帧序列)。序列可以重复帧，用来做“眨一下”这种短动作。
+# 主角的朝向 -> 精灵名；left/right 共用侧面，left 由渲染层水平翻转。
+BABA_VIEWS = {
+    "down": "baba",
+    "up": "baba-up",
+    "left": "baba-side",
+    "right": "baba-side",
+}
+
 ANIMATIONS: dict[str, tuple[int, tuple[int, ...]]] = {
     "baba": (320, (0, 0, 0, 1)),
     "dog": (420, (0, 1)),
@@ -32,6 +41,11 @@ def animation_frame(object_id: str, ticks: int) -> int:
         return 0
     period, pattern = animation
     return pattern[(ticks // period) % len(pattern)]
+
+
+def baba_sprite_name(facing: str) -> str:
+    """朝向对应的精灵名；未知朝向回退正面。"""
+    return BABA_VIEWS.get(facing, "baba")
 
 
 def sprite_for(object_id: str, size: int, frame: int = 0):
@@ -64,12 +78,28 @@ def sprite_for(object_id: str, size: int, frame: int = 0):
     return image
 
 
-def draw_object(screen, entity, rect, frame: int = 0) -> bool:
-    """在 rect 内居中绘制物件精灵；词块或缺图返回 False。"""
+def draw_object(screen, entity, rect, frame: int = 0, facing: str | None = None) -> bool:
+    """在 rect 内居中绘制物件精灵；词块或缺图返回 False。
+
+    主角可以按朝向换精灵：下=正面、上=背面、左右=侧面（左为水平翻转）。
+    """
     if entity is None or entity.is_word or entity.kind != "object":
         return False
     size = max(8, min(rect.width, rect.height))
-    sprite = sprite_for(entity.id, size, frame)
+    if entity.id == "baba" and facing in BABA_VIEWS:
+        import pygame
+
+        name = baba_sprite_name(facing)
+        sprite = sprite_for(name, size, frame)
+        if sprite is not None and facing == "left":
+            key = (name, size, frame)
+            flipped = _FLIPPED.get(key)
+            if flipped is None:
+                flipped = pygame.transform.flip(sprite, True, False)
+                _FLIPPED[key] = flipped
+            sprite = flipped
+    else:
+        sprite = sprite_for(entity.id, size, frame)
     if sprite is None:
         return False
     screen.blit(sprite, sprite.get_rect(center=rect.center))

@@ -61,6 +61,7 @@ class _App:
         self.editor: Editor | None = None
         self.layout: tuple[int, int, int] | None = None
         self.fonts: dict | None = None
+        self.facing = "down"
 
     def start_index(self, index: int, entries=None) -> None:
         entries = list(entries) if entries is not None else list(self.entries)
@@ -109,6 +110,7 @@ class _App:
             "word": _font(max(12, cell // 3)),
         }
         self.screen = "play"
+        self.facing = "down"
 
     def mark_win(self) -> None:
         if self.level_index is not None and self.level_index < len(self.play_entries):
@@ -253,7 +255,7 @@ def main(argv: list[str] | None = None) -> int:
     parsed = _parse_args(args)
     if parsed is None:
         return 0
-    level_path, frames, shot, debug_keys, start_editor = parsed
+    level_path, frames, shot, debug_keys, start_editor, facing = parsed
     if level_path is not None and not level_path.exists():
         print(f"找不到关卡：{level_path}", file=sys.stderr)
         return 2
@@ -288,6 +290,7 @@ def main(argv: list[str] | None = None) -> int:
         shot,
         debug_keys,
         start_editor,
+        facing,
     )
 
 
@@ -297,13 +300,14 @@ def _parse_args(args: list[str]):
     shot: Path | None = None
     debug_keys = False
     start_editor = False
+    facing = "down"
     i = 0
     while i < len(args):
         arg = args[i]
         if arg in ("-h", "--help"):
             print(
                 "用法：python run.py [关卡文件] [--editor] [--frames N] "
-                "[--shot 图片路径] [--debug-keys]"
+                "[--shot 图片路径] [--facing down|up|left|right] [--debug-keys]"
             )
             return None
         if arg == "--frames":
@@ -321,6 +325,13 @@ def _parse_args(args: list[str]):
             shot = Path(args[i + 1])
             i += 2
             continue
+        if arg == "--facing":
+            if i + 1 >= len(args) or args[i + 1] not in ("down", "up", "left", "right"):
+                print("--facing 需要 down/up/left/right", file=sys.stderr)
+                return None
+            facing = args[i + 1]
+            i += 2
+            continue
         if arg == "--debug-keys":
             debug_keys = True
             i += 1
@@ -331,7 +342,7 @@ def _parse_args(args: list[str]):
             continue
         level_path = Path(arg)
         i += 1
-    return level_path, frames, shot, debug_keys, start_editor
+    return level_path, frames, shot, debug_keys, start_editor, facing
 
 
 def _run(
@@ -343,6 +354,7 @@ def _run(
     shot,
     debug_keys: bool,
     start_editor: bool = False,
+    facing: str = "down",
 ) -> int:
     import pygame
 
@@ -377,6 +389,8 @@ def _run(
         app.start_path(initial_level)
     else:
         app.screen = "menu"
+    if app.screen == "play":
+        app.facing = facing
     moves = _move_map()
 
     running = True
@@ -575,6 +589,13 @@ def _handle_play(app: _App, key: int, text: str, moves) -> bool:
         app.next_level()
         return True
 
+    direction = moves.get(key)
+    if direction is not None and not game.won and not game.lost:
+        dr, dc = direction
+        app.facing = "up" if dr < 0 else "down" if dr > 0 else "left" if dc < 0 else "right"
+    if key == pygame.K_r or (text or "").lower() == "r":
+        app.facing = "down"
+
     _handle_key(game, key, text, moves)
     if game.won:
         app.mark_win()
@@ -584,6 +605,7 @@ def _handle_play(app: _App, key: int, text: str, moves) -> bool:
 def _move_game(app: _App, dr: int, dc: int) -> None:
     if app.game is None:
         return
+    app.facing = "up" if dr < 0 else "down" if dr > 0 else "left" if dc < 0 else "right"
     if app.game.move(dr, dc).won:
         app.mark_win()
 
@@ -791,7 +813,7 @@ def _draw_play(screen, app: _App, chrome) -> None:
             for entity in world.entities_at(row, col):
                 inset = max(3, cell // 12)
                 rect = pygame.Rect(x + inset, y + inset, cell - inset * 2, cell - inset * 2)
-                if draw_object(screen, entity, rect, animation_frame(entity.id, ticks)):
+                if draw_object(screen, entity, rect, animation_frame(entity.id, ticks), app.facing):
                     continue
                 color = entity.color
                 if entity.is_word and (row, col) not in active_words:

@@ -18,16 +18,26 @@ def png_size(path: Path) -> tuple[int, int]:
 
 def test_every_object_has_a_sprite():
     for object_id in OBJECTS:
-        expected = (32, 32) if object_id == "baba" else (16, 16)
+        expected = (40, 40) if object_id == "baba" else (16, 16)
         path = SPRITE_DIR / f"{object_id}.png"
         assert path.exists(), f"缺少精灵：{object_id}"
         assert png_size(path) == expected, object_id
 
 
 def test_baba_uses_higher_resolution():
-    # 主角单独用 32×32，其他物件保持 16×16。
-    assert png_size(SPRITE_DIR / "baba.png") == (32, 32)
-    assert png_size(SPRITE_DIR / "baba-1.png") == (32, 32)
+    # 主角单独用 40×40，其他物件保持 16×16。
+    assert png_size(SPRITE_DIR / "baba.png") == (40, 40)
+    assert png_size(SPRITE_DIR / "baba-1.png") == (40, 40)
+
+
+def test_baba_has_directional_views():
+    # 正面 baba 之外，背面/侧面各有两帧。
+    for name in ("baba-up", "baba-side"):
+        first = SPRITE_DIR / f"{name}.png"
+        second = SPRITE_DIR / f"{name}-1.png"
+        assert png_size(first) == (40, 40), name
+        assert png_size(second) == (40, 40), name
+        assert first.read_bytes() != second.read_bytes(), name
 
 
 def test_new_nouns_are_playable_objects():

@@ -28,7 +28,7 @@ def test_animated_objects_have_two_different_frames():
         second = SPRITE_DIR / f"{object_id}-1.png"
         assert first.exists(), f"缺少第一帧：{object_id}"
         assert second.exists(), f"缺少第二帧：{object_id}"
-        expected = (32, 32) if object_id == "baba" else (16, 16)
+        expected = (40, 40) if object_id == "baba" else (16, 16)
         assert png_size(first) == expected
         assert png_size(second) == expected
         assert first.read_bytes() != second.read_bytes(), f"{object_id} 两帧一样"
@@ -83,6 +83,16 @@ def test_static_objects_never_animate():
 def test_animation_is_deterministic():
     for ticks in (0, 1, 999, 100_000):
         assert animation_frame("fire", ticks) == animation_frame("fire", ticks)
+
+
+def test_baba_view_names():
+    from rulebox.ui.sprites import baba_sprite_name
+
+    assert baba_sprite_name("down") == "baba"
+    assert baba_sprite_name("up") == "baba-up"
+    assert baba_sprite_name("left") == "baba-side"
+    assert baba_sprite_name("right") == "baba-side"
+    assert baba_sprite_name("nonsense") == "baba"
 
 
 def test_sprite_loading_supports_frames():
