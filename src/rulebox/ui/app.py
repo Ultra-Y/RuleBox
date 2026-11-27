@@ -30,7 +30,7 @@ BG = (24, 26, 34)
 FLOOR_A = (50, 54, 66)
 FLOOR_B = (56, 60, 74)
 GRID_LINE = (34, 36, 46)
-FULL_TILE_OBJECTS = {"wall", "water", "lava"}
+FULL_TILE_OBJECTS = {"water", "lava"}
 
 
 def floor_color(row: int, col: int, show_grid: bool):
@@ -41,7 +41,7 @@ def floor_color(row: int, col: int, show_grid: bool):
 
 
 def entity_rect(x: int, y: int, cell: int, entity):
-    """墙/水/岩浆铺满整格；其他物件留出内边距。"""
+    """水/岩浆铺满整格；其他物件留出内边距。"""
     import pygame
 
     if entity.kind == "object" and entity.id in FULL_TILE_OBJECTS:

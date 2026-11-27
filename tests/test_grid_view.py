@@ -40,15 +40,16 @@ def test_floor_color_toggles_checkerboard():
 
 
 def test_full_tile_objects_use_full_cell():
-    for object_id in ("wall", "water", "lava"):
+    for object_id in ("water", "lava"):
         entity = SimpleNamespace(kind="object", id=object_id)
         rect = entity_rect(40, 50, 60, entity)
         assert (rect.x, rect.y, rect.width, rect.height) == (40, 50, 60, 60)
 
-    dog = SimpleNamespace(kind="object", id="dog")
-    rect = entity_rect(40, 50, 60, dog)
-    assert rect.width < 60 and rect.height < 60
-    assert rect.x > 40 and rect.y > 50
+    for object_id in ("wall", "dog"):
+        entity = SimpleNamespace(kind="object", id=object_id)
+        rect = entity_rect(40, 50, 60, entity)
+        assert rect.width < 60 and rect.height < 60
+        assert rect.x > 40 and rect.y > 50
 
     word = SimpleNamespace(kind="word", id="word")
     assert entity_rect(40, 50, 60, word).width < 60

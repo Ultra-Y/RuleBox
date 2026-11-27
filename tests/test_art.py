@@ -18,16 +18,16 @@ def png_size(path: Path) -> tuple[int, int]:
 
 def test_every_object_has_a_sprite():
     for object_id in OBJECTS:
-        expected = (64, 64)
+        expected = (16, 16)
         path = SPRITE_DIR / f"{object_id}.png"
         assert path.exists(), f"缺少精灵：{object_id}"
         assert png_size(path) == expected, object_id
 
 
-def test_baba_uses_higher_resolution():
-    # 主角和其他物件都是作者提供的 64×64 素材。
-    assert png_size(SPRITE_DIR / "baba.png") == (64, 64)
-    assert png_size(SPRITE_DIR / "baba-1.png") == (64, 64)
+def test_baba_has_two_frames():
+    assert png_size(SPRITE_DIR / "baba.png") == (16, 16)
+    assert png_size(SPRITE_DIR / "baba-1.png") == (16, 16)
+    assert (SPRITE_DIR / "baba.png").read_bytes() != (SPRITE_DIR / "baba-1.png").read_bytes()
 
 
 def test_baba_has_directional_views():
@@ -35,8 +35,8 @@ def test_baba_has_directional_views():
     for name in ("baba-up", "baba-side"):
         first = SPRITE_DIR / f"{name}.png"
         second = SPRITE_DIR / f"{name}-1.png"
-        assert png_size(first) == (64, 64), name
-        assert png_size(second) == (64, 64), name
+        assert png_size(first) == (16, 16), name
+        assert png_size(second) == (16, 16), name
         assert first.read_bytes() != second.read_bytes(), name
 
 
@@ -67,8 +67,8 @@ def test_liquid_tiles_cover_the_whole_cell():
 
     for object_id in ("water", "lava"):
         image = pygame.image.load(str(SPRITE_DIR / f"{object_id}.png"))
-        assert image.get_size() == (64, 64), object_id
-        for x in range(64):
-            for y in range(64):
+        assert image.get_size() == (16, 16), object_id
+        for x in range(16):
+            for y in range(16):
                 assert image.get_at((x, y)).a == 255, f"{object_id} 在 ({x},{y}) 是透明的"
 

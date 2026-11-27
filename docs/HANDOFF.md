@@ -474,6 +474,16 @@ py -3.10 -m venv .venv
 - 测试：`floor_color`（棋盘格/单色）、`entity_rect`（墙/水/岩浆整格，其他内缩）、`G` 键切换，新增 `tests/test_grid_view.py`。
 - 验证：216 passed；22 张关卡预览、`editor.png`、`word_states.png`、`rule_lock.png` 全部重生成。
 
+### 5.3.49 美术回退到交接版 + 重新加回新物件/功能（已完成）
+
+- 按“回退版本、只加这次新增的物件和功能、原来的人等形象保持不变”处理；git 历史保留，新提交只改内容。
+- 恢复交接版的 10 个 16×16 精灵（人/墙/箱/旗/水/火/石/门/钥/传送门）；主角仍是原来的黄色小人。
+- 补回新物件：狗、猫、花、树、鱼（16×16，沿用早期新增时的图）和岩浆（16×16，3 帧）。
+- 功能：待机动画（原有物件用原图做眨眼/亮度帧；新物件用它们的 2 帧）、水/岩浆铺满整格、G 网格开关、主角正/背/侧三视角（新画 16×16 侧/背，朝左翻转）。
+- 清理：删除 64×64 AI 素材、`tools/source/`、`docs/ART-PROMPTS.md`；`tools/generate_sprites.py` 改成只合成 `docs/sprites.png` / `sprites_views.png` / `sprites_anim.gif`。
+- 测试：尺寸断言改回 16×16；`test_grid_view` 只让水/岩浆整格；共 216 passed。
+- 验证：22 张关卡预览、`editor.png`、`word_states.png`、`rule_lock.png` 全部重生成。
+
 ### 5.4 关卡 4–8（已完成）
 
 - **04 拆掉规则**：把「停」从「墙 是 停」中推出，规则失效后穿过整排墙；解法 `UDDDD`。
