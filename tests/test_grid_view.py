@@ -24,7 +24,7 @@ class FakeApp:
         self.game = Game(load_level(LEVEL))
         self.facing = "down"
         self.play_return = "menu"
-        self.show_grid = True
+        self.show_grid = False
         self.won = False
 
     def mark_win(self):
@@ -60,10 +60,10 @@ def test_g_toggles_grid():
 
     app = FakeApp()
     moves = _move_map()
-    assert app.show_grid is True
-
-    _handle_play(app, pygame.K_g, "g", moves)
     assert app.show_grid is False
 
     _handle_play(app, pygame.K_g, "g", moves)
     assert app.show_grid is True
+
+    _handle_play(app, pygame.K_g, "g", moves)
+    assert app.show_grid is False

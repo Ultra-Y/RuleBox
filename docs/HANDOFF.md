@@ -4,7 +4,7 @@
 
 这是给下一个 AI 会话的压缩交接；细节仍以仓库和 `docs/MECHANICS.md` 为准。
 
-- **当前基线**：`216 passed`；23 个官方关卡；16 种物件、11 个带动画（水 4 帧/岩浆 3 帧）、调色板 53 项、主角 64×64（作者提供的铁甲战士三视角）；最新提交以 `git log` 为准。
+- **当前基线**：`217 passed`；23 个官方关卡；16 种物件、11 个带动画（水 4 帧/岩浆 3 帧）、调色板 53 项、主角 64×64（作者提供的铁甲战士三视角）；最新提交以 `git log` 为准。
 - **先跑**：
   ```powershell
   .\.venv\Scripts\python.exe -m pytest -q
@@ -43,7 +43,7 @@ Windows 免安装包已构建并验证：`dist/RuleBox-Windows.zip`（约 13 MB�
 | 源码 | `src/rulebox/` | core 纯逻辑，ui 用 Pygame |
 | 关卡 | ... + `main-3-1.txt`、`main-3-2.txt`、`main-3-3.txt`、`main-4-1.txt`、`main-4-2.txt`、`main-4-3.txt`、`main-5-1.txt` | 教程 01–10，第一章 1-1/1-2，第二章 2-1/2-2/2-3/2-4，第三章 3-1/3-2/3-3，第四章 4-1/4-2/4-3，第五章 5-1 |
 | 解法 | `solutions/*.txt` | `URDL` 回放串 |
-| 测试 | `tests/` | 216 条 |
+| 测试 | `tests/` | 217 条 |
 | 机制说明 | `docs/MECHANICS.md` | 结算顺序、规则语法、属性表、已知边界 |
 | 美术 | `assets/sprites/` | 15 个 16×16 + 主角 64×64（三视角）+ 16 张动画帧（DB16 配色 + 1px 描边）；人是正常人类少年（深棕短发 + 蓝 T 恤 + 牛仔裤，侧面无鼻子/耳朵突出）、狗是柴犬；水/岩浆铺满整格；生成脚本 `tools/generate_sprites.py` |
 | 发布包 | `dist/RuleBox-Windows.zip` | 约 13 MB，免安装 Windows 包；`dist/` gitignore，不提交 |
@@ -497,6 +497,13 @@ py -3.10 -m venv .venv
 - 把 `baba-side.png` / `baba-side-1.png` 水平镜像，侧面默认朝右；渲染层仍然“向左时翻转”，左右方向就对了。
 - 验证：216 passed；`sprites_views.png`、动图、22 张关卡预览、编辑器截图重生成。
 
+### 5.3.52 网格默认关闭 + 狗换新柴犬（已完成）
+
+- 网格默认隐藏：`_App.show_grid` 初值改为 `False`，删掉默认的深浅棋盘和格子线；按 **G** 仍可打开，`run.py --grid` 可截图用。
+- 狗换成作者给的新柴犬侧视图（两帧），裁切/缩放到 **32×32**；猫/鱼/花/树/岩浆等仍 16×16。
+- 测试：新增 `test_dog_uses_the_new_shiba_art`；`test_grid_view` 默认值改为关闭；共 217 passed。
+- 验证：`sprites.png`、`sprites_views.png`、`sprites_anim.gif`、22 张关卡预览、`editor.png`、`word_states.png`、`rule_lock.png`、`grid_off.png` 全部重生成。
+
 ### 5.4 关卡 4–8（已完成）
 
 - **04 拆掉规则**：把「停」从「墙 是 停」中推出，规则失效后穿过整排墙；解法 `UDDDD`。
@@ -606,7 +613,7 @@ git clone RuleBox-handoff-2026-11-10.bundle RuleBox
 
 第一步：
 1. 读 AGENTS.md、docs/HANDOFF.md、docs/plan.md。
-2. 运行 .\.venv\Scripts\python.exe -m pytest -q，确认 216 passed。
+2. 运行 .\.venv\Scripts\python.exe -m pytest -q，确认 217 passed。
 3. 运行 .\.venv\Scripts\python.exe run.py，确认开始菜单能启动。
 
 约束：
@@ -622,7 +629,7 @@ git clone RuleBox-handoff-2026-11-10.bundle RuleBox
 ## 10. 交接检查清单
 
 - [x] 代码已推送，远程 = 本地
-- [x] 测试 216 passed
+- [x] 测试 217 passed
 - [x] 计划 / 清单 / AI 记录进仓库
 - [x] 交接 tag
 - [x] 新 agent 跑通测试

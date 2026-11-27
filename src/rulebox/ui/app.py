@@ -80,7 +80,7 @@ class _App:
         self.layout: tuple[int, int, int] | None = None
         self.fonts: dict | None = None
         self.facing = "down"
-        self.show_grid = True
+        self.show_grid = False
 
     def start_index(self, index: int, entries=None) -> None:
         entries = list(entries) if entries is not None else list(self.entries)
@@ -321,14 +321,14 @@ def _parse_args(args: list[str]):
     debug_keys = False
     start_editor = False
     facing = "down"
-    show_grid = True
+    show_grid = False
     i = 0
     while i < len(args):
         arg = args[i]
         if arg in ("-h", "--help"):
             print(
                 "用法：python run.py [关卡文件] [--editor] [--frames N] "
-                "[--shot 图片路径] [--facing down|up|left|right] [--no-grid] [--debug-keys]"
+                "[--shot 图片路径] [--facing down|up|left|right] [--grid] [--debug-keys]"
             )
             return None
         if arg == "--frames":
@@ -352,6 +352,10 @@ def _parse_args(args: list[str]):
                 return None
             facing = args[i + 1]
             i += 2
+            continue
+        if arg == "--grid":
+            show_grid = True
+            i += 1
             continue
         if arg == "--no-grid":
             show_grid = False
@@ -380,7 +384,7 @@ def _run(
     debug_keys: bool,
     start_editor: bool = False,
     facing: str = "down",
-    show_grid: bool = True,
+    show_grid: bool = False,
 ) -> int:
     import pygame
 

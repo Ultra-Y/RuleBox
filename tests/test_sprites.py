@@ -11,5 +11,5 @@ def test_pixel_sprites_have_expected_size():
         data = (ROOT / "assets" / "sprites" / f"{name}.png").read_bytes()
         assert data[:8] == b"\x89PNG\r\n\x1a\n", name
         width, height = struct.unpack(">II", data[16:24])
-        expected = (16, 16)
+        expected = (32, 32) if name == "dog" else (16, 16)
         assert (width, height) == expected, name

@@ -18,10 +18,17 @@ def png_size(path: Path) -> tuple[int, int]:
 
 def test_every_object_has_a_sprite():
     for object_id in OBJECTS:
-        expected = (16, 16)
+        expected = (32, 32) if object_id == "dog" else (16, 16)
         path = SPRITE_DIR / f"{object_id}.png"
         assert path.exists(), f"缺少精灵：{object_id}"
         assert png_size(path) == expected, object_id
+
+
+def test_dog_uses_the_new_shiba_art():
+    # 新狗是 32×32，其它物件保持 16×16。
+    assert png_size(SPRITE_DIR / "dog.png") == (32, 32)
+    assert png_size(SPRITE_DIR / "dog-1.png") == (32, 32)
+    assert (SPRITE_DIR / "dog.png").read_bytes() != (SPRITE_DIR / "dog-1.png").read_bytes()
 
 
 def test_baba_has_two_frames():
