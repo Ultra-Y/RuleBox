@@ -69,15 +69,13 @@ def test_sprite_sheet_covers_every_object():
     assert (width, height) == (5 * 72, rows * 72)
 
 
-def test_liquid_tiles_have_border_and_margin():
+def test_liquid_tiles_are_full_bleed():
     import pygame
 
     for object_id in ("water", "lava"):
         image = pygame.image.load(str(SPRITE_DIR / f"{object_id}.png"))
         assert image.get_size() == (16, 16), object_id
-        # 四角留空，1px 描边，里面是内容
-        for x, y in ((0, 0), (15, 0), (0, 15), (15, 15)):
-            assert image.get_at((x, y)).a == 0, f"{object_id} 在 ({x},{y}) 应该空着"
-        assert image.get_at((1, 1)).a == 255, object_id
-        assert image.get_at((2, 2)).a == 255, object_id
+        for x in range(16):
+            for y in range(16):
+                assert image.get_at((x, y)).a == 255, f"{object_id} 在 ({x},{y}) 是透明的"
 

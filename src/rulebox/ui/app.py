@@ -21,7 +21,7 @@ from ..core.rules import (
     parse_rules,
 )
 from .editor import Editor
-from .sprites import animation_frame, draw_object
+from .sprites import animation_frame, draw_object, sprite_for
 
 WIDTH, HEIGHT = 980, 680
 MARGIN, TOP, BOTTOM = 40, 100, 170
@@ -30,6 +30,26 @@ BG = (24, 26, 34)
 FLOOR_A = (50, 54, 66)
 FLOOR_B = (56, 60, 74)
 GRID_LINE = (34, 36, 46)
+LIQUIDS = {"water", "lava"}
+LIQUID_BORDER = (30, 24, 30)
+
+
+def liquid_open_sides(world, row: int, col: int, liquid: str):
+    """返回上/右/下/左四条边是否“露在外面”（邻居不是同种液体）。"""
+    open_sides = []
+    for dr, dc in ((-1, 0), (0, 1), (1, 0), (0, -1)):
+        nr, nc = row + dr, col + dc
+        if not (0 <= nr < world.height and 0 <= nc < world.width):
+            open_sides.append(True)
+            continue
+        same = any(
+            entity.kind == "object" and entity.id == liquid
+            for entity in world.entities_at(nr, nc)
+        )
+        open_sides.append(not same)
+    return tuple(open_sides)
+
+
 def floor_color(row: int, col: int, show_grid: bool):
     """显示网格时用深浅交替的地板；隐藏网格时用单色地板。"""
     if not show_grid:
@@ -815,6 +835,32 @@ def _draw_select(screen, app: _App, chrome) -> None:
     screen.blit(tip, tip.get_rect(center=(WIDTH // 2, 650)))
 
 
+def _draw_liquid(screen, world, entity, x: int, y: int, cell: int, row: int, col: int, floor, frame: int) -> bool:
+    """水/岩浆铺满整格；只在“露在外面”的边画空隙和描边。"""
+    import pygame
+
+    sprite = sprite_for(entity.id, cell, frame)
+    if sprite is None:
+        return False
+    screen.blit(sprite, (x, y))
+    top, right, bottom, left = liquid_open_sides(world, row, col, entity.id)
+    gap = max(2, cell // 16)
+    border = max(1, cell // 24)
+    if top:
+        pygame.draw.rect(screen, floor, (x, y, cell, gap))
+        pygame.draw.rect(screen, LIQUID_BORDER, (x, y + gap, cell, border))
+    if bottom:
+        pygame.draw.rect(screen, floor, (x, y + cell - gap, cell, gap))
+        pygame.draw.rect(screen, LIQUID_BORDER, (x, y + cell - gap - border, cell, border))
+    if left:
+        pygame.draw.rect(screen, floor, (x, y, gap, cell))
+        pygame.draw.rect(screen, LIQUID_BORDER, (x + gap, y, border, cell))
+    if right:
+        pygame.draw.rect(screen, floor, (x + cell - gap, y, gap, cell))
+        pygame.draw.rect(screen, LIQUID_BORDER, (x + cell - gap - border, y, border, cell))
+    return True
+
+
 def _draw_play(screen, app: _App, chrome) -> None:
     import pygame
 
@@ -841,8 +887,13 @@ def _draw_play(screen, app: _App, chrome) -> None:
                 pygame.draw.rect(screen, GRID_LINE, (x, y, cell, cell), 1)
 
             for entity in world.entities_at(row, col):
+                frame = animation_frame(entity.id, ticks)
+                if entity.kind == "object" and entity.id in LIQUIDS:
+                    floor = floor_color(row, col, app.show_grid)
+                    _draw_liquid(screen, world, entity, x, y, cell, row, col, floor, frame)
+                    continue
                 rect = entity_rect(x, y, cell, entity)
-                if draw_object(screen, entity, rect, animation_frame(entity.id, ticks), app.facing):
+                if draw_object(screen, entity, rect, frame, app.facing):
                     continue
                 color = entity.color
                 if entity.is_word and (row, col) not in active_words:

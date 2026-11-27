@@ -1,6 +1,6 @@
 # RuleBox 机制说明
 
-> 对应代码：`src/rulebox/core/` 与 `src/rulebox/ui/`。测试基线 217 条。
+> 对应代码：`src/rulebox/core/` 与 `src/rulebox/ui/`。测试基线 218 条。
 > 这份文档解释“玩家看到的规则”和“代码实际的结算顺序”。
 
 ## 1. 世界模型

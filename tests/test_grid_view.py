@@ -5,7 +5,7 @@ from types import SimpleNamespace
 os.environ.setdefault("SDL_VIDEODRIVER", "dummy")
 
 from rulebox.core.game import Game
-from rulebox.core.level import load_level
+from rulebox.core.level import load_level, parse_level
 from rulebox.ui.app import (
     FLOOR_A,
     FLOOR_B,
@@ -13,6 +13,7 @@ from rulebox.ui.app import (
     _move_map,
     entity_rect,
     floor_color,
+    liquid_open_sides,
 )
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -62,3 +63,27 @@ def test_g_toggles_grid():
 
     _handle_play(app, pygame.K_g, "g", moves)
     assert app.show_grid is False
+
+
+WATER_LEVEL = """\
+name 水边
+size 6 3
+legend
+  # wall
+  . empty
+  ~ water
+  ^ fire
+grid
+  ######
+  #~~^.#
+  ######
+"""
+
+
+def test_liquid_open_sides_follow_neighbors():
+    world = Game(parse_level(WATER_LEVEL)).world
+
+    # (1,1)：右边是水，其余是墙/火 → 上/右/下/左 = 开/连/开/开
+    assert liquid_open_sides(world, 1, 1, "water") == (True, False, True, True)
+    # (1,2)：左边是水，右边是火
+    assert liquid_open_sides(world, 1, 2, "water") == (True, True, True, False)
