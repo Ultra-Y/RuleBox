@@ -30,9 +30,6 @@ BG = (24, 26, 34)
 FLOOR_A = (50, 54, 66)
 FLOOR_B = (56, 60, 74)
 GRID_LINE = (34, 36, 46)
-FULL_TILE_OBJECTS = {"water", "lava"}
-
-
 def floor_color(row: int, col: int, show_grid: bool):
     """显示网格时用深浅交替的地板；隐藏网格时用单色地板。"""
     if not show_grid:
@@ -41,11 +38,9 @@ def floor_color(row: int, col: int, show_grid: bool):
 
 
 def entity_rect(x: int, y: int, cell: int, entity):
-    """水/岩浆铺满整格；其他物件留出内边距。"""
+    """所有物件都留出内边距（水和岩浆现在是带边框的小块，不再铺满）。"""
     import pygame
 
-    if entity.kind == "object" and entity.id in FULL_TILE_OBJECTS:
-        return pygame.Rect(x, y, cell, cell)
     inset = max(3, cell // 12)
     return pygame.Rect(x + inset, y + inset, cell - inset * 2, cell - inset * 2)
 TITLE = (236, 238, 245)

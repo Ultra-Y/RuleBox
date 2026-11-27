@@ -39,13 +39,8 @@ def test_floor_color_toggles_checkerboard():
     assert floor_color(0, 1, False) == FLOOR_A
 
 
-def test_full_tile_objects_use_full_cell():
-    for object_id in ("water", "lava"):
-        entity = SimpleNamespace(kind="object", id=object_id)
-        rect = entity_rect(40, 50, 60, entity)
-        assert (rect.x, rect.y, rect.width, rect.height) == (40, 50, 60, 60)
-
-    for object_id in ("wall", "dog"):
+def test_objects_use_inset_rect():
+    for object_id in ("water", "lava", "wall", "dog", "baba"):
         entity = SimpleNamespace(kind="object", id=object_id)
         rect = entity_rect(40, 50, 60, entity)
         assert rect.width < 60 and rect.height < 60

@@ -504,6 +504,14 @@ py -3.10 -m venv .venv
 - 测试：新增 `test_dog_uses_the_new_shiba_art`；`test_grid_view` 默认值改为关闭；共 217 passed。
 - 验证：`sprites.png`、`sprites_views.png`、`sprites_anim.gif`、22 张关卡预览、`editor.png`、`word_states.png`、`rule_lock.png`、`grid_off.png` 全部重生成。
 
+### 5.3.53 水/岩浆改成带边框的小块（已完成）
+
+- 按“水/岩浆可以不填满一整格，空着的那边加边界”处理。
+- 水/岩浆的 16×16 图改成：四周 1px 透明外边距 + 1px 深色描边 + 12×12 内容；不再铺满整格。
+- 渲染层去掉 `FULL_TILE_OBJECTS` 特判，所有物件都用内缩 rect；动画帧重新按 12×12 内容生成（水 4 帧纵向流动，岩浆 3 帧）。
+- 测试：`test_liquid_tiles_have_border_and_margin`（四角透明、描边和内容不透明）、`test_objects_use_inset_rect`（所有物件内缩）；共 217 passed。
+- 验证：`sprites.png`、`sprites_views.png`、`sprites_anim.gif`、22 张关卡预览、`editor.png`、`word_states.png`、`rule_lock.png`、`grid_off.png`、`grid_on.png` 全部重生成。
+
 ### 5.4 关卡 4–8（已完成）
 
 - **04 拆掉规则**：把「停」从「墙 是 停」中推出，规则失效后穿过整排墙；解法 `UDDDD`。
