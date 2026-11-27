@@ -43,7 +43,6 @@ C = {
     "aqua": (109, 194, 202, 255),
     "lemon": (218, 212, 94, 255),
     "cream": (222, 238, 214, 255),
-    "snow": (242, 242, 248, 255),  # 白发；DB16 没有纯白，这里补一个
 }
 
 
@@ -71,101 +70,93 @@ def add_outline(image: Image.Image, color: tuple = C["ink"]) -> Image.Image:
 
 
 def _baba_body(draw, facing: str) -> None:
-    """三个视角共用的身体：鞋、腿、外套、手臂、领口、拉链、脖子。"""
+    """三个视角共用的身体：鞋、腿、衣服、手臂、领口、脖子。"""
     if facing == "side":
-        draw.rounded_rectangle((14, 35, 20, 39), radius=1, fill=C["clay"])
-        draw.rounded_rectangle((23, 35, 29, 39), radius=1, fill=C["clay"])
-        draw.rectangle((14, 35, 20, 36), fill=C["amber"])
-        draw.rectangle((23, 35, 29, 36), fill=C["amber"])
-        draw.rectangle((15, 30, 18, 36), fill=C["charcoal"])
-        draw.rectangle((24, 30, 27, 36), fill=C["charcoal"])
+        draw.rounded_rectangle((13, 35, 19, 39), radius=1, fill=C["clay"])
+        draw.rounded_rectangle((21, 35, 28, 39), radius=1, fill=C["clay"])
+        draw.rectangle((13, 38, 19, 39), fill=C["wine"])
+        draw.rectangle((21, 38, 28, 39), fill=C["wine"])
+        draw.rectangle((15, 28, 18, 35), fill=C["midnight"])
+        draw.rectangle((22, 28, 26, 35), fill=C["midnight"])
     else:
         draw.rounded_rectangle((12, 35, 19, 39), radius=1, fill=C["clay"])
         draw.rounded_rectangle((21, 35, 28, 39), radius=1, fill=C["clay"])
-        draw.rectangle((12, 35, 19, 36), fill=C["amber"])
-        draw.rectangle((21, 35, 28, 36), fill=C["amber"])
-        draw.rectangle((14, 30, 18, 36), fill=C["charcoal"])
-        draw.rectangle((22, 30, 26, 36), fill=C["charcoal"])
-    draw.rounded_rectangle((13, 18, 27, 31), radius=2, fill=C["midnight"])
+        draw.rectangle((12, 38, 19, 39), fill=C["wine"])
+        draw.rectangle((21, 38, 28, 39), fill=C["wine"])
+        draw.rectangle((14, 28, 18, 35), fill=C["midnight"])
+        draw.rectangle((22, 28, 26, 35), fill=C["midnight"])
+    draw.rounded_rectangle((13, 16, 27, 28), radius=2, fill=C["cornflower"])
     if facing == "side":
-        draw.rectangle((11, 19, 13, 28), fill=C["midnight"])
-        draw.rectangle((11, 28, 13, 31), fill=C["beige"])
+        draw.rectangle((21, 17, 23, 26), fill=C["cornflower"])
+        draw.rectangle((21, 26, 23, 28), fill=C["beige"])
     else:
-        draw.rectangle((10, 19, 12, 28), fill=C["midnight"])
-        draw.rectangle((28, 19, 30, 28), fill=C["midnight"])
-        draw.rectangle((10, 28, 12, 31), fill=C["beige"])
-        draw.rectangle((28, 28, 30, 31), fill=C["beige"])
-    draw.rectangle((17, 18, 23, 19), fill=C["cornflower"])
-    if facing != "up":
-        draw.rectangle((20, 20, 20, 30), fill=C["wine"])
-    draw.rectangle((18, 13, 22, 18), fill=C["beige"])
+        draw.rectangle((10, 17, 12, 26), fill=C["cornflower"])
+        draw.rectangle((28, 17, 30, 26), fill=C["cornflower"])
+        draw.rectangle((10, 26, 12, 28), fill=C["beige"])
+        draw.rectangle((28, 26, 30, 28), fill=C["beige"])
+    draw.rectangle((17, 16, 23, 17), fill=C["cream"])
+    draw.rectangle((18, 13, 22, 16), fill=C["beige"])
 
 
 def _baba_head_front(draw, frame: int) -> None:
-    draw.rounded_rectangle((13, 3, 27, 15), radius=5, fill=C["beige"])
-    draw.polygon([(13, 12), (15, 13), (15, 15), (25, 15), (25, 13), (27, 12)], fill=C["beige"])
-    draw.rounded_rectangle((12, 1, 28, 8), radius=3, fill=C["snow"])
-    draw.polygon([(13, 8), (17, 8), (15, 9)], fill=C["snow"])
-    draw.polygon([(18, 8), (22, 8), (20, 9)], fill=C["snow"])
-    draw.polygon([(23, 8), (27, 8), (25, 9)], fill=C["snow"])
-    draw.rectangle((12, 6, 13, 12), fill=C["snow"])
-    draw.rectangle((27, 6, 28, 12), fill=C["snow"])
-    draw.rectangle((27, 10, 28, 12), fill=C["steel"])
-    draw.point((20, 0), fill=C["snow"])
+    draw.rounded_rectangle((13, 3, 27, 14), radius=5, fill=C["beige"])
+    draw.polygon([(13, 11), (15, 12), (15, 14), (25, 14), (25, 12), (27, 11)], fill=C["beige"])
+    # 深棕色短发
+    draw.rounded_rectangle((12, 2, 28, 7), radius=3, fill=C["clay"])
+    draw.polygon([(12, 7), (16, 7), (14, 9)], fill=C["clay"])
+    draw.polygon([(17, 7), (21, 7), (19, 8)], fill=C["clay"])
+    draw.polygon([(22, 7), (26, 7), (24, 9)], fill=C["clay"])
+    draw.rectangle((12, 6, 13, 10), fill=C["clay"])
+    draw.rectangle((27, 6, 28, 10), fill=C["clay"])
+    # 眉毛
+    draw.rectangle((15, 9, 18, 9), fill=C["clay"])
+    draw.rectangle((22, 9, 25, 9), fill=C["clay"])
+    # 眼睛（第 2 帧眨眼）
     if frame == 0:
         draw.rectangle((16, 10, 17, 12), fill=C["ink"])
         draw.rectangle((23, 10, 24, 12), fill=C["ink"])
-        draw.point((16, 10), fill=C["snow"])
-        draw.point((23, 10), fill=C["snow"])
-    else:  # 眨眼
+        draw.point((16, 10), fill=C["cream"])
+        draw.point((23, 10), fill=C["cream"])
+    else:
         draw.rectangle((16, 11, 17, 11), fill=C["ink"])
         draw.rectangle((23, 11, 24, 11), fill=C["ink"])
-    draw.point((20, 13), fill=C["clay"])
+    # 鼻子、嘴
+    draw.rectangle((20, 13, 20, 13), fill=C["clay"])
     draw.rectangle((19, 14, 21, 14), fill=C["wine"])
 
 
 def _baba_head_back(draw, frame: int) -> None:
-    draw.rounded_rectangle((13, 3, 27, 15), radius=5, fill=C["snow"])
-    draw.rectangle((13, 9, 27, 15), fill=C["snow"])
-    draw.rectangle((27, 10, 28, 15), fill=C["steel"])
-    draw.point((20, 0), fill=C["snow"])
+    draw.rounded_rectangle((13, 2, 27, 14), radius=5, fill=C["clay"])
+    draw.rounded_rectangle((13, 8, 27, 14), radius=3, fill=C["clay"])
     shift = 0 if frame == 0 else 1
-    draw.point((20 + shift, 6), fill=C["steel"])
-    draw.point((19 + shift, 7), fill=C["steel"])
-    draw.point((21 + shift, 7), fill=C["steel"])
+    draw.point((20 + shift, 5), fill=C["wine"])
+    draw.point((19 + shift, 6), fill=C["wine"])
+    draw.point((21 + shift, 6), fill=C["wine"])
 
 
 def _baba_head_side(draw, frame: int) -> None:
-    draw.rounded_rectangle((14, 3, 28, 15), radius=5, fill=C["beige"])
-    draw.polygon([(14, 12), (16, 13), (16, 15), (26, 15), (26, 13), (28, 12)], fill=C["beige"])
-    draw.rectangle((28, 10, 29, 12), fill=C["beige"])
-    draw.rounded_rectangle((12, 1, 26, 8), radius=3, fill=C["snow"])
-    draw.polygon([(13, 8), (17, 8), (15, 9)], fill=C["snow"])
-    draw.polygon([(18, 8), (22, 8), (20, 9)], fill=C["snow"])
-    draw.rectangle((12, 6, 14, 13), fill=C["snow"])
-    draw.rectangle((25, 8, 26, 11), fill=C["snow"])
-    draw.rectangle((12, 10, 13, 13), fill=C["steel"])
-    draw.point((20, 0), fill=C["snow"])
+    # 侧脸朝右：脸、鼻尖、下巴
+    draw.rounded_rectangle((13, 3, 27, 14), radius=5, fill=C["beige"])
+    draw.polygon([(13, 11), (15, 12), (15, 14), (24, 14), (25, 12), (27, 11)], fill=C["beige"])
+    draw.rectangle((27, 10, 28, 12), fill=C["beige"])
+    # 深棕短发（后脑 + 头顶 + 刘海）
+    draw.rounded_rectangle((11, 2, 25, 7), radius=3, fill=C["clay"])
+    draw.polygon([(12, 7), (16, 7), (14, 9)], fill=C["clay"])
+    draw.polygon([(17, 7), (21, 7), (19, 8)], fill=C["clay"])
+    draw.rectangle((11, 6, 13, 13), fill=C["clay"])
+    draw.rectangle((24, 7, 26, 9), fill=C["clay"])
+    # 耳朵
+    draw.rectangle((17, 9, 18, 11), fill=C["beige"])
+    draw.point((17, 10), fill=C["clay"])
+    # 眉毛 + 眼睛（第 2 帧眨眼）
+    draw.rectangle((23, 9, 26, 9), fill=C["clay"])
     if frame == 0:
         draw.rectangle((23, 10, 23, 12), fill=C["ink"])
-        draw.point((23, 10), fill=C["snow"])
-    else:  # 眨眼
-        draw.rectangle((23, 11, 23, 11), fill=C["ink"])
-    draw.rectangle((25, 14, 26, 14), fill=C["wine"])
-
-
-def _baba_scarf(draw, facing: str, frame: int) -> None:
-    draw.rectangle((13, 15, 27, 18), fill=C["crimson"])
-    draw.rectangle((13, 17, 16, 18), fill=C["wine"])
-    shift = 0 if frame == 0 else 1
-    if facing == "side":
-        for x, y in ((12, 18), (12, 19), (11, 20), (11, 21), (10, 22), (9, 23), (9, 24)):
-            draw.rectangle((x, y + shift, x + 1, y + shift), fill=C["crimson"])
-        draw.rectangle((7, 25 + shift, 9, 25 + shift), fill=C["wine"])
+        draw.point((23, 10), fill=C["cream"])
     else:
-        for x, y in ((12, 18), (12, 19), (11, 20), (11, 21), (10, 22), (9, 23)):
-            draw.point((x, y + shift), fill=C["crimson"])
-        draw.rectangle((7, 24 + shift, 9, 24 + shift), fill=C["wine"])
+        draw.rectangle((23, 11, 23, 11), fill=C["ink"])
+    # 嘴
+    draw.rectangle((24, 14, 25, 14), fill=C["wine"])
 
 
 def _baba_view(facing: str, frame: int) -> Image.Image:
@@ -174,7 +165,6 @@ def _baba_view(facing: str, frame: int) -> Image.Image:
     _baba_body(draw, facing)
     heads = {"down": _baba_head_front, "up": _baba_head_back, "side": _baba_head_side}
     heads[facing](draw, frame)
-    _baba_scarf(draw, facing, frame)
     return add_outline(image)
 
 

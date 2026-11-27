@@ -45,7 +45,7 @@ Windows 免安装包已构建并验证：`dist/RuleBox-Windows.zip`（约 13 MB�
 | 解法 | `solutions/*.txt` | `URDL` 回放串 |
 | 测试 | `tests/` | 213 条 |
 | 机制说明 | `docs/MECHANICS.md` | 结算顺序、规则语法、属性表、已知边界 |
-| 美术 | `assets/sprites/` | 15 个 16×16 + 主角 40×40（三视角）+ 16 张动画帧（DB16 配色 + 1px 描边）；人是白发黑眼少年（纯白豆豆头 + 红围巾）、狗是柴犬；水/岩浆铺满整格；生成脚本 `tools/generate_sprites.py` |
+| 美术 | `assets/sprites/` | 15 个 16×16 + 主角 40×40（三视角）+ 16 张动画帧（DB16 配色 + 1px 描边）；人是正常人类少年（深棕短发 + 蓝 T 恤 + 牛仔裤）、狗是柴犬；水/岩浆铺满整格；生成脚本 `tools/generate_sprites.py` |
 | 发布包 | `dist/RuleBox-Windows.zip` | 约 13 MB，免安装 Windows 包；`dist/` gitignore，不提交 |
 | 发布脚本 | `tools/build_release.py` | PyInstaller；玩家说明 `docs/HOW-TO-PLAY.txt` |
 | 发布说明 | `docs/DISTRIBUTION.md` | 分发、SmartScreen、存档位置、重新打包 |
@@ -404,6 +404,13 @@ py -3.10 -m venv .venv
 - UI：`_App.facing` 记录朝向；按方向键/长按方向移动时更新（左/右/上/下），重开和重新载入关卡回到正面；`draw_object(..., facing=...)` 选择视角并做左向翻转。
 - 调试：`run.py <关卡> --facing left|up|right|down --shot ...` 可以直接截指定朝向。
 - 测试：`test_art`（40×40 + 三视角两帧）、`test_animation`（`baba_sprite_name` 映射、尺寸）、`test_sprites`（尺寸）、`test_facing`（移动/按键/重开三组朝向断言）。
+- 验证：213 passed；`sprites.png`、`sprites_views.png`、`sprites_anim.gif`、22 张关卡预览、`editor.png`、`word_states.png`、`rule_lock.png` 全部重生成。
+
+### 5.3.40 人改回正常人类（已完成）
+
+- 去掉白发/围巾/呆毛，改成正常人类少年：深棕短发 + 刘海 + 侧发，黑眼睛 + 眉毛，蓝 T 恤 + 浅色领口，深蓝牛仔裤，棕色鞋。
+- 三视角重画：正面（脸、眉眼、鼻子、嘴）、背面（后脑勺 + 发旋）、侧面（朝右的侧脸：鼻尖、下巴、耳朵、单眼、眉毛）；侧面朝左仍由渲染层翻转。
+- 身体比例保持 40×40：头约 1/3、肩窄、腿长；站姿脚分开、鞋有鞋底。
 - 验证：213 passed；`sprites.png`、`sprites_views.png`、`sprites_anim.gif`、22 张关卡预览、`editor.png`、`word_states.png`、`rule_lock.png` 全部重生成。
 
 ### 5.4 关卡 4–8（已完成）
