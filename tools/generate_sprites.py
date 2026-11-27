@@ -64,6 +64,13 @@ def baba_sprite(view: str, frame: int = 0) -> Image.Image:
     return _pulse(image) if frame else image
 
 
+def _wall_tile() -> Image.Image:
+    """把墙的立体边框裁掉，让相邻墙格能接上（不再看到每格的边线）。"""
+    image = Image.open(AI_DIR / "wall.png").convert("RGBA")
+    image = image.crop((4, 4, 60, 60))
+    return image.resize((64, 64), Image.Resampling.LANCZOS)
+
+
 def render(name: str, frame: int = 0) -> Image.Image:
     if name == "baba":
         return baba_sprite("front", frame)
@@ -71,6 +78,8 @@ def render(name: str, frame: int = 0) -> Image.Image:
         return baba_sprite("back", frame)
     if name == "baba-side":
         return baba_sprite("side", frame)
+    if name == "wall":
+        return _wall_tile()
     if frame == 0:
         return Image.open(AI_DIR / f"{name}.png").convert("RGBA")
     return Image.open(ANIM_DIR / f"{name}_{frame}.png").convert("RGBA")

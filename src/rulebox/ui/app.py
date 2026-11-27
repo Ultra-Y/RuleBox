@@ -30,6 +30,24 @@ BG = (24, 26, 34)
 FLOOR_A = (50, 54, 66)
 FLOOR_B = (56, 60, 74)
 GRID_LINE = (34, 36, 46)
+FULL_TILE_OBJECTS = {"wall", "water", "lava"}
+
+
+def floor_color(row: int, col: int, show_grid: bool):
+    """显示网格时用深浅交替的地板；隐藏网格时用单色地板。"""
+    if not show_grid:
+        return FLOOR_A
+    return FLOOR_A if (row + col) % 2 == 0 else FLOOR_B
+
+
+def entity_rect(x: int, y: int, cell: int, entity):
+    """墙/水/岩浆铺满整格；其他物件留出内边距。"""
+    import pygame
+
+    if entity.kind == "object" and entity.id in FULL_TILE_OBJECTS:
+        return pygame.Rect(x, y, cell, cell)
+    inset = max(3, cell // 12)
+    return pygame.Rect(x + inset, y + inset, cell - inset * 2, cell - inset * 2)
 TITLE = (236, 238, 245)
 HINT = (150, 155, 170)
 RULE_TEXT = (196, 202, 218)
@@ -62,6 +80,7 @@ class _App:
         self.layout: tuple[int, int, int] | None = None
         self.fonts: dict | None = None
         self.facing = "down"
+        self.show_grid = True
 
     def start_index(self, index: int, entries=None) -> None:
         entries = list(entries) if entries is not None else list(self.entries)
@@ -255,7 +274,7 @@ def main(argv: list[str] | None = None) -> int:
     parsed = _parse_args(args)
     if parsed is None:
         return 0
-    level_path, frames, shot, debug_keys, start_editor, facing = parsed
+    level_path, frames, shot, debug_keys, start_editor, facing, show_grid = parsed
     if level_path is not None and not level_path.exists():
         print(f"找不到关卡：{level_path}", file=sys.stderr)
         return 2
@@ -291,6 +310,7 @@ def main(argv: list[str] | None = None) -> int:
         debug_keys,
         start_editor,
         facing,
+        show_grid,
     )
 
 
@@ -301,13 +321,14 @@ def _parse_args(args: list[str]):
     debug_keys = False
     start_editor = False
     facing = "down"
+    show_grid = True
     i = 0
     while i < len(args):
         arg = args[i]
         if arg in ("-h", "--help"):
             print(
                 "用法：python run.py [关卡文件] [--editor] [--frames N] "
-                "[--shot 图片路径] [--facing down|up|left|right] [--debug-keys]"
+                "[--shot 图片路径] [--facing down|up|left|right] [--no-grid] [--debug-keys]"
             )
             return None
         if arg == "--frames":
@@ -332,6 +353,10 @@ def _parse_args(args: list[str]):
             facing = args[i + 1]
             i += 2
             continue
+        if arg == "--no-grid":
+            show_grid = False
+            i += 1
+            continue
         if arg == "--debug-keys":
             debug_keys = True
             i += 1
@@ -342,7 +367,7 @@ def _parse_args(args: list[str]):
             continue
         level_path = Path(arg)
         i += 1
-    return level_path, frames, shot, debug_keys, start_editor, facing
+    return level_path, frames, shot, debug_keys, start_editor, facing, show_grid
 
 
 def _run(
@@ -355,6 +380,7 @@ def _run(
     debug_keys: bool,
     start_editor: bool = False,
     facing: str = "down",
+    show_grid: bool = True,
 ) -> int:
     import pygame
 
@@ -391,6 +417,7 @@ def _run(
         app.screen = "menu"
     if app.screen == "play":
         app.facing = facing
+        app.show_grid = show_grid
     moves = _move_map()
 
     running = True
@@ -587,6 +614,10 @@ def _handle_play(app: _App, key: int, text: str, moves) -> bool:
         )
     ):
         app.next_level()
+        return True
+
+    if key == pygame.K_g or (text or "").lower() == "g":
+        app.show_grid = not app.show_grid
         return True
 
     direction = moves.get(key)
@@ -806,13 +837,12 @@ def _draw_play(screen, app: _App, chrome) -> None:
     for row in range(world.height):
         for col in range(world.width):
             x, y = ox + col * cell, oy + row * cell
-            floor = FLOOR_A if (row + col) % 2 == 0 else FLOOR_B
-            pygame.draw.rect(screen, floor, (x, y, cell, cell))
-            pygame.draw.rect(screen, GRID_LINE, (x, y, cell, cell), 1)
+            pygame.draw.rect(screen, floor_color(row, col, app.show_grid), (x, y, cell, cell))
+            if app.show_grid:
+                pygame.draw.rect(screen, GRID_LINE, (x, y, cell, cell), 1)
 
             for entity in world.entities_at(row, col):
-                inset = max(3, cell // 12)
-                rect = pygame.Rect(x + inset, y + inset, cell - inset * 2, cell - inset * 2)
+                rect = entity_rect(x, y, cell, entity)
                 if draw_object(screen, entity, rect, animation_frame(entity.id, ticks), app.facing):
                     continue
                 color = entity.color
@@ -858,7 +888,7 @@ def _draw_play(screen, app: _App, chrome) -> None:
         if len(rules) > 6:
             screen.blit(fonts["hint"].render("…", True, HINT), (ox, panel_y + 54))
 
-    hint = "方向键 / WASD 移动 · 空格等待 · Z 撤销 · R 重开 · Esc 菜单"
+    hint = "方向键 / WASD 移动 · 空格等待 · Z 撤销 · R 重开 · G 网格 · Esc 菜单"
     screen.blit(fonts["hint"].render(hint, True, HINT), (MARGIN, HEIGHT - 34))
 
     if game.won or game.lost:
