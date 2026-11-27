@@ -528,6 +528,12 @@ py -3.10 -m venv .venv
 - 贴图仍是 16×16 铺满；同种相邻连成一片，异种/墙边保留空隙 + 深色边框（渲染层逻辑不变）。
 - 验证：218 passed；`sprites.png`、`sprites_views.png`、`sprites_anim.gif`、22 张关卡预览、`editor.png`、`word_states.png`、`rule_lock.png`、`grid_off.png`、`grid_on.png` 全部重生成。
 
+### 5.3.56 水/岩浆的点改成单个 + 呼吸式晃动（已完成）
+
+- 每格只保留 **1 个点**（水白、岩浆黑），底色不变。
+- 动画从“一直向右下漂”改成左右晃：水 4 帧偏移 0/+1/0/-1，岩浆 3 帧偏移 0/+1/-1；周期保持 900ms / 1100ms。
+- 验证：218 passed；`sprites.png`、`sprites_views.png`、`sprites_anim.gif`、22 张关卡预览、`editor.png`、`word_states.png`、`rule_lock.png`、`grid_off.png`、`grid_on.png` 全部重生成。
+
 ### 5.4 关卡 4–8（已完成）
 
 - **04 拆掉规则**：把「停」从「墙 是 停」中推出，规则失效后穿过整排墙；解法 `UDDDD`。
