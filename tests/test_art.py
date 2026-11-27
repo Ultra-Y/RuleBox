@@ -18,14 +18,14 @@ def png_size(path: Path) -> tuple[int, int]:
 
 def test_every_object_has_a_sprite():
     for object_id in OBJECTS:
-        expected = (64, 64) if object_id == "baba" else (16, 16)
+        expected = (64, 64)
         path = SPRITE_DIR / f"{object_id}.png"
         assert path.exists(), f"缺少精灵：{object_id}"
         assert png_size(path) == expected, object_id
 
 
 def test_baba_uses_higher_resolution():
-    # 主角单独用 64×64，其他物件保持 16×16。
+    # 主角和其他物件都是作者提供的 64×64 素材。
     assert png_size(SPRITE_DIR / "baba.png") == (64, 64)
     assert png_size(SPRITE_DIR / "baba-1.png") == (64, 64)
 
@@ -67,8 +67,8 @@ def test_liquid_tiles_cover_the_whole_cell():
 
     for object_id in ("water", "lava"):
         image = pygame.image.load(str(SPRITE_DIR / f"{object_id}.png"))
-        assert image.get_size() == (16, 16), object_id
-        for x in range(16):
-            for y in range(16):
+        assert image.get_size() == (64, 64), object_id
+        for x in range(64):
+            for y in range(64):
                 assert image.get_at((x, y)).a == 255, f"{object_id} 在 ({x},{y}) 是透明的"
 

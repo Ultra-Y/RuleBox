@@ -28,7 +28,7 @@ def test_animated_objects_have_two_different_frames():
         second = SPRITE_DIR / f"{object_id}-1.png"
         assert first.exists(), f"缺少第一帧：{object_id}"
         assert second.exists(), f"缺少第二帧：{object_id}"
-        expected = (64, 64) if object_id == "baba" else (16, 16)
+        expected = (64, 64)
         assert png_size(first) == expected
         assert png_size(second) == expected
         assert first.read_bytes() != second.read_bytes(), f"{object_id} 两帧一样"

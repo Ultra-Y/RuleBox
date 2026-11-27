@@ -457,6 +457,15 @@ py -3.10 -m venv .venv
 - 水/岩浆要求生成无缝贴图，后续用平铺 + 滚动做 4/3 帧动画；其他物件先用单图做轻微呼吸/发光帧。
 - 说明：TraeWork 的生图 MCP 只能在客户端里用，命令行调不到；其底层 Pollinations 免费接口现在返回 402（需付费）。提示词已备好，等作者生成图片后再做接入。
 
+### 5.3.47 其他贴图统一成 64×64 AI 风格（已完成）
+
+- 作者用 `docs/ART-PROMPTS.md` 的提示词在 TraeWork 生成了 15 个物件的图，并做了去白底、裁切、降采样 64×64、补描边、无缝处理、动画帧。
+- 成品接进仓库：`tools/source/ai/*.png`（静态第 0 帧）、`tools/source/anim/*.png`（动画帧）、`tools/source/baba-*.png`（主角三视角）。
+- `tools/generate_sprites.py` 重写为“素材 → assets/sprites/”的写盘脚本：按 `ANIMATIONS` 选帧、生成 `sprites.png` / `sprites_views.png` / `sprites_anim.gif`，不再程序化绘制。
+- 所有物件改成 64×64；水/岩浆保持无缝铺满整格；静态物件没有第二帧。
+- 测试：`test_art` / `test_animation` / `test_sprites` 的尺寸断言统一为 64×64。
+- 验证：213 passed；22 张关卡预览、`editor.png`、`word_states.png`、`rule_lock.png` 全部重生成。
+
 ### 5.4 关卡 4–8（已完成）
 
 - **04 拆掉规则**：把「停」从「墙 是 停」中推出，规则失效后穿过整排墙；解法 `UDDDD`。
