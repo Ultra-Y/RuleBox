@@ -542,6 +542,12 @@ py -3.10 -m venv .venv
 - 测试：新增 `liquid_dots` 的位置/固定性/单闪点断言；共 219 passed。
 - 验证：`sprites.png`、`sprites_views.png`、`sprites_anim.gif`、22 张关卡预览、`editor.png`、`word_states.png`、`rule_lock.png`、`grid_off.png`、`grid_on.png` 全部重生成。
 
+### 5.3.58 水/岩浆的点再减到每格 1 个（已完成）
+
+- 每格只画 1 个点（位置仍由哈希决定，不规则）；大约 1/3 的格子会闪（右上冒点、原点变暗），其余格子的点完全不动。
+- 测试：`liquid_dots` 断言改成“每格 1 个、有些格闪有些格不闪”；共 219 passed。
+- 验证：`sprites.png`、`sprites_views.png`、`sprites_anim.gif`、22 张关卡预览、`editor.png`、`word_states.png`、`rule_lock.png`、`grid_off.png`、`grid_on.png` 全部重生成。
+
 ### 5.4 关卡 4–8（已完成）
 
 - **04 拆掉规则**：把「停」从「墙 是 停」中推出，规则失效后穿过整排墙；解法 `UDDDD`。

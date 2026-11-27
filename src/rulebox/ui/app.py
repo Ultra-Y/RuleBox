@@ -45,17 +45,14 @@ def _mix(row: int, col: int, salt: int) -> int:
 
 
 def liquid_dots(row: int, col: int, cell: int):
-    """每格 3 个位置不规则的点；其中 1 个会闪，另外 2 个不动。"""
+    """每格只有 1 个位置不规则的点；大约三分之一的格子会闪，其余不动。"""
     margin = max(3, cell // 14)
     span = max(1, cell - margin * 2)
-    twinkle_index = _mix(row, col, 9) % 3
-    dots = []
-    for index in range(3):
-        h = _mix(row, col, index)
-        dx = margin + h % span
-        dy = margin + (h >> 8) % span
-        dots.append((dx, dy, index == twinkle_index))
-    return tuple(dots)
+    h = _mix(row, col, 0)
+    dx = margin + h % span
+    dy = margin + (h >> 8) % span
+    twinkle = _mix(row, col, 9) % 3 == 0
+    return ((dx, dy, twinkle),)
 
 
 def _blend(a, b, t: float):

@@ -92,13 +92,16 @@ def test_liquid_open_sides_follow_neighbors():
 
 def test_liquid_dots_are_irregular_and_some_twinkle():
     dots = liquid_dots(2, 3, 40)
-    assert len(dots) == 3
-    # 三个点位置互不相同、每格结果固定
-    assert len({(dx, dy) for dx, dy, _ in dots}) == 3
+    assert len(dots) == 1
+    # 每格结果固定，但相邻格子的点位置不同
     assert dots == liquid_dots(2, 3, 40)
-    # 每格只有 1 个点会闪，另外 2 个不动
-    assert sum(1 for _, _, twinkle in dots if twinkle) == 1
-    # 相邻格子的点位置不同，避免整齐排列
     assert {(dx, dy) for dx, dy, _ in dots} != {
         (dx, dy) for dx, dy, _ in liquid_dots(2, 4, 40)
     }
+    # 有些格子的点会闪，有些不会
+    flags = {
+        liquid_dots(row, col, 40)[0][2]
+        for row in range(4)
+        for col in range(4)
+    }
+    assert flags == {True, False}
