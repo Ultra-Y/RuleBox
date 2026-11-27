@@ -44,13 +44,14 @@ def _mix(row: int, col: int, salt: int) -> int:
     return (n ^ (n >> 16)) & 0xFFFFFFFF
 
 
-def liquid_dots(row: int, col: int, cell: int):
-    """每格只有 1 个位置不规则的点；大约三分之一的格子会闪，其余不动。"""
-    margin = max(3, cell // 14)
-    span = max(1, cell - margin * 2)
+def liquid_dots(row: int, col: int, width: int, height: int, pad: int):
+    """每格只有 1 个点，离四边至少 pad 像素；大约三分之一的格子会闪。"""
+    pad = min(pad, max(1, (min(width, height) - 1) // 2))
+    span_x = max(1, width - pad * 2)
+    span_y = max(1, height - pad * 2)
     h = _mix(row, col, 0)
-    dx = margin + h % span
-    dy = margin + (h >> 8) % span
+    dx = pad + h % span_x
+    dy = pad + (h >> 8) % span_y
     twinkle = _mix(row, col, 9) % 3 == 0
     return ((dx, dy, twinkle),)
 
@@ -885,10 +886,11 @@ def _draw_liquid(screen, world, entity, x: int, y: int, cell: int, row: int, col
     size = max(2, cell // 12)
     shift = max(2, cell // 14)
     dim = _blend(dot_color, base, 0.55)
-    if inner.width >= size and inner.height >= size:
-        for dx, dy, twinkle in liquid_dots(row, col, cell):
-            px = min(max(x + dx, inner.left), inner.right - size)
-            py = min(max(y + dy, inner.top), inner.bottom - size)
+    pad = size + shift + 2
+    if inner.width > pad * 2 and inner.height > pad * 2:
+        for dx, dy, twinkle in liquid_dots(row, col, inner.width, inner.height, pad):
+            px = inner.x + dx
+            py = inner.y + dy
             if twinkle and frame % 2 == 1:
                 # 右上角冒出一个同样的点，原点变暗；下一帧消失、原点恢复。
                 pygame.draw.rect(screen, dot_color, (px + shift, py - shift, size, size))

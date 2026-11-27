@@ -548,6 +548,12 @@ py -3.10 -m venv .venv
 - 测试：`liquid_dots` 断言改成“每格 1 个、有些格闪有些格不闪”；共 219 passed。
 - 验证：`sprites.png`、`sprites_views.png`、`sprites_anim.gif`、22 张关卡预览、`editor.png`、`word_states.png`、`rule_lock.png`、`grid_off.png`、`grid_on.png` 全部重生成。
 
+### 5.3.59 水/岩浆的点不生成在边缘（已完成）
+
+- 点的位置按可用区域（去掉边框/空隙后的内容区）计算，离四边至少 `点大小 + 闪烁偏移 + 2px`（约 8px），不会再贴边或贴边框。
+- 测试改为断言点的坐标在 `[pad, 宽-pad]` 内；共 219 passed。
+- 验证：`sprites.png`、`sprites_views.png`、`sprites_anim.gif`、22 张关卡预览、`editor.png`、`word_states.png`、`rule_lock.png`、`grid_off.png`、`grid_on.png` 全部重生成。
+
 ### 5.4 关卡 4–8（已完成）
 
 - **04 拆掉规则**：把「停」从「墙 是 停」中推出，规则失效后穿过整排墙；解法 `UDDDD`。

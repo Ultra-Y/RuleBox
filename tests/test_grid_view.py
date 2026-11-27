@@ -90,17 +90,20 @@ def test_liquid_open_sides_follow_neighbors():
     assert liquid_open_sides(world, 1, 2, "water") == (True, True, True, False)
 
 
-def test_liquid_dots_are_irregular_and_some_twinkle():
-    dots = liquid_dots(2, 3, 40)
+def test_liquid_dots_are_inset_and_some_twinkle():
+    pad = 8
+    dots = liquid_dots(2, 3, 40, 40, pad)
     assert len(dots) == 1
+    dx, dy, _ = dots[0]
+    # 点离四边都至少 pad 像素，不会贴边
+    assert pad <= dx <= 40 - pad
+    assert pad <= dy <= 40 - pad
     # 每格结果固定，但相邻格子的点位置不同
-    assert dots == liquid_dots(2, 3, 40)
-    assert {(dx, dy) for dx, dy, _ in dots} != {
-        (dx, dy) for dx, dy, _ in liquid_dots(2, 4, 40)
-    }
+    assert dots == liquid_dots(2, 3, 40, 40, pad)
+    assert (dx, dy) != liquid_dots(2, 4, 40, 40, pad)[0][:2]
     # 有些格子的点会闪，有些不会
     flags = {
-        liquid_dots(row, col, 40)[0][2]
+        liquid_dots(row, col, 40, 40, pad)[0][2]
         for row in range(4)
         for col in range(4)
     }
