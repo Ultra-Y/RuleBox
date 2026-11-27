@@ -43,6 +43,7 @@ C = {
     "aqua": (109, 194, 202, 255),
     "lemon": (218, 212, 94, 255),
     "cream": (222, 238, 214, 255),
+    "snow": (242, 242, 248, 255),  # 白发；DB16 没有纯白，这里补一个
 }
 
 
@@ -70,35 +71,36 @@ def add_outline(image: Image.Image, color: tuple = C["ink"]) -> Image.Image:
 
 
 BABA_PALETTE = {
-    "h": C["cream"],      # 白头发
+    "h": C["snow"],       # 白头发
     "s": C["beige"],      # 皮肤
     "e": C["ink"],        # 黑眼睛
     "m": C["wine"],       # 嘴
     "r": C["crimson"],    # 红围巾
+    "w": C["wine"],       # 围巾结/暗部
     "j": C["midnight"],   # 外套
     "p": C["charcoal"],   # 裤子
     "b": C["clay"],       # 鞋
     "a": C["beige"],      # 手臂
 }
 
-# 白发黑眼少年：白围巾在脖子一圈，右边垂一条
+# 白发黑眼少年：纯白豆豆头 + 呆毛，2×2 黑眼睛，红围巾（右侧垂一条）
 BABA_GRID = [
-    "................",
+    "........h.......",
     "....hhhhhhhh....",
     "...hhhhhhhhhh...",
-    "...hhhhhhhhhh...",
-    "...hhsssssshh...",
-    "...hhsesseshh...",
-    "...hhsesseshh...",
-    "...hhsssssshh...",
-    "...hhssmmsshh...",
-    "...hhhsssshhh...",
-    "...rrrrrrrrrr...",
+    "..hhhhhhhhhhhh..",
+    "..hhsssssssshh..",
+    "..hhseesseeshh..",
+    "..hhseesseeshh..",
+    "..hhsssssssshh..",
+    "..hhsssmmssshh..",
+    "..hhhsssssshhh..",
+    "...rrrrrrrrwr...",
     "..a.jjjjjjjjra..",
-    "..a.jjjjjjjjra..",
+    "..a.jjjjjjjjwa..",
     "....pppp..pppp..",
     "....pppp..pppp..",
-    "...bbbbbb.bbbbb.",
+    "...bbbbb.bbbbb..",
 ]
 BABA_BLINK = list(BABA_GRID)
 BABA_BLINK[5] = BABA_GRID[5].replace("e", "s")
