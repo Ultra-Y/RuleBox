@@ -4,7 +4,7 @@
 
 这是给下一个 AI 会话的压缩交接；细节仍以仓库和 `docs/MECHANICS.md` 为准。
 
-- **当前基线**：`213 passed`；23 个官方关卡；16 种物件、11 个带动画（水 4 帧/岩浆 3 帧）、调色板 53 项、主角 40×40（三视角）；最新提交以 `git log` 为准。
+- **当前基线**：`213 passed`；23 个官方关卡；16 种物件、11 个带动画（水 4 帧/岩浆 3 帧）、调色板 53 项、主角 64×64（三视角勇者）；最新提交以 `git log` 为准。
 - **先跑**：
   ```powershell
   .\.venv\Scripts\python.exe -m pytest -q
@@ -45,7 +45,7 @@ Windows 免安装包已构建并验证：`dist/RuleBox-Windows.zip`（约 13 MB�
 | 解法 | `solutions/*.txt` | `URDL` 回放串 |
 | 测试 | `tests/` | 213 条 |
 | 机制说明 | `docs/MECHANICS.md` | 结算顺序、规则语法、属性表、已知边界 |
-| 美术 | `assets/sprites/` | 15 个 16×16 + 主角 40×40（三视角）+ 16 张动画帧（DB16 配色 + 1px 描边）；人是正常人类少年（深棕短发 + 蓝 T 恤 + 牛仔裤，侧面无鼻子/耳朵突出）、狗是柴犬；水/岩浆铺满整格；生成脚本 `tools/generate_sprites.py` |
+| 美术 | `assets/sprites/` | 15 个 16×16 + 主角 64×64（三视角）+ 16 张动画帧（DB16 配色 + 1px 描边）；人是正常人类少年（深棕短发 + 蓝 T 恤 + 牛仔裤，侧面无鼻子/耳朵突出）、狗是柴犬；水/岩浆铺满整格；生成脚本 `tools/generate_sprites.py` |
 | 发布包 | `dist/RuleBox-Windows.zip` | 约 13 MB，免安装 Windows 包；`dist/` gitignore，不提交 |
 | 发布脚本 | `tools/build_release.py` | PyInstaller；玩家说明 `docs/HOW-TO-PLAY.txt` |
 | 发布说明 | `docs/DISTRIBUTION.md` | 分发、SmartScreen、存档位置、重新打包 |
@@ -418,6 +418,14 @@ py -3.10 -m venv .venv
 - 侧面头改成光滑的圆角方块：去掉鼻尖凸起、耳朵和下巴尖角，头不再有突出部分。
 - 眼睛贴到脸的外层（右侧靠边缘），上面加一撮棕色刘海/眉毛；嘴在靠近下巴的外缘。
 - 侧面朝左仍由渲染层水平翻转；正面/背面不变。
+- 验证：213 passed；`sprites.png`、`sprites_views.png`、`sprites_anim.gif`、22 张关卡预览、`editor.png`、`word_states.png`、`rule_lock.png` 全部重生成。
+
+### 5.3.42 主角改 64×64 勇者（已完成）
+
+- 按“画一个 64×64 的勇者，带红围巾”重画：深棕短发、黑眼睛、绿色上衣（左明右暗）+ 棕色腰带 + 柠檬色腰带扣、红围巾（围脖 + 左侧垂带 + 暗红结）、深蓝牛仔裤、棕色靴（琥珀色靴口 + 酒红鞋底）。
+- 三视角 × 两帧：正面（眨眼）、背面（发旋/围巾尾摆动）、侧面（光滑头、眼睛贴脸外缘、眨眼），侧面朝左仍由渲染层翻转。
+- 尺寸从 40×40 提到 64×64；`sprite_for` 仍按目标格子缩放，渲染代码未改。
+- 测试：`test_art` / `test_animation` / `test_sprites` 的尺寸断言改成 64×64。
 - 验证：213 passed；`sprites.png`、`sprites_views.png`、`sprites_anim.gif`、22 张关卡预览、`editor.png`、`word_states.png`、`rule_lock.png` 全部重生成。
 
 ### 5.4 关卡 4–8（已完成）

@@ -6,10 +6,10 @@ SPRITES = ("baba", "wall", "box", "flag", "water", "fire", "rock", "door", "key"
 
 
 def test_pixel_sprites_have_expected_size():
-    # 主角单独用 40×40（更修长、细节更多），其余物件保持 16×16。
+    # 主角单独用 64×64（更修长、细节更多），其余物件保持 16×16。
     for name in SPRITES:
         data = (ROOT / "assets" / "sprites" / f"{name}.png").read_bytes()
         assert data[:8] == b"\x89PNG\r\n\x1a\n", name
         width, height = struct.unpack(">II", data[16:24])
-        expected = (40, 40) if name == "baba" else (16, 16)
+        expected = (64, 64) if name == "baba" else (16, 16)
         assert (width, height) == expected, name
